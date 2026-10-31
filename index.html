@@ -157,6 +157,11 @@ body { width:100%; max-width:100%; overflow-x:hidden; padding:12px; }
 .clock-wheel-item.selected{font-weight:800;color:#283e72;font-size:27px}
 .clock-wheel-colon{font-size:30px;font-weight:700;color:#4b649b;padding-top:25px}
 .clock-wheel-hint{font-size:12px;text-align:center;color:#5b6882;padding-bottom:6px}
+/* Reliable manual day navigation */
+#dateNav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+#dateNav button{flex:1;min-width:90px}
+#dateManual{width:150px;max-width:100%;direction:ltr;text-align:center;padding:10px;border:1px solid #94a3b8;border-radius:8px}
+#date.picker-shell{pointer-events:none}
 </style>
  <div style="text-align:center;padding:14px;color:#5df5f2;font-size:13px">
   <span style="font-size:20px">◷ AB</span>
@@ -552,4 +557,22 @@ saveDay=v16SaveDay;
 $('v16SaveBtn').addEventListener('click',()=>v16SaveDay());
 $('date').addEventListener('change',()=>{v16PreviousDate=$('date').value});
 
+
+// V16.1: robust date navigation independent of native browser picker.
+(function installDayNavigation(){
+ const nativeDate=$('date');
+ const shell=nativeDate.closest('.picker-shell');
+ if(shell) shell.style.display='none';
+ const nav=document.createElement('div');nav.id='dateNav';
+ nav.innerHTML='<button type="button" id="prevDay">יום קודם ◀</button><input id="dateManual" type="text" inputmode="numeric" aria-label="תאריך דיווח" placeholder="DD.MM.YYYY"><button type="button" id="nextDay">▶ יום הבא</button>';
+ (shell||nativeDate).insertAdjacentElement('afterend',nav);
+ const manual=$('dateManual');
+ function sync(){const v=nativeDate.value;if(/^\d{4}-\d{2}-\d{2}$/.test(v)){const [y,m,d]=v.split('-');manual.value=`${d}.${m}.${y}`}}
+ function setDate(iso){const d=new Date(iso+'T12:00:00');if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)||Number.isNaN(d.getTime())||isoLocal(d)!==iso){alert('תאריך לא תקין');sync();return}nativeDate.value=iso;nativeDate.refreshDisplay?.();nativeDate.dispatchEvent(new Event('change',{bubbles:true}));sync()}
+ function shift(n){const d=new Date(nativeDate.value+'T12:00:00');d.setDate(d.getDate()+n);setDate(isoLocal(d))}
+ $('prevDay').onclick=()=>shift(-1);$('nextDay').onclick=()=>shift(1);
+ manual.addEventListener('change',()=>{const v=manual.value.trim();const m=v.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);if(!m){alert('יש להזין תאריך בפורמט 31.10.2026');sync();return}setDate(`${m[3]}-${pad(m[2])}-${pad(m[1])}`)});
+ nativeDate.addEventListener('change',sync);
+ sync();
+})();
 </script></body></html>
