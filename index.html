@@ -12,6 +12,11 @@
 .v13-alert{background:#392a1b;border-right:3px solid #ffbe63;padding:10px;border-radius:7px;margin:8px 0;font-size:13px}
 .v13-good{color:#86e7b8}.v13-bad{color:#ffca8c}
 .v13-muted{font-size:12px;color:#a3b4c8;line-height:1.7}
+
+/* V16.2: history month navigation */
+#monthNav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+#monthNav button{flex:1;min-width:90px}
+#monthManual{width:150px;max-width:100%;direction:ltr;text-align:center;padding:10px;border:1px solid #94a3b8;border-radius:8px}
 </style></head><body><main class="app"><header class="hero"><h1>שחרר</h1><div>דיווח שעות · חישובי עבודה · היסטוריה</div><div class="muted" id="todayText"></div></header><nav class="tabs"><button data-tab="day" class="primary">דיווח יומי</button><button data-tab="history">היסטוריה</button><button data-tab="settings">הגדרות</button></nav>
 <section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option><option value="fixedClock">אתר קבוע — דווח בשעון נוכחות</option><option value="abroad">עבודה בחו״ל</option><option value="vacation">חופשה</option><option value="sick">מחלה</option></select></div><div id="v14Extra" class="field" style="display:none">
 <label id="v14ExtraLabel">פרטי הדיווח</label>
@@ -39,7 +44,7 @@
 <p class="v13-muted" id="v14MonthTypes"></p>
 </div>
 <div class="panel" id="v13Dashboard">
-<h2>דוח חודשי חכם <span class="muted">גרסה 16</span></h2>
+<h2>דוח חודשי חכם <span class="muted">גרסה 16.2</span></h2>
 <p class="v13-muted">מבוסס על הדיווחים השמורים בחודש שנבחר למעלה. ימי ראשון–רביעי: 9 שעות, חמישי: 8:30; שישי ושבת ללא תקן אוטומטי. הפרשים הם לצורך בקרה בלבד ולא קביעת זכאות לשעות נוספות.</p>
 <div class="v13-summary">
 <div class="v13-tile"><small>שעות מדווחות וניתנות לחישוב</small><strong id="v13Actual">—</strong></div>
@@ -55,7 +60,7 @@
 <div class="actions"><button id="v13Csv">ייצוא דוח חודשי מפורט CSV</button></div>
 </div>
 <div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
-<section id="settings" class="hidden"><div class="panel"><h2>יתרות אישיות מהמעסיק</h2><p class="note">השאר ריק עד שתקבל נתונים מאומתים. הזנת יתרה לא משנה דיווחים קיימים.</p><div class="field"><label>יתרת חופשה (ימים)</label><input type="number" id="v14VacInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><div class="field"><label>יתרת מחלה (ימים)</label><input type="number" id="v14SickInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><button id="v14SaveBalances">שמור יתרות אישיות</button><p id="v14BalanceStatus" class="note"></p></div><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 11 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
+<section id="settings" class="hidden"><div class="panel"><h2>יתרות אישיות מהמעסיק</h2><p class="note">השאר ריק עד שתקבל נתונים מאומתים. הזנת יתרה לא משנה דיווחים קיימים.</p><div class="field"><label>יתרת חופשה (ימים)</label><input type="number" id="v14VacInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><div class="field"><label>יתרת מחלה (ימים)</label><input type="number" id="v14SickInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><button id="v14SaveBalances">שמור יתרות אישיות</button><p id="v14BalanceStatus" class="note"></p></div><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסה 16.2 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
 <style>
 input.clock-input,
 input[type="date"],
@@ -573,6 +578,42 @@ $('date').addEventListener('change',()=>{v16PreviousDate=$('date').value});
  $('prevDay').onclick=()=>shift(-1);$('nextDay').onclick=()=>shift(1);
  manual.addEventListener('change',()=>{const v=manual.value.trim();const m=v.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);if(!m){alert('יש להזין תאריך בפורמט 31.10.2026');sync();return}setDate(`${m[3]}-${pad(m[2])}-${pad(m[1])}`)});
  nativeDate.addEventListener('change',sync);
+ sync();
+})();
+
+
+// V16.2: month navigation without relying on the browser's native month picker.
+(function installHistoryMonthNavigation(){
+ const nativeMonth=$('month');
+ const shell=nativeMonth.closest('.picker-shell');
+ if(shell) shell.style.display='none';
+ const nav=document.createElement('div');nav.id='monthNav';
+ nav.innerHTML='<button type="button" id="prevMonth">חודש קודם ◀</button><input id="monthManual" type="text" inputmode="numeric" aria-label="חודש ושנה" placeholder="MM.YYYY"><button type="button" id="nextMonth">▶ חודש הבא</button>';
+ (shell||nativeMonth).insertAdjacentElement('afterend',nav);
+ const manual=$('monthManual');
+ function sync(){const m=/^(\d{4})-(\d{2})$/.exec(nativeMonth.value);if(m)manual.value=m[2]+'.'+m[1]}
+ function setMonth(value){
+  const m=/^(\d{4})-(\d{2})$/.exec(value);
+  if(!m||Number(m[1])<1||Number(m[2])<1||Number(m[2])>12){alert('חודש לא תקין');sync();return}
+  nativeMonth.value=value;
+  nativeMonth.refreshDisplay?.();
+  nativeMonth.dispatchEvent(new Event('change',{bubbles:true}));
+  sync();
+ }
+ function shift(delta){
+  const m=/^(\d{4})-(\d{2})$/.exec(nativeMonth.value);
+  if(!m)return;
+  const d=new Date(Number(m[1]),Number(m[2])-1+delta,1);
+  setMonth(d.getFullYear()+'-'+pad(d.getMonth()+1));
+ }
+ $('prevMonth').onclick=()=>shift(-1);
+ $('nextMonth').onclick=()=>shift(1);
+ manual.addEventListener('change',()=>{
+  const m=/^(\d{1,2})[.\/-](\d{4})$/.exec(manual.value.trim());
+  if(!m){alert('יש להזין חודש ושנה בפורמט 10.2026');sync();return}
+  setMonth(m[2]+'-'+pad(m[1]));
+ });
+ nativeMonth.addEventListener('change',sync);
  sync();
 })();
 </script></body></html>
