@@ -16,6 +16,11 @@
 <section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option><option value="fixedClock">אתר קבוע — דווח בשעון נוכחות</option><option value="abroad">עבודה בחו״ל</option><option value="vacation">חופשה</option><option value="sick">מחלה</option></select></div><div id="v14Extra" class="field" style="display:none">
 <label id="v14ExtraLabel">פרטי הדיווח</label>
 <input id="v14Country" placeholder="מדינה / עיר (בעבודה בחו״ל)" style="display:none">
+<div id="v15AbsenceBox" style="display:none">
+<label>אופן דיווח</label><select id="v15Unit"><option value="days">לפי ימים</option><option value="hours">לפי שעות ודקות</option></select>
+<div id="v15DaysBox"><label>מספר ימים</label><input id="v15Days" type="number" min="0.5" step="0.5" value="1" inputmode="decimal"></div>
+<div id="v15HoursBox" style="display:none"><label>שעות</label><input id="v15Hours" type="number" min="0" max="23" step="1" value="0" inputmode="numeric"><label>דקות</label><input id="v15Minutes" type="number" min="0" max="59" step="1" value="0" inputmode="numeric"></div>
+<p class="v13-muted">הכמות נשמרת כפי שדווחה. אין המרה אוטומטית משעות לימי מכסה.</p></div>
 <select id="v14Portion" style="display:none"><option value="1">יום מלא</option><option value="0.5">חצי יום</option></select>
 <label class="muted" id="v14ClockLabel" style="display:none"><input type="checkbox" id="v14ClockConfirmed"> הדיווח בוצע בשעון המעסיק</label>
 </div><div class="field"><label>שם האתר / מקום העבודה</label><input id="siteName" placeholder="שם האתר"></div><div class="grid" style="margin-top:12px"><button data-stamp="leaveHome">🏠 יציאה מהבית</button><button data-stamp="startWork">🧰 התחלת עבודה</button><button data-stamp="endWork">🏁 סיום עבודה</button><button data-stamp="arriveDest">📍 שעת הגעה</button><button data-stamp="startCoffee">☕ תחילת הפסקה</button><button data-stamp="endCoffee">✔ סיום הפסקה</button><button data-stamp="returnHome">🏠 חזרה הביתה</button></div><div id="timeFields" style="margin-top:16px"></div><label class="muted">הערות</label><textarea id="notes" placeholder="אתר, משימות, הוצאות והערות"></textarea><div class="actions" style="margin-top:10px"><button id="locationBtn">📌 שמור מיקום</button><button id="clearBtn" class="danger">נקה יום זה</button></div><div class="status" id="locationStatus"></div><div class="status" id="saveStatus"></div></div>
@@ -34,7 +39,7 @@
 <p class="v13-muted" id="v14MonthTypes"></p>
 </div>
 <div class="panel" id="v13Dashboard">
-<h2>דוח חודשי חכם <span class="muted">גרסה 14</span></h2>
+<h2>דוח חודשי חכם <span class="muted">גרסה 15</span></h2>
 <p class="v13-muted">מבוסס על הדיווחים השמורים בחודש שנבחר למעלה. ימי ראשון–רביעי: 9 שעות, חמישי: 8:30; שישי ושבת ללא תקן אוטומטי. הפרשים הם לצורך בקרה בלבד ולא קביעת זכאות לשעות נוספות.</p>
 <div class="v13-summary">
 <div class="v13-tile"><small>שעות מדווחות וניתנות לחישוב</small><strong id="v13Actual">—</strong></div>
@@ -385,6 +390,11 @@ renderDay=function(){
  const d=current();
  $('v14Country').value=d.country||'';
  $('v14Portion').value=String(d.portion||1);
+ $('v15Unit').value=d.absenceUnit||'days';
+ $('v15Days').value=d.absenceUnit==='days'?(d.absenceDays??d.portion??1):1;
+ $('v15Hours').value=d.absenceUnit==='hours'?Math.floor((d.absenceMinutes||0)/60):0;
+ $('v15Minutes').value=d.absenceUnit==='hours'?(d.absenceMinutes||0)%60:0;
+ v15UnitDisplay();
  $('v14ClockConfirmed').checked=Boolean(d.clockConfirmed);
  v14ShowFields();
 };
@@ -392,7 +402,7 @@ function v14ShowFields(){
  const t=$('dayType').value;
  $('v14Extra').style.display=t==='fixedClock'||t==='abroad'||t==='vacation'||t==='sick'?'block':'none';
  $('v14Country').style.display=t==='abroad'?'block':'none';
- $('v14Portion').style.display=t==='vacation'||t==='sick'?'block':'none';
+ $('v14Portion').style.display='none';$('v15AbsenceBox').style.display=t==='vacation'||t==='sick'?'block':'none';
  $('v14ClockLabel').style.display=t==='fixedClock'?'block':'none';
  $('v14ExtraLabel').textContent=t==='abroad'?'פרטי עבודה בחו״ל':t==='fixedClock'?'אישור דיווח בשעון':'היקף ההיעדרות';
  const nonTimed=v14NonTimed.has(t);
@@ -408,10 +418,24 @@ saveDay=function(){
  if(!h[k])return;
  h[k].country=$('v14Country').value.trim();
  h[k].portion=Number($('v14Portion').value)||1;
+ if(t==='vacation'||t==='sick'){
+   const unit=$('v15Unit').value;
+   const days=Number($('v15Days').value);
+   const hours=Number($('v15Hours').value),minutes=Number($('v15Minutes').value);
+   if(unit==='days'&&(!Number.isFinite(days)||days<=0)){alert('יש להזין מספר ימים חיובי');return}
+   if(unit==='hours'&&(!Number.isInteger(hours)||!Number.isInteger(minutes)||hours<0||hours>23||minutes<0||minutes>59||hours*60+minutes===0)){alert('יש להזין שעות ודקות תקינות');return}
+   h[k].absenceUnit=unit;
+   h[k].absenceDays=unit==='days'?days:null;
+   h[k].absenceMinutes=unit==='hours'?hours*60+minutes:null;
+ }
  h[k].clockConfirmed=$('v14ClockConfirmed').checked;
  setHistory(h);v13Render();
 };
 $('dayType').addEventListener('change',v14ShowFields);
+function v15UnitDisplay(){const hours=$('v15Unit').value==='hours';$('v15HoursBox').style.display=hours?'block':'none';$('v15DaysBox').style.display=hours?'none':'block'}
+$('v15Unit').addEventListener('change',v15UnitDisplay);
+['v15Days','v15Hours','v15Minutes'].forEach(id=>$(id).addEventListener('change',saveDay));
+
 ['v14Country','v14Portion','v14ClockConfirmed'].forEach(id=>$(id).addEventListener('change',saveDay));
 const v14OldAnalyze=v13Analyze;
 v13Analyze=function(d,k){
@@ -437,9 +461,10 @@ function v14BalancesRender(){
  const b=v14BalanceData(),data=v13MonthlyData();
  $('v14VacationBalance').textContent=b.vacation==null?'טרם הוגדר':b.vacation+' ימים';
  $('v14SickBalance').textContent=b.sick==null?'טרם הוגדר':b.sick+' ימים';
- const sum=t=>data.filter(r=>r.d.dayType===t).reduce((n,r)=>n+(Number(r.d.portion)||1),0);
- $('v14VacationUsed').textContent=sum('vacation')+' ימים';
- $('v14SickUsed').textContent=sum('sick')+' ימים';
+ const sum=t=>data.filter(r=>r.d.dayType===t&&r.d.absenceUnit!=='hours').reduce((n,r)=>n+(r.d.absenceUnit==='days'?(Number(r.d.absenceDays)||0):(Number(r.d.portion)||1)),0);
+ const hourSum=t=>data.filter(r=>r.d.dayType===t&&r.d.absenceUnit==='hours').reduce((n,r)=>n+(Number(r.d.absenceMinutes)||0),0);
+ $('v14VacationUsed').textContent=sum('vacation')+' ימים; '+fmt(hourSum('vacation'))+' שעות';
+ $('v14SickUsed').textContent=sum('sick')+' ימים; '+fmt(hourSum('sick'))+' שעות';
  $('v14MonthTypes').textContent='דווח בשעון: '+data.filter(r=>r.d.dayType==='fixedClock').length+
  ' | עבודה בחו״ל: '+data.filter(r=>r.d.dayType==='abroad').length+
  ' | אתר חיצוני: '+data.filter(r=>r.d.dayType==='external').length;
@@ -486,7 +511,7 @@ v13Export=function(){
  v13MonthlyData().forEach(r=>{
  const special=r.excluded;
  rows.push([r.k,v14Labels[r.d.dayType]||'מקום קבוע',r.d.siteName||'',r.d.country||'',
-  ['vacation','sick'].includes(r.d.dayType)?r.d.portion||1:'',
+  ['vacation','sick'].includes(r.d.dayType)?(r.d.absenceUnit==='hours'?fmt(r.d.absenceMinutes||0)+' שעות':(r.d.absenceDays??r.d.portion??1)+' ימים'):'',
   special?'':r.complete?fmt(r.net):'',special?'':r.quota?fmt(r.quota):'',
   special?'':r.complete?v13Signed(r.net-r.quota):'',r.complete?(special?'דיווח ללא שעות':'תקין'):'לבדיקה',r.problems.join(' | ')]);
  });
