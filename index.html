@@ -3,7 +3,7 @@
 <section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option></select></div><div class="field"><label>שם האתר / מקום העבודה</label><input id="siteName" placeholder="שם האתר"></div><div class="grid" style="margin-top:12px"><button data-stamp="leaveHome">🏠 יציאה מהבית</button><button data-stamp="startWork">🧰 התחלת עבודה</button><button data-stamp="endWork">🏁 סיום עבודה</button><button data-stamp="arriveDest">📍 שעת הגעה</button><button data-stamp="startCoffee">☕ תחילת הפסקה</button><button data-stamp="endCoffee">✔ סיום הפסקה</button><button data-stamp="returnHome">🏠 חזרה הביתה</button></div><div id="timeFields" style="margin-top:16px"></div><label class="muted">הערות</label><textarea id="notes" placeholder="אתר, משימות, הוצאות והערות"></textarea><div class="actions" style="margin-top:10px"><button id="locationBtn">📌 שמור מיקום</button><button id="clearBtn" class="danger">נקה יום זה</button></div><div class="status" id="locationStatus"></div><div class="status" id="saveStatus"></div></div>
 <div class="panel"><h2>סיכום וחישוב</h2><div class="metrics"><div class="metric"><span class="muted">משך יציאה עד הגעה</span><strong id="absence">—</strong></div><div class="metric"><span class="muted">שעות מוכרות</span><strong id="net">—</strong></div><div class="metric"><span class="muted">מעל מכסה (לבדיקת תשלום)</span><strong id="extra">—</strong></div><div class="metric"><span class="muted">חוסר מהמכסה</span><strong id="shortfall">—</strong></div><div class="metric"><span class="muted">125% (הערכה)</span><strong id="ot125">—</strong></div><div class="metric"><span class="muted">150% (הערכה)</span><strong id="ot150">—</strong></div><div class="metric wide"><span class="muted">זכאות לארוחות*</span><strong id="meals" style="font-size:17px">—</strong></div></div><p class="small">*מכסה אישית: 9 שעות ראשון–רביעי, 8:30 שעות בחמישי, כולל הפסקות. 125%/150% הם אומדן בלבד מעל המכסה; זכאות בפועל תלויה גם בדין, ביום המקוצר, בסך השבוע ובהסכם העבודה. אין לקזז חוסר משעות נוספות באופן אוטומטי.</p><div class="actions"><button id="dailyCsv">ייצוא יום CSV</button><button id="shareBtn">שיתוף דוח</button></div></div></section>
 <section id="history" class="hidden"><div class="panel"><h2>היסטוריית דיווחים</h2><label class="muted">חודש</label><input type="month" id="month"><div id="historyList"></div><div class="actions"><button id="monthCsv">ייצוא חודש CSV</button><button id="backupBtn">גיבוי מלא JSON</button></div></div><div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
-<section id="settings" class="hidden"><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 10 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
+<section id="settings" class="hidden"><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 11 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
 <style>
 input.clock-input,
 input[type="date"],
@@ -90,6 +90,21 @@ body { width:100%; max-width:100%; overflow-x:hidden; padding:12px; }
 .clock-actions button:focus-visible,.clock-number:focus-visible { outline:2px solid #435d96; }
 .clock-actions .clock-mode { font-size:23px; margin-inline-start:auto; }
 @media(max-width:360px){.clock-digits{font-size:47px}.clock-actions button{font-size:14px;padding:8px 5px}}
+
+/* Version 11: touch-scroll hour/minute wheels */
+.clock-keyboard[hidden],.clock-dial[hidden],.clock-wheels[hidden]{display:none!important}
+.clock-view-tabs{display:flex;gap:8px;padding:12px 14px 0;direction:rtl}
+.clock-view-tabs button{flex:1;background:#eef0f6;border:1px solid #aeb8ca;color:#344565;padding:10px 6px;border-radius:10px;font-size:14px}
+.clock-view-tabs button.selected{background:#4b649b;color:white;border-color:#4b649b}
+.clock-wheels{direction:ltr;display:flex;justify-content:center;align-items:center;gap:15px;padding:12px 18px 16px;position:relative}
+.clock-wheel-col{width:108px;text-align:center;direction:rtl}
+.clock-wheel-col>span{display:block;font-size:13px;color:#394765;margin-bottom:7px}
+.clock-wheel{height:220px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:12px;background:linear-gradient(#e9edf5,#f8f9fc 45%,#f8f9fc 55%,#e9edf5);touch-action:pan-y}
+.clock-wheel::-webkit-scrollbar{display:none}
+.clock-wheel-item{height:44px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:23px;color:#6d768a;user-select:none;cursor:pointer}
+.clock-wheel-item.selected{font-weight:800;color:#283e72;font-size:27px}
+.clock-wheel-colon{font-size:30px;font-weight:700;color:#4b649b;padding-top:25px}
+.clock-wheel-hint{font-size:12px;text-align:center;color:#5b6882;padding-bottom:6px}
 </style>
  <div style="text-align:center;padding:14px;color:#5df5f2;font-size:13px">
   <span style="font-size:20px">◷ AB</span>
@@ -142,12 +157,15 @@ function installClockPicker(){
     <div class="clock-actions"><button type="button" id="clockSet">הגדר</button><button type="button" id="clockCancel">ביטול</button><button type="button" id="clockClear">ניקוי</button><button type="button" id="clockMode" class="clock-mode" aria-label="מעבר למקלדת">⌨</button></div>
   </div>`;
   document.body.append(modal);
-  let active=null,hour=0,minute=0,part='hour',keyboard=false,previousFocus=null;
+  let active=null,hour=0,minute=0,part='hour',keyboard=false,view='dial',previousFocus=null;
   const el=id=>modal.querySelector('#'+id);
   function draw(){
     el('clockHours').textContent=pad(hour);el('clockMinutes').textContent=pad(minute);
     el('clockHours').classList.toggle('active',part==='hour');el('clockMinutes').classList.toggle('active',part==='minute');
-    el('clockDial').hidden=keyboard;el('clockKeyboard').hidden=!keyboard;
+    keyboard=view==='keyboard';
+    el('clockDial').hidden=view!=='dial';el('clockWheels').hidden=view!=='wheels';el('clockKeyboard').hidden=!keyboard;
+    for(const [name,v] of [['viewDial','dial'],['viewWheels','wheels'],['viewKeyboard','keyboard']])el(name).classList.toggle('selected',view===v);
+    if(view==='wheels'){renderWheels();return}
     if(keyboard){el('clockHourEdit').value=hour;el('clockMinuteEdit').value=minute;return}
     const dial=el('clockDial');dial.replaceChildren();
     const total=part==='hour'?24:12;
@@ -171,18 +189,54 @@ function installClockPicker(){
     hand.style.width=r+'%';hand.style.transform=`rotate(${a}rad)`;dial.append(hand);
     const dot=document.createElement('div');dot.className='clock-center';dial.append(dot);
   }
+  const wheelItemHeight=44;
+  let wheelTimers={};
+  function buildWheel(id,count){
+    const root=el(id);root.replaceChildren();
+    for(let i=0;i<2;i++){const spacer=document.createElement('div');spacer.style.height='88px';if(i===0)root.append(spacer);else root._endSpacer=spacer}
+    for(let i=0;i<count;i++){const item=document.createElement('div');item.className='clock-wheel-item';item.textContent=pad(i);item.dataset.value=i;item.onclick=()=>{root.scrollTo({top:i*wheelItemHeight,behavior:'smooth'})};root.append(item)}
+    root.append(root._endSpacer);
+    root.addEventListener('scroll',()=>{
+      if(view!=='wheels'||modal.hidden)return;
+      const value=Math.max(0,Math.min(count-1,Math.round(root.scrollTop/wheelItemHeight)));
+      if(id==='hourWheel')hour=value;else minute=value;
+      updateWheelSelection(root,value);updateDigits();
+      clearTimeout(wheelTimers[id]);wheelTimers[id]=setTimeout(()=>root.scrollTo({top:value*wheelItemHeight,behavior:'smooth'}),140);
+    },{passive:true});
+  }
+  function updateDigits(){el('clockHours').textContent=pad(hour);el('clockMinutes').textContent=pad(minute)}
+  function updateWheelSelection(root,value){for(const item of root.querySelectorAll('.clock-wheel-item'))item.classList.toggle('selected',Number(item.dataset.value)===value)}
+  function renderWheels(){
+    updateDigits();
+    for(const [id,value] of [['hourWheel',hour],['minuteWheel',minute]]){
+      const root=el(id);updateWheelSelection(root,value);root.scrollTop=value*wheelItemHeight;
+    }
+  }
+  buildWheel('hourWheel',24);buildWheel('minuteWheel',60);
+  function changeView(next){
+    if(view==='keyboard'){
+      const h=Number(el('clockHourEdit').value),m=Number(el('clockMinuteEdit').value);
+      if(Number.isInteger(h)&&h>=0&&h<=23)hour=h;
+      if(Number.isInteger(m)&&m>=0&&m<=59)minute=m;
+    }
+    view=next;draw();
+    if(next==='keyboard')el('clockHourEdit').focus();
+  }
+  el('viewDial').onclick=()=>changeView('dial');
+  el('viewWheels').onclick=()=>changeView('wheels');
+  el('viewKeyboard').onclick=()=>changeView('keyboard');
   function close(){modal.hidden=true;active=null;document.body.style.overflow='';if(previousFocus)previousFocus.focus()}
   function commit(value){if(!active)return;const target=active;target.value=value;close();if(ids.includes(target.id))saveDay()}
   function open(target){
     previousFocus=document.activeElement;active=target;
     const now=new Date();const parts=/^(\d{2}):(\d{2})$/.exec(target.value);
     hour=parts?Number(parts[1]):now.getHours();minute=parts?Number(parts[2]):now.getMinutes();
-    part='hour';keyboard=false;el('clockTitle').textContent=target.closest('.field')?.querySelector('label')?.textContent||'בחירת שעה';
+    part='hour';keyboard=false;view='dial';el('clockTitle').textContent=target.closest('.field')?.querySelector('label')?.textContent||'בחירת שעה';
     modal.hidden=false;document.body.style.overflow='hidden';draw();el('clockHours').focus();
   }
-  el('clockHours').onclick=()=>{part='hour';keyboard=false;draw()};
-  el('clockMinutes').onclick=()=>{part='minute';keyboard=false;draw()};
-  el('clockMode').onclick=()=>{if(keyboard){const h=Number(el('clockHourEdit').value),m=Number(el('clockMinuteEdit').value);if(Number.isInteger(h)&&h>=0&&h<=23)hour=h;if(Number.isInteger(m)&&m>=0&&m<=59)minute=m}keyboard=!keyboard;el('clockMode').textContent=keyboard?'◷':'⌨';draw();if(keyboard)el('clockHourEdit').focus()};
+  el('clockHours').onclick=()=>{part='hour';changeView('dial')};
+  el('clockMinutes').onclick=()=>{part='minute';changeView('dial')};
+  el('clockMode').onclick=()=>changeView(view==='keyboard'?'dial':'keyboard');
   el('clockSet').onclick=()=>{if(keyboard){const h=Number(el('clockHourEdit').value),m=Number(el('clockMinuteEdit').value);if(!Number.isInteger(h)||h<0||h>23||!Number.isInteger(m)||m<0||m>59){alert('יש להזין שעות 00–23 ודקות 00–59');return}hour=h;minute=m}commit(pad(hour)+':'+pad(minute))};
   el('clockCancel').onclick=close;el('clockClear').onclick=()=>commit('');
   modal.addEventListener('click',e=>{if(e.target===modal)close()});
