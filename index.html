@@ -5,8 +5,17 @@
 <section id="history" class="hidden"><div class="panel"><h2>היסטוריית דיווחים</h2><label class="muted">חודש</label><input type="month" id="month"><div id="historyList"></div><div class="actions"><button id="monthCsv">ייצוא חודש CSV</button><button id="backupBtn">גיבוי מלא JSON</button></div></div><div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
 <section id="settings" class="hidden"><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>תחילת שעות אפס</label><input id="zeroStart" type="time"></div><div class="field"><label>סיום שעות אפס</label><input id="zeroEnd" type="time"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 6 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
 <style>
-input[type="time"] { direction:ltr; text-align:center; }
-.metric strong { direction:ltr; unicode-bidi:isolate; }
+input[type="time"],
+input[type="date"],
+input[type="month"] {
+  direction: ltr !important;
+  text-align: center;
+  unicode-bidi: isolate;
+}
+.metric strong {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 </style>
  <div style="text-align:center;padding:14px;color:#5df5f2;font-size:13px">
   <span style="font-size:20px">◷ AB</span>
