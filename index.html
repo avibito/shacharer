@@ -152,7 +152,10 @@ function installClockPicker(){
   modal.innerHTML=`<div class="clock-card" role="dialog" aria-modal="true" aria-label="בחירת שעה">
     <div class="clock-top"><div class="clock-caption" id="clockTitle">בחירת שעה</div>
       <div class="clock-digits"><button type="button" id="clockHours" aria-label="בחירת שעות">00</button><span>:</span><button type="button" id="clockMinutes" aria-label="בחירת דקות">00</button></div>
-    </div><div id="clockDial" class="clock-dial" aria-label="לוח בחירת שעה"></div>
+    </div>
+    <div class="clock-view-tabs"><button type="button" id="viewDial">שעון עגול</button><button type="button" id="viewWheels">גלגלת</button><button type="button" id="viewKeyboard">הקלדה</button></div>
+    <div id="clockDial" class="clock-dial" aria-label="לוח בחירת שעה"></div>
+    <div id="clockWheels" class="clock-wheels" hidden><div class="clock-wheel-col"><span>שעות</span><div id="hourWheel" class="clock-wheel" aria-label="גלגלת שעות"></div></div><div class="clock-wheel-colon">:</div><div class="clock-wheel-col"><span>דקות</span><div id="minuteWheel" class="clock-wheel" aria-label="גלגלת דקות"></div></div></div>
     <div id="clockKeyboard" class="clock-keyboard" hidden><label>שעות (00–23)<input id="clockHourEdit" type="number" inputmode="numeric" min="0" max="23"></label><label>דקות (00–59)<input id="clockMinuteEdit" type="number" inputmode="numeric" min="0" max="59"></label></div>
     <div class="clock-actions"><button type="button" id="clockSet">הגדר</button><button type="button" id="clockCancel">ביטול</button><button type="button" id="clockClear">ניקוי</button><button type="button" id="clockMode" class="clock-mode" aria-label="מעבר למקלדת">⌨</button></div>
   </div>`;
