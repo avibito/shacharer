@@ -13,11 +13,28 @@
 .v13-good{color:#86e7b8}.v13-bad{color:#ffca8c}
 .v13-muted{font-size:12px;color:#a3b4c8;line-height:1.7}
 </style></head><body><main class="app"><header class="hero"><h1>שחרר</h1><div>דיווח שעות · חישובי עבודה · היסטוריה</div><div class="muted" id="todayText"></div></header><nav class="tabs"><button data-tab="day" class="primary">דיווח יומי</button><button data-tab="history">היסטוריה</button><button data-tab="settings">הגדרות</button></nav>
-<section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option></select></div><div class="field"><label>שם האתר / מקום העבודה</label><input id="siteName" placeholder="שם האתר"></div><div class="grid" style="margin-top:12px"><button data-stamp="leaveHome">🏠 יציאה מהבית</button><button data-stamp="startWork">🧰 התחלת עבודה</button><button data-stamp="endWork">🏁 סיום עבודה</button><button data-stamp="arriveDest">📍 שעת הגעה</button><button data-stamp="startCoffee">☕ תחילת הפסקה</button><button data-stamp="endCoffee">✔ סיום הפסקה</button><button data-stamp="returnHome">🏠 חזרה הביתה</button></div><div id="timeFields" style="margin-top:16px"></div><label class="muted">הערות</label><textarea id="notes" placeholder="אתר, משימות, הוצאות והערות"></textarea><div class="actions" style="margin-top:10px"><button id="locationBtn">📌 שמור מיקום</button><button id="clearBtn" class="danger">נקה יום זה</button></div><div class="status" id="locationStatus"></div><div class="status" id="saveStatus"></div></div>
+<section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option><option value="fixedClock">אתר קבוע — דווח בשעון נוכחות</option><option value="abroad">עבודה בחו״ל</option><option value="vacation">חופשה</option><option value="sick">מחלה</option></select></div><div id="v14Extra" class="field" style="display:none">
+<label id="v14ExtraLabel">פרטי הדיווח</label>
+<input id="v14Country" placeholder="מדינה / עיר (בעבודה בחו״ל)" style="display:none">
+<select id="v14Portion" style="display:none"><option value="1">יום מלא</option><option value="0.5">חצי יום</option></select>
+<label class="muted" id="v14ClockLabel" style="display:none"><input type="checkbox" id="v14ClockConfirmed"> הדיווח בוצע בשעון המעסיק</label>
+</div><div class="field"><label>שם האתר / מקום העבודה</label><input id="siteName" placeholder="שם האתר"></div><div class="grid" style="margin-top:12px"><button data-stamp="leaveHome">🏠 יציאה מהבית</button><button data-stamp="startWork">🧰 התחלת עבודה</button><button data-stamp="endWork">🏁 סיום עבודה</button><button data-stamp="arriveDest">📍 שעת הגעה</button><button data-stamp="startCoffee">☕ תחילת הפסקה</button><button data-stamp="endCoffee">✔ סיום הפסקה</button><button data-stamp="returnHome">🏠 חזרה הביתה</button></div><div id="timeFields" style="margin-top:16px"></div><label class="muted">הערות</label><textarea id="notes" placeholder="אתר, משימות, הוצאות והערות"></textarea><div class="actions" style="margin-top:10px"><button id="locationBtn">📌 שמור מיקום</button><button id="clearBtn" class="danger">נקה יום זה</button></div><div class="status" id="locationStatus"></div><div class="status" id="saveStatus"></div></div>
 <div class="panel"><h2>סיכום וחישוב</h2><div class="metrics"><div class="metric"><span class="muted">משך יציאה עד הגעה</span><strong id="absence">—</strong></div><div class="metric"><span class="muted">שעות מוכרות</span><strong id="net">—</strong></div><div class="metric"><span class="muted">מעל מכסה (לבדיקת תשלום)</span><strong id="extra">—</strong></div><div class="metric"><span class="muted">חוסר מהמכסה</span><strong id="shortfall">—</strong></div><div class="metric"><span class="muted">125% (הערכה)</span><strong id="ot125">—</strong></div><div class="metric"><span class="muted">150% (הערכה)</span><strong id="ot150">—</strong></div><div class="metric wide"><span class="muted">זכאות לארוחות*</span><strong id="meals" style="font-size:17px">—</strong></div></div><p class="small">*מכסה אישית: 9 שעות ראשון–רביעי, 8:30 שעות בחמישי, כולל הפסקות. 125%/150% הם אומדן בלבד מעל המכסה; זכאות בפועל תלויה גם בדין, ביום המקוצר, בסך השבוע ובהסכם העבודה. אין לקזז חוסר משעות נוספות באופן אוטומטי.</p><div class="actions"><button id="dailyCsv">ייצוא יום CSV</button><button id="shareBtn">שיתוף דוח</button></div></div></section>
 <section id="history" class="hidden"><div class="panel"><h2>היסטוריית דיווחים</h2><label class="muted">חודש</label><input type="month" id="month"><div id="historyList"></div><div class="actions"><button id="monthCsv">ייצוא חודש CSV</button><button id="backupBtn">גיבוי מלא JSON</button></div></div>
+
+<div class="panel" id="v14Balances">
+<h2>יתרות חופשה ומחלה</h2>
+<p class="v13-muted">היתרות אישיות וניתנות להזנה כשתקבל את הנתונים מהמעסיק. ריק פירושו ״טרם הוגדר״, לא אפס. ניצול מוצג בנפרד ואינו מופחת אוטומטית מיתרת המעסיק.</p>
+<div class="v13-summary">
+<div class="v13-tile"><small>יתרת חופשה לפי המעסיק</small><strong id="v14VacationBalance">טרם הוגדר</strong></div>
+<div class="v13-tile"><small>יתרת מחלה לפי המעסיק</small><strong id="v14SickBalance">טרם הוגדר</strong></div>
+<div class="v13-tile"><small>חופשה שדווחה באפליקציה בחודש</small><strong id="v14VacationUsed">0</strong></div>
+<div class="v13-tile"><small>מחלה שדווחה באפליקציה בחודש</small><strong id="v14SickUsed">0</strong></div>
+</div>
+<p class="v13-muted" id="v14MonthTypes"></p>
+</div>
 <div class="panel" id="v13Dashboard">
-<h2>דוח חודשי חכם <span class="muted">גרסה 13</span></h2>
+<h2>דוח חודשי חכם <span class="muted">גרסה 14</span></h2>
 <p class="v13-muted">מבוסס על הדיווחים השמורים בחודש שנבחר למעלה. ימי ראשון–רביעי: 9 שעות, חמישי: 8:30; שישי ושבת ללא תקן אוטומטי. הפרשים הם לצורך בקרה בלבד ולא קביעת זכאות לשעות נוספות.</p>
 <div class="v13-summary">
 <div class="v13-tile"><small>שעות מדווחות וניתנות לחישוב</small><strong id="v13Actual">—</strong></div>
@@ -33,7 +50,7 @@
 <div class="actions"><button id="v13Csv">ייצוא דוח חודשי מפורט CSV</button></div>
 </div>
 <div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
-<section id="settings" class="hidden"><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 11 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
+<section id="settings" class="hidden"><div class="panel"><h2>יתרות אישיות מהמעסיק</h2><p class="note">השאר ריק עד שתקבל נתונים מאומתים. הזנת יתרה לא משנה דיווחים קיימים.</p><div class="field"><label>יתרת חופשה (ימים)</label><input type="number" id="v14VacInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><div class="field"><label>יתרת מחלה (ימים)</label><input type="number" id="v14SickInput" min="0" step="0.5" placeholder="טרם הוגדר"></div><button id="v14SaveBalances">שמור יתרות אישיות</button><p id="v14BalanceStatus" class="note"></p></div><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 11 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
 <style>
 input.clock-input,
 input[type="date"],
@@ -352,10 +369,133 @@ function v13Export(){
   download('\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),
     'shacharer_smart_month_'+$('month').value+'.csv','text/csv;charset=utf-8');
 }
-$('v13Csv').addEventListener('click',v13Export);
+
 $('month').addEventListener('change',v13Render);
 const v13OldRenderHistory=renderHistory;
 renderHistory=function(){v13OldRenderHistory();v13Render()};
 v13Render();
+
+
+// v14: additional day types, preserving existing stored records and original storage keys.
+const v14Labels={fixed:'מקום קבוע',external:'אתר חיצוני',fixedClock:'דווח בשעון נוכחות',abroad:'עבודה בחו״ל',vacation:'חופשה',sick:'מחלה'};
+const v14NonTimed=new Set(['fixedClock','vacation','sick']);
+const v14OldRenderDay=renderDay;
+renderDay=function(){
+ v14OldRenderDay();
+ const d=current();
+ $('v14Country').value=d.country||'';
+ $('v14Portion').value=String(d.portion||1);
+ $('v14ClockConfirmed').checked=Boolean(d.clockConfirmed);
+ v14ShowFields();
+};
+function v14ShowFields(){
+ const t=$('dayType').value;
+ $('v14Extra').style.display=t==='fixedClock'||t==='abroad'||t==='vacation'||t==='sick'?'block':'none';
+ $('v14Country').style.display=t==='abroad'?'block':'none';
+ $('v14Portion').style.display=t==='vacation'||t==='sick'?'block':'none';
+ $('v14ClockLabel').style.display=t==='fixedClock'?'block':'none';
+ $('v14ExtraLabel').textContent=t==='abroad'?'פרטי עבודה בחו״ל':t==='fixedClock'?'אישור דיווח בשעון':'היקף ההיעדרות';
+ const nonTimed=v14NonTimed.has(t);
+ $('timeFields').style.display=nonTimed?'none':'';
+ document.querySelectorAll('[data-stamp]').forEach(b=>b.disabled=nonTimed);
+}
+const v14OldSaveDay=saveDay;
+saveDay=function(){
+ const t=$('dayType').value;
+ if(t==='fixedClock'&&!$('v14ClockConfirmed').checked){$('saveStatus').textContent='יש לאשר שהדיווח בוצע בשעון המעסיק';return}
+ v14OldSaveDay();
+ const h=getHistory(),k=toKey($('date').value);
+ if(!h[k])return;
+ h[k].country=$('v14Country').value.trim();
+ h[k].portion=Number($('v14Portion').value)||1;
+ h[k].clockConfirmed=$('v14ClockConfirmed').checked;
+ setHistory(h);v13Render();
+};
+$('dayType').addEventListener('change',v14ShowFields);
+['v14Country','v14Portion','v14ClockConfirmed'].forEach(id=>$(id).addEventListener('change',saveDay));
+const v14OldAnalyze=v13Analyze;
+v13Analyze=function(d,k){
+ const t=d.dayType||'fixed';
+ const special=v14NonTimed.has(t);
+ if(special){
+   const iso=keyToIso(k);
+   const weekday=iso?new Date(iso+'T12:00:00').getDay():null;
+   const quota=(weekday===0||weekday>=1&&weekday<=3)?settings.regular*60:weekday===4?settings.thursdayRegular*60:0;
+   const problems=t==='fixedClock'&&!d.clockConfirmed?['נדרש אישור דיווח בשעון נוכחות']:[];
+   return {problems,net:null,quota,complete:!problems.length,weekday,excluded:true};
+ }
+ if(t==='abroad'){
+   const r=v14OldAnalyze({...d,dayType:'fixed'},k);
+   if(!d.country)r.problems.push('לא צוינה מדינה בעבודה בחו״ל');
+   r.complete=r.problems.length===0&&r.net!==null;
+   return r;
+ }
+ return v14OldAnalyze(d,k);
+};
+function v14BalanceData(){try{return JSON.parse(localStorage.getItem('shacharerV14Balances')||'{}')}catch(e){return {}}}
+function v14BalancesRender(){
+ const b=v14BalanceData(),data=v13MonthlyData();
+ $('v14VacationBalance').textContent=b.vacation==null?'טרם הוגדר':b.vacation+' ימים';
+ $('v14SickBalance').textContent=b.sick==null?'טרם הוגדר':b.sick+' ימים';
+ const sum=t=>data.filter(r=>r.d.dayType===t).reduce((n,r)=>n+(Number(r.d.portion)||1),0);
+ $('v14VacationUsed').textContent=sum('vacation')+' ימים';
+ $('v14SickUsed').textContent=sum('sick')+' ימים';
+ $('v14MonthTypes').textContent='דווח בשעון: '+data.filter(r=>r.d.dayType==='fixedClock').length+
+ ' | עבודה בחו״ל: '+data.filter(r=>r.d.dayType==='abroad').length+
+ ' | אתר חיצוני: '+data.filter(r=>r.d.dayType==='external').length;
+}
+const v14OldMonthlyRender=v13Render;
+v13Render=function(){
+ const data=v13MonthlyData();
+ // The original monthly renderer assumes every valid record has numeric net hours.
+ // Override only the data view temporarily for special non-timed days.
+ const old=v13MonthlyData;
+ v13MonthlyData=()=>data.map(r=>r.excluded?{...r,complete:false,problems:[]}:r);
+ try{v14OldMonthlyRender()}finally{v13MonthlyData=old}
+ const valid=data.filter(r=>r.complete&&!r.excluded&&r.net!==null);
+ const actual=valid.reduce((n,r)=>n+r.net,0),quota=valid.reduce((n,r)=>n+r.quota,0);
+ $('v13Actual').textContent=fmt(actual);$('v13Quota').textContent=fmt(quota);
+ $('v13Delta').textContent=v13Signed(actual-quota);
+ $('v13Counts').textContent=valid.length+' / '+data.filter(r=>!r.complete).length+' לבדיקה';
+ const warning=$('v13Warnings');warning.replaceChildren();
+ const flagged=data.filter(r=>!r.complete);
+ if(!flagged.length)warning.textContent='אין דיווחים חריגים בחודש זה.';
+ flagged.forEach(r=>{const el=document.createElement('div');el.className='v13-alert';el.textContent=r.k+': '+r.problems.join(' · ');warning.append(el)});
+ const rows=$('v13Rows');rows.replaceChildren();
+ data.forEach(r=>{
+  const tr=document.createElement('tr'),status=r.excluded?(r.complete?v14Labels[r.d.dayType]:'לבדיקה'):(r.complete?'תקין':'לבדיקה');
+  const vals=[r.k,r.excluded?'לא מחושב':r.complete?fmt(r.net):'—',r.excluded?'לא נכלל':r.quota?fmt(r.quota):'לא מוגדר',
+   r.excluded?'—':r.complete?v13Signed(r.net-r.quota):'—',status];
+  vals.forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});rows.append(tr);
+ });
+ v14BalancesRender();
+};
+$('v14SaveBalances').onclick=()=>{
+ const parse=id=>$(id).value===''?null:Number($(id).value);
+ const vacation=parse('v14VacInput'),sick=parse('v14SickInput');
+ if([vacation,sick].some(v=>v!==null&&(!Number.isFinite(v)||v<0))){$('v14BalanceStatus').textContent='יש להזין מספר לא שלילי';return}
+ localStorage.setItem('shacharerV14Balances',JSON.stringify({vacation,sick}));
+ $('v14BalanceStatus').textContent='✓ היתרות נשמרו בדפדפן';v14BalancesRender();
+};
+const v14B=v14BalanceData();
+$('v14VacInput').value=v14B.vacation??'';
+$('v14SickInput').value=v14B.sick??'';
+const v14OldCsv=v13Export;
+v13Export=function(){
+ const rows=[['תאריך','סוג יום','שם אתר','מדינה','היקף היעדרות','שעות עבודה','תקן','הפרש','סטטוס','הערות']];
+ v13MonthlyData().forEach(r=>{
+ const special=r.excluded;
+ rows.push([r.k,v14Labels[r.d.dayType]||'מקום קבוע',r.d.siteName||'',r.d.country||'',
+  ['vacation','sick'].includes(r.d.dayType)?r.d.portion||1:'',
+  special?'':r.complete?fmt(r.net):'',special?'':r.quota?fmt(r.quota):'',
+  special?'':r.complete?v13Signed(r.net-r.quota):'',r.complete?(special?'דיווח ללא שעות':'תקין'):'לבדיקה',r.problems.join(' | ')]);
+ });
+ if(rows.length===1){alert('אין דיווחים בחודש הנבחר');return}
+ download('\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),
+ 'shacharer_month_v14_'+$('month').value+'.csv','text/csv;charset=utf-8');
+};
+$('v13Csv').removeEventListener('click',v14OldCsv);
+$('v13Csv').addEventListener('click',v13Export);
+v14ShowFields();v13Render();
 
 </script></body></html>
