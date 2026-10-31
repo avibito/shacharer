@@ -1,8 +1,38 @@
 <!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>שחרר | דיווח וחישוב שעות</title><style>
-:root{color-scheme:dark;font-family:system-ui,'Segoe UI',sans-serif}*{box-sizing:border-box}body{background:#060b15;color:#f1f7ff;margin:0;padding:16px}.app{max-width:560px;margin:auto}.hero{text-align:center;padding:22px 12px;background:linear-gradient(150deg,#111d34,#080c16);border:1px solid #223854;border-radius:22px}h1{color:#18f2ee;text-shadow:0 0 18px #00ffff8a;margin:0;font-size:38px}h2{font-size:20px;color:#5df5f2;margin:0 0 14px}.muted{color:#a3b4c8;font-size:13px}.tabs{display:flex;gap:6px;margin:16px 0}.tabs button{flex:1;padding:12px 4px;font-size:14px}.panel{background:#101826;border:1px solid #23344c;border-radius:18px;padding:17px;margin:14px 0}.hidden{display:none!important}button{border:1px solid #18dcd9;background:#0c1721;color:#eaffff;border-radius:11px;padding:13px;font-weight:700;cursor:pointer}button:active{transform:scale(.98)}.primary{background:#063b41;border-color:#25f4e8}.secondary{border-color:#637a9b}.danger{border-color:#f36576;color:#ffc7ce}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid button{min-height:63px}.field{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:9px 0;border-bottom:1px solid #253246;padding:5px 0}.field label{flex:1}input,textarea,select{background:#07111d;color:white;border:1px solid #42617b;border-radius:9px;padding:10px;max-width:100%;font:inherit}input[type=time]{width:132px}input[type=number]{width:100px}textarea{width:100%;min-height:78px}input[type=date],input[type=month]{width:100%}.metric{padding:13px;border:1px solid #294967;border-radius:13px;background:#0b2331}.metric strong{display:block;font-size:27px;margin-top:5px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.wide{grid-column:1/-1}.small{font-size:12px;color:#a6b6c9}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}.entry{border-bottom:1px solid #293a4e;padding:11px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}.note{padding:12px;background:#142b32;border-right:3px solid #2fe7cf;border-radius:8px;font-size:13px;line-height:1.6}.status{font-size:13px;color:#b0eacb;min-height:20px}a{color:#50e5ff}details{margin-top:14px}summary{cursor:pointer;color:#e4efff} .foot{padding:25px 8px;text-align:center;color:#879bb4;font-size:12px}</style></head><body><main class="app"><header class="hero"><h1>שחרר</h1><div>דיווח שעות · חישובי עבודה · היסטוריה</div><div class="muted" id="todayText"></div></header><nav class="tabs"><button data-tab="day" class="primary">דיווח יומי</button><button data-tab="history">היסטוריה</button><button data-tab="settings">הגדרות</button></nav>
+:root{color-scheme:dark;font-family:system-ui,'Segoe UI',sans-serif}*{box-sizing:border-box}body{background:#060b15;color:#f1f7ff;margin:0;padding:16px}.app{max-width:560px;margin:auto}.hero{text-align:center;padding:22px 12px;background:linear-gradient(150deg,#111d34,#080c16);border:1px solid #223854;border-radius:22px}h1{color:#18f2ee;text-shadow:0 0 18px #00ffff8a;margin:0;font-size:38px}h2{font-size:20px;color:#5df5f2;margin:0 0 14px}.muted{color:#a3b4c8;font-size:13px}.tabs{display:flex;gap:6px;margin:16px 0}.tabs button{flex:1;padding:12px 4px;font-size:14px}.panel{background:#101826;border:1px solid #23344c;border-radius:18px;padding:17px;margin:14px 0}.hidden{display:none!important}button{border:1px solid #18dcd9;background:#0c1721;color:#eaffff;border-radius:11px;padding:13px;font-weight:700;cursor:pointer}button:active{transform:scale(.98)}.primary{background:#063b41;border-color:#25f4e8}.secondary{border-color:#637a9b}.danger{border-color:#f36576;color:#ffc7ce}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid button{min-height:63px}.field{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:9px 0;border-bottom:1px solid #253246;padding:5px 0}.field label{flex:1}input,textarea,select{background:#07111d;color:white;border:1px solid #42617b;border-radius:9px;padding:10px;max-width:100%;font:inherit}input[type=time]{width:132px}input[type=number]{width:100px}textarea{width:100%;min-height:78px}input[type=date],input[type=month]{width:100%}.metric{padding:13px;border:1px solid #294967;border-radius:13px;background:#0b2331}.metric strong{display:block;font-size:27px;margin-top:5px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.wide{grid-column:1/-1}.small{font-size:12px;color:#a6b6c9}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}.entry{border-bottom:1px solid #293a4e;padding:11px 0;display:flex;align-items:center;justify-content:space-between;gap:10px}.note{padding:12px;background:#142b32;border-right:3px solid #2fe7cf;border-radius:8px;font-size:13px;line-height:1.6}.status{font-size:13px;color:#b0eacb;min-height:20px}a{color:#50e5ff}details{margin-top:14px}summary{cursor:pointer;color:#e4efff} .foot{padding:25px 8px;text-align:center;color:#879bb4;font-size:12px}
+/* v13 monthly review */
+.v13-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.v13-tile{background:#0b2331;border:1px solid #294967;border-radius:12px;padding:12px}
+.v13-tile small{display:block;color:#a3b4c8;font-size:12px}
+.v13-tile strong{font-size:23px;display:block;margin-top:5px;direction:ltr;text-align:right}
+.v13-table-wrap{overflow-x:auto}
+.v13-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.v13-table th,.v13-table td{padding:10px 7px;border-bottom:1px solid #29405b;text-align:right}
+.v13-table th{color:#76e9e6}
+.v13-alert{background:#392a1b;border-right:3px solid #ffbe63;padding:10px;border-radius:7px;margin:8px 0;font-size:13px}
+.v13-good{color:#86e7b8}.v13-bad{color:#ffca8c}
+.v13-muted{font-size:12px;color:#a3b4c8;line-height:1.7}
+</style></head><body><main class="app"><header class="hero"><h1>שחרר</h1><div>דיווח שעות · חישובי עבודה · היסטוריה</div><div class="muted" id="todayText"></div></header><nav class="tabs"><button data-tab="day" class="primary">דיווח יומי</button><button data-tab="history">היסטוריה</button><button data-tab="settings">הגדרות</button></nav>
 <section id="day"><div class="panel"><h2>יום העבודה</h2><label class="muted">בחר תאריך לדיווח / עריכה</label><input id="date" type="date"><div class="field"><label>סוג יום</label><select id="dayType"><option value="fixed">מקום עבודה קבוע (כרטיס)</option><option value="external">אתר חיצוני (כולל נסיעות)</option></select></div><div class="field"><label>שם האתר / מקום העבודה</label><input id="siteName" placeholder="שם האתר"></div><div class="grid" style="margin-top:12px"><button data-stamp="leaveHome">🏠 יציאה מהבית</button><button data-stamp="startWork">🧰 התחלת עבודה</button><button data-stamp="endWork">🏁 סיום עבודה</button><button data-stamp="arriveDest">📍 שעת הגעה</button><button data-stamp="startCoffee">☕ תחילת הפסקה</button><button data-stamp="endCoffee">✔ סיום הפסקה</button><button data-stamp="returnHome">🏠 חזרה הביתה</button></div><div id="timeFields" style="margin-top:16px"></div><label class="muted">הערות</label><textarea id="notes" placeholder="אתר, משימות, הוצאות והערות"></textarea><div class="actions" style="margin-top:10px"><button id="locationBtn">📌 שמור מיקום</button><button id="clearBtn" class="danger">נקה יום זה</button></div><div class="status" id="locationStatus"></div><div class="status" id="saveStatus"></div></div>
 <div class="panel"><h2>סיכום וחישוב</h2><div class="metrics"><div class="metric"><span class="muted">משך יציאה עד הגעה</span><strong id="absence">—</strong></div><div class="metric"><span class="muted">שעות מוכרות</span><strong id="net">—</strong></div><div class="metric"><span class="muted">מעל מכסה (לבדיקת תשלום)</span><strong id="extra">—</strong></div><div class="metric"><span class="muted">חוסר מהמכסה</span><strong id="shortfall">—</strong></div><div class="metric"><span class="muted">125% (הערכה)</span><strong id="ot125">—</strong></div><div class="metric"><span class="muted">150% (הערכה)</span><strong id="ot150">—</strong></div><div class="metric wide"><span class="muted">זכאות לארוחות*</span><strong id="meals" style="font-size:17px">—</strong></div></div><p class="small">*מכסה אישית: 9 שעות ראשון–רביעי, 8:30 שעות בחמישי, כולל הפסקות. 125%/150% הם אומדן בלבד מעל המכסה; זכאות בפועל תלויה גם בדין, ביום המקוצר, בסך השבוע ובהסכם העבודה. אין לקזז חוסר משעות נוספות באופן אוטומטי.</p><div class="actions"><button id="dailyCsv">ייצוא יום CSV</button><button id="shareBtn">שיתוף דוח</button></div></div></section>
-<section id="history" class="hidden"><div class="panel"><h2>היסטוריית דיווחים</h2><label class="muted">חודש</label><input type="month" id="month"><div id="historyList"></div><div class="actions"><button id="monthCsv">ייצוא חודש CSV</button><button id="backupBtn">גיבוי מלא JSON</button></div></div><div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
+<section id="history" class="hidden"><div class="panel"><h2>היסטוריית דיווחים</h2><label class="muted">חודש</label><input type="month" id="month"><div id="historyList"></div><div class="actions"><button id="monthCsv">ייצוא חודש CSV</button><button id="backupBtn">גיבוי מלא JSON</button></div></div>
+<div class="panel" id="v13Dashboard">
+<h2>דוח חודשי חכם <span class="muted">גרסה 13</span></h2>
+<p class="v13-muted">מבוסס על הדיווחים השמורים בחודש שנבחר למעלה. ימי ראשון–רביעי: 9 שעות, חמישי: 8:30; שישי ושבת ללא תקן אוטומטי. הפרשים הם לצורך בקרה בלבד ולא קביעת זכאות לשעות נוספות.</p>
+<div class="v13-summary">
+<div class="v13-tile"><small>שעות מדווחות וניתנות לחישוב</small><strong id="v13Actual">—</strong></div>
+<div class="v13-tile"><small>תקן לימי עבודה עם דיווח</small><strong id="v13Quota">—</strong></div>
+<div class="v13-tile"><small>הפרש מצטבר</small><strong id="v13Delta">—</strong></div>
+<div class="v13-tile"><small>דיווחים תקינים / דורשים בדיקה</small><strong id="v13Counts">—</strong></div>
+</div>
+<h3>בדיקת דיווחים חסרים או חריגים</h3>
+<div id="v13Warnings" aria-live="polite"></div>
+<h3>פירוט יומי</h3>
+<div class="v13-table-wrap"><table class="v13-table"><thead><tr><th>תאריך</th><th>שעות</th><th>תקן</th><th>הפרש</th><th>מצב</th></tr></thead><tbody id="v13Rows"></tbody></table></div>
+<p class="v13-muted">ימים שאין להם דיווח שמור אינם נחשבים אוטומטית לימי עבודה או לחיסור. ימים עם נתונים חסרים אינם נספרים בסיכומי השעות.</p>
+<div class="actions"><button id="v13Csv">ייצוא דוח חודשי מפורט CSV</button></div>
+</div>
+<div class="panel"><h2>ייבוא נתונים</h2><p class="muted">ניתן לייבא דוח CSV ישן של שחרר או קובץ גיבוי JSON. נתונים קיימים בתאריכים זהים לא יידרסו ללא אישור.</p><input type="file" id="importFile" accept=".csv,.json,text/csv,application/json"><p class="status" id="importStatus"></p></div></section>
 <section id="settings" class="hidden"><div class="panel"><h2>הגדרות חישוב</h2><p class="note">המכסה האישית: ראשון–רביעי 07:50–16:50 (9 שעות), חמישי 07:50–16:20 (8:30 שעות), ללא ניכוי הפסקות. תעריפי שעות נוספות דורשים בדיקת זכאות לפי דין והסכם.</p><div class="field"><label>מכסה רגילה ראשון–רביעי (שעות)</label><input id="regular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div><div class="field"><label>סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div><label class="field"><span>ניכוי הפסקת קפה מדווחת</span><input id="deductCoffee" type="checkbox"></label><button id="saveSettings" class="primary">שמור הגדרות</button></div><div class="panel"><h2>אחסון וגיבוי</h2><p class="muted">הנתונים נשמרים במכשיר ובדפדפן הנוכחיים בלבד. התקנה מחדש, ניקוי נתוני אתר או מעבר לכתובת אחרת עלולים להסתיר או למחוק אותם. בצע גיבוי תקופתי.</p><button id="backupSettings">הורד גיבוי מלא</button></div></section><div class="foot">שחרר · גרסת ניסיון 11 · מקום קבוע ואתרים חיצוניים · ללא שרת וללא סנכרון ענן</div></main>
 <style>
 input.clock-input,
@@ -251,4 +281,81 @@ function installClockPicker(){
   }
 }
 installClockPicker();
+
+// v13: read-only monthly review; existing localStorage keys and exports remain unchanged.
+function v13Duration(a,b){
+  const x=mins(a),y=mins(b);
+  if(x===null||y===null)return null;
+  // Do not silently interpret reversed timestamps as an overnight shift.
+  return y>=x?y-x:null;
+}
+function v13Analyze(d,k){
+  const external=d.dayType==='external';
+  const begin=external?d.leaveHome:d.startWork;
+  const end=external?d.returnHome:d.endWork;
+  const problems=[];
+  if(!begin)problems.push(external?'חסרה שעת יציאה מהבית':'חסרה תחילת עבודה');
+  else if(mins(begin)===null)problems.push('שעת התחלה לא תקינה');
+  if(!end)problems.push(external?'חסרה שעת חזרה הביתה':'חסרה שעת סיום עבודה');
+  else if(mins(end)===null)problems.push('שעת סיום לא תקינה');
+  const gross=v13Duration(begin,end);
+  if(begin&&end&&gross===null&&mins(begin)!==null&&mins(end)!==null)problems.push('שעת הסיום מוקדמת משעת ההתחלה — יש לבדוק');
+  if(Boolean(d.startCoffee)!==Boolean(d.endCoffee))problems.push('חסרה אחת משעות הפסקת הקפה');
+  if(d.startCoffee&&d.endCoffee&&v13Duration(d.startCoffee,d.endCoffee)===null)problems.push('שעות הפסקת הקפה אינן תקינות');
+  const coffee=d.startCoffee&&d.endCoffee?v13Duration(d.startCoffee,d.endCoffee):0;
+  if(settings.deductCoffee&&gross!==null&&coffee!==null&&coffee>gross)problems.push('משך ההפסקה ארוך ממשך העבודה');
+  if(external&&!d.siteName)problems.push('לא צוין שם האתר החיצוני');
+  const iso=keyToIso(k);
+  const weekday=iso?new Date(iso+'T12:00:00').getDay():null;
+  const quota=weekday===0||weekday>=1&&weekday<=3?settings.regular*60:weekday===4?settings.thursdayRegular*60:0;
+  const complete=problems.length===0&&gross!==null;
+  const net=complete?Math.max(0,gross-(settings.deductCoffee?(coffee||0):0)):null;
+  return {problems,net,quota,complete,weekday};
+}
+function v13MonthlyData(){
+  const h=getHistory(),month=$('month').value;
+  return Object.keys(h).filter(k=>keyToIso(k)?.startsWith(month))
+    .sort((a,b)=>keyToIso(a).localeCompare(keyToIso(b)))
+    .map(k=>({k,d:h[k],...v13Analyze(h[k],k)}));
+}
+function v13Signed(n){return (n>0?'+':n<0?'−':'')+fmt(Math.abs(n))}
+function v13Render(){
+  const data=v13MonthlyData();
+  const valid=data.filter(r=>r.complete);
+  const actual=valid.reduce((s,r)=>s+r.net,0);
+  const quota=valid.reduce((s,r)=>s+r.quota,0);
+  $('v13Actual').textContent=fmt(actual);
+  $('v13Quota').textContent=fmt(quota);
+  $('v13Delta').textContent=v13Signed(actual-quota);
+  $('v13Counts').textContent=valid.length+' / '+(data.length-valid.length);
+  const warn=$('v13Warnings');warn.replaceChildren();
+  const flagged=data.filter(r=>!r.complete);
+  if(!data.length)warn.textContent='אין דיווחים שמורים לחודש זה.';
+  else if(!flagged.length){const p=document.createElement('p');p.className='v13-good';p.textContent='✓ לא נמצאו בעיות בדיווחים השמורים.';warn.append(p)}
+  else flagged.forEach(r=>{const p=document.createElement('div');p.className='v13-alert';p.textContent=r.k+': '+r.problems.join(' · ');warn.append(p)});
+  const tbody=$('v13Rows');tbody.replaceChildren();
+  data.forEach(r=>{
+    const tr=document.createElement('tr');
+    const values=[r.k,r.complete?fmt(r.net):'—',r.quota?fmt(r.quota):'לא מוגדר',r.complete?v13Signed(r.net-r.quota):'—',r.complete?'תקין':'לבדיקה'];
+    values.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===4)td.className=r.complete?'v13-good':'v13-bad';tr.append(td)});
+    tbody.append(tr);
+  });
+}
+function v13Export(){
+  const rows=[['תאריך','סוג יום','שם אתר','שעות מוכרות','תקן יומי','הפרש','סטטוס','הערות בדיקה']];
+  v13MonthlyData().forEach(r=>rows.push([
+    r.k,r.d.dayType==='external'?'אתר חיצוני':'קבוע',r.d.siteName||'',
+    r.complete?fmt(r.net):'',r.quota?fmt(r.quota):'לא מוגדר',
+    r.complete?v13Signed(r.net-r.quota):'',r.complete?'תקין':'לבדיקה',r.problems.join(' | ')
+  ]));
+  if(rows.length===1){alert('אין דיווחים בחודש הנבחר');return}
+  download('\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),
+    'shacharer_smart_month_'+$('month').value+'.csv','text/csv;charset=utf-8');
+}
+$('v13Csv').addEventListener('click',v13Export);
+$('month').addEventListener('change',v13Render);
+const v13OldRenderHistory=renderHistory;
+renderHistory=function(){v13OldRenderHistory();v13Render()};
+v13Render();
+
 </script></body></html>
