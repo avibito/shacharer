@@ -9,5 +9,15 @@
   "background_color": "#060b16",
   "theme_color": "#060b16",
   "lang": "he",
-  "dir": "rtl"
+  "dir": "rtl",
+
+"icons": [
+  {
+    "src": "./אייקון רקטת שעון עם שחרר.png",
+    "sizes": "any",
+    "type": "image/png",
+    "purpose": "any"
+  }
+]
+}
 }
