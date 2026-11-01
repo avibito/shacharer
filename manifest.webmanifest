@@ -1,0 +1,13 @@
+
+{
+  "name": "שחרר - דיווח שעות עבודה",
+  "short_name": "שחרר",
+  "description": "דיווח שעות עבודה, חישובי עבודה והיסטוריה",
+  "start_url": "/shacharer/",
+  "scope": "/shacharer/",
+  "display": "standalone",
+  "background_color": "#060b16",
+  "theme_color": "#060b16",
+  "lang": "he",
+  "dir": "rtl"
+}
