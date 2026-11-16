@@ -98,6 +98,15 @@ a{color:#50e5ff}
 .trip .field input:not([type=number]):not(.clock-input),.trip .field select{width:min(100%,210px)}
 .trip .km input{width:96px;flex:0 0 96px}
 .trip-sum{margin-top:6px}
+.welcome{border-color:#25f4e8;background:linear-gradient(160deg,#0d2a33,#101826)}
+.welcome ol,.welcome ul{margin:8px 0;padding-inline-start:22px;line-height:1.8;font-size:14px}
+.install{display:flex;align-items:center;gap:10px;border-color:#25f4e8}
+.install .txt{flex:1;font-size:14px;line-height:1.6}
+.install .btns{display:flex;flex-direction:column;gap:6px}
+.install button{padding:9px 12px;font-size:14px}
+.install .later{font-weight:400;border-color:#637a9b;font-size:12px;padding:6px 10px}
+details summary{cursor:pointer;list-style-position:inside}
+#teamFiles{width:100%;margin:6px 0}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -145,6 +154,11 @@ a{color:#50e5ff}
  <div class="muted" id="todayText"></div>
 </header>
 
+<div class="panel install hidden" id="installBar" role="region" aria-label="התקנת האפליקציה">
+ <div class="txt" id="installText"></div>
+ <div class="btns"><button type="button" id="installBtn" class="primary hidden">📲 התקן</button><button type="button" id="installLater" class="later">לא עכשיו</button></div>
+</div>
+
 <nav class="tabs" role="tablist">
  <button type="button" data-tab="day" class="primary" role="tab">דיווח יומי</button>
  <button type="button" data-tab="history" role="tab">היסטוריה</button>
@@ -153,6 +167,22 @@ a{color:#50e5ff}
 
 <!-- ============ DAY ============ -->
 <section id="day">
+ <div class="panel welcome hidden" id="welcome">
+  <h2>👋 ברוכים הבאים לשחרר</h2>
+  <ul>
+   <li><b>דיווח יומי</b> — לוחצים על כפתורי ההחתמה (יציאה מהבית, התחלת עבודה, סיום…) והשעה נרשמת לבד.</li>
+   <li><b>רכב תפעולי</b> — כל יציאה ברכב הצוות: ״➕ הוסף נסיעה״.</li>
+   <li><b>היסטוריה</b> — סיכום חודשי של שעות ושל הרכב, וייצוא ל-CSV.</li>
+   <li><b>פרטיות</b> — הנתונים נשמרים רק בטלפון שלך. אין שרת ואף אחד אחר לא רואה אותם.</li>
+  </ul>
+  <b>3 צעדים להתחלה:</b>
+  <ol>
+   <li>בהגדרות: בדוק את מכסת השעות היומית והוסף את רכבי הצוות.</li>
+   <li>התקן את האפליקציה למסך הבית<span id="welcomeInstallHint"></span></li>
+   <li>מדי פעם: הגדרות ← ״הורד גיבוי מלא״.</li>
+  </ol>
+  <div class="actions"><button type="button" id="welcomeSettings">⚙ פתח הגדרות</button><button type="button" id="welcomeDone" class="primary">הבנתי, נתחיל</button></div>
+ </div>
  <div class="panel">
   <h2>יום העבודה</h2>
   <div class="subnav"><span class="muted" id="dateCaption">בחר תאריך לדיווח / עריכה</span><button type="button" id="todayBtn">היום</button></div>
@@ -264,7 +294,30 @@ a{color:#50e5ff}
   <h3>פירוט נסיעות</h3>
   <div class="table-wrap"><table><thead><tr><th>תאריך</th><th>רכב</th><th>מ־</th><th>יעד</th><th>שעות</th><th>ק״מ</th><th>תפקיד</th></tr></thead><tbody id="vRows"></tbody></table></div>
   <p class="small">ק״מ מחושב רק בנסיעות שבהן הוזן מונה ק״מ ביציאה ובחזרה. נסיעות עם נתונים חריגים מופיעות גם בבדיקת הדיווחים בדוח החודשי.</p>
-  <div class="actions"><button type="button" id="vehicleCsv" class="wide">ייצוא נסיעות רכב תפעולי CSV</button></div>
+  <h3>📤 שליחת הסיכום</h3>
+  <p class="small" id="sendInfo"></p>
+  <div class="actions"><button type="button" id="sendWhatsapp" class="primary">📤 שלח בוואטסאפ</button><button type="button" id="sendFile">📎 שלח קובץ</button><button type="button" id="vehicleCsv" class="wide">⬇ הורד קובץ CSV למכשיר</button></div>
+ </div>
+
+ <div class="panel" id="teamPanel">
+  <details id="teamDetails">
+   <summary><h2 style="display:inline">👥 סיכום צוות — למקבל הסיכומים</h2></summary>
+   <p class="small">לאחראי או לממונה: טען כאן את קובצי הסיכום שחברי הצוות שלחו לך בוואטסאפ (אפשר כמה קבצים יחד). קובץ חדש של אותו עובד לאותו חודש מחליף את הקודם. הנתונים נשמרים רק במכשיר שלך.</p>
+   <input type="file" id="teamFiles" accept=".csv,text/csv" multiple>
+   <p class="status" id="teamStatus"></p>
+   <p class="small">מוצג החודש שנבחר למעלה.</p>
+   <div class="tiles">
+    <div class="tile"><small>עובדים שדיווחו</small><strong id="tWorkers">0</strong></div>
+    <div class="tile"><small>נסיעות</small><strong id="tTrips">0</strong></div>
+    <div class="tile"><small>ק״מ</small><strong id="tKm">0</strong></div>
+    <div class="tile"><small>שעות בשימוש</small><strong id="tHours">—</strong></div>
+   </div>
+   <h3>לפי עובד</h3>
+   <div class="table-wrap"><table><thead><tr><th>עובד</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>כנהג</th></tr></thead><tbody id="tByWorker"></tbody></table></div>
+   <h3>לפי רכב</h3>
+   <div class="table-wrap"><table><thead><tr><th>רכב</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>עובדים</th></tr></thead><tbody id="tByVehicle"></tbody></table></div>
+   <div class="actions"><button type="button" id="teamCsv">⬇ ייצוא סיכום צוות CSV</button><button type="button" id="teamClear" class="danger">נקה נתוני צוות לחודש</button></div>
+  </details>
  </div>
 
  <div class="panel">
@@ -313,6 +366,21 @@ a{color:#50e5ff}
   <button type="button" id="saveSettings" class="primary">שמור הגדרות</button>
   <p id="settingsStatus" class="status"></p>
  </div>
+ <div class="panel" id="sendSettings">
+  <h2>📤 שליחת סיכום רכב</h2>
+  <p class="small">למי נשלח הסיכום החודשי של הרכב התפעולי — אליך או לממונה. רק נתוני הנסיעות נשלחים, לא שעות העבודה.</p>
+  <div class="field stack"><label for="reporterName">השם שלך</label><input id="reporterName" placeholder="ישראל ישראלי" autocomplete="name"></div>
+  <div class="field stack"><label for="recipientName">שם מקבל הסיכום</label><input id="recipientName" placeholder="לדוגמה: אבי / הממונה"></div>
+  <div class="field stack"><label for="recipientPhone">טלפון לוואטסאפ (לא חובה)</label><input id="recipientPhone" type="tel" inputmode="tel" placeholder="050-1234567" class="ltr"></div>
+  <p class="small">בלי טלפון — וואטסאפ ייפתח ותבחר בעצמך למי לשלוח (איש קשר או קבוצה).</p>
+  <button type="button" id="saveSend" class="primary">שמור פרטי שליחה</button>
+  <p id="sendStatus" class="status"></p>
+ </div>
+ <div class="panel" id="installSettings">
+  <h2>📲 התקנה ושיתוף</h2>
+  <p class="small" id="installSettingsText"></p>
+  <div class="actions"><button type="button" id="installBtn2" class="primary hidden">📲 התקן אפליקציה</button><button type="button" id="shareApp">🔗 שתף קישור לאפליקציה</button><button type="button" id="showWelcome">📖 הצג שוב את ההסבר</button></div>
+ </div>
  <div class="panel" id="vehicleSettings">
   <h2>🚗 רכבים תפעוליים</h2>
   <p class="small">רכבי הצוות שיופיעו לבחירה מהירה בדיווח נסיעה. אפשר מספר רישוי, כינוי או שניהם.</p>
@@ -340,7 +408,7 @@ a{color:#50e5ff}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.2';
+const VERSION = '17.4';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -358,7 +426,7 @@ const TIME_IDS = TIME_FIELDS.map(f => f[0]);
 const TYPES = { fixed:'מקום קבוע', external:'אתר חיצוני', fixedClock:'דווח בשעון נוכחות', abroad:'עבודה בחו״ל', vacation:'חופשה', sick:'מחלה' };
 const NON_TIMED = new Set(['fixedClock','vacation','sick']);
 const ABSENCE   = new Set(['vacation','sick']);
-const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, deductCoffee:false, vehicles:[] };
+const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, deductCoffee:false, vehicles:[], reporterName:'', recipientName:'', recipientPhone:'' };
 const TRIP_FROM = { home:'הבית', fixed:'מקום העבודה הקבוע' };
 const TRIP_ROLE = { driver:'נהג', passenger:'נוסע' };
 const WEEKDAYS  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
@@ -820,6 +888,8 @@ function renderMonth() {
   });
 
   renderVehicleMonth(data);
+  renderTeam();
+  renderSendSettings();
 
   // balances
   const b = getBalances();
@@ -871,6 +941,134 @@ function exportVehicles() {
   trips.forEach(t => rows.push([t.k, WEEKDAYS[dateOf(keyToIso(t.k)).getDay()], t.vehicle, TRIP_FROM[t.from] || TRIP_FROM.home, t.to, t.depart, t.ret,
     tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.kmStart, t.kmEnd, tripKm(t) ?? '', TRIP_ROLE[t.role] || TRIP_ROLE.driver, typeLabel(t.dayType), t.siteName]));
   download(toCsv(rows), `shacharer_vehicle_${state.month}.csv`, 'text/csv;charset=utf-8');
+}
+
+/* ---------- send vehicle summary (to me / to the team manager) ---------- */
+const VEH_SEND_HEADERS = ['עובד','תאריך','יום','רכב','יציאה מ','יעד','שעת יציאה','שעת חזרה','משך','ק״מ ביציאה','ק״מ בחזרה','ק״מ','תפקיד'];
+const monthLabel = () => { const [y, m] = state.month.split('-'); return `${m}.${y}`; };
+function waPhone(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('0')) d = '972' + d.slice(1);
+  return d.length >= 9 ? d : '';
+}
+function vehicleSendCsv(trips) {
+  const name = settings.reporterName || '';
+  return toCsv([VEH_SEND_HEADERS, ...trips.map(t => [name, t.k, WEEKDAYS[dateOf(keyToIso(t.k)).getDay()], t.vehicle, TRIP_FROM[t.from] || TRIP_FROM.home, t.to, t.depart, t.ret,
+    tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.kmStart, t.kmEnd, tripKm(t) ?? '', TRIP_ROLE[t.role] || TRIP_ROLE.driver])]);
+}
+function vehicleSummaryText(trips) {
+  const km = trips.reduce((n, t) => n + (tripKm(t) ?? 0), 0), minutes = trips.reduce((n, t) => n + (tripMinutes(t) ?? 0), 0);
+  const lines = [`🚗 סיכום רכב תפעולי — ${monthLabel()}`, `עובד: ${settings.reporterName || 'לא צוין'}`, '',
+    `נסיעות: ${trips.length} | ימי שימוש: ${new Set(trips.map(t => t.k)).size} | ק״מ: ${km} | שעות: ${fmt(minutes)}`];
+  const groups = new Map(); trips.forEach(t => { const v = t.vehicle || 'לא צוין'; groups.set(v, [...(groups.get(v) || []), t]); });
+  if (groups.size) { lines.push('', 'לפי רכב:'); groups.forEach((arr, v) => lines.push(`• ${v}: ${arr.length} נסיעות, ${arr.reduce((n, t) => n + (tripKm(t) ?? 0), 0)} ק״מ`)); }
+  lines.push('', 'פירוט:');
+  const MAX = 40;
+  trips.slice(0, MAX).forEach(t => { const k = tripKm(t);
+    lines.push(`${t.k} · ${t.vehicle || '—'} · מ${TRIP_FROM[t.from] || TRIP_FROM.home} ל${t.to || '—'} · ${t.depart || '—'}–${t.ret || '—'}${k !== null ? ` · ${k} ק״מ` : ''} · ${TRIP_ROLE[t.role] || TRIP_ROLE.driver}`); });
+  if (trips.length > MAX) lines.push(`…ועוד ${trips.length - MAX} נסיעות (פירוט מלא בקובץ)`);
+  lines.push('', 'נשלח מאפליקציית שחרר');
+  return lines.join('\n');
+}
+function readySend() {
+  const trips = monthTrips(monthEntries());
+  if (!trips.length) { toast('אין נסיעות ברכב תפעולי בחודש הנבחר'); return null; }
+  if (!settings.reporterName) {
+    const n = prompt('מה השם שלך? (יופיע בסיכום שנשלח)'); if (!n || !n.trim()) return null;
+    settings = { ...settings, reporterName: n.trim() }; writeJSON(SK, settings); renderSendSettings();
+  }
+  return trips;
+}
+function sendWhatsapp() {
+  const trips = readySend(); if (!trips) return;
+  const phone = waPhone(settings.recipientPhone);
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(vehicleSummaryText(trips))}`, '_blank', 'noopener');
+}
+async function sendFile() {
+  const trips = readySend(); if (!trips) return;
+  // ASCII-only file name (some phones drop non-Latin names); the worker's name is inside the file.
+  const name = `shacharer_vehicle_${state.month}_${Date.now().toString(36)}.csv`;
+  const content = vehicleSendCsv(trips);
+  try {
+    const file = new File([content], name, { type: 'text/csv' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: `סיכום רכב תפעולי ${monthLabel()}`, text: `סיכום רכב תפעולי ${monthLabel()} — ${settings.reporterName}` });
+      return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  download(content, name, 'text/csv;charset=utf-8');
+  toast('הקובץ ירד למכשיר — צרף אותו בוואטסאפ ל' + (settings.recipientName || 'מקבל הסיכום'));
+}
+function renderSendSettings() {
+  $('reporterName').value = settings.reporterName || '';
+  $('recipientName').value = settings.recipientName || '';
+  $('recipientPhone').value = settings.recipientPhone || '';
+  $('sendInfo').textContent = `הסיכום של ${monthLabel()} יישלח ` + (settings.recipientName ? `ל${settings.recipientName}` : 'למי שתבחר בוואטסאפ') +
+    (settings.reporterName ? ` בשם ${settings.reporterName}.` : '. (מומלץ להזין את שמך בהגדרות.)') + ' רק נתוני הנסיעות נשלחים.';
+}
+function saveSend() {
+  const phone = $('recipientPhone').value.trim();
+  if (phone && !waPhone(phone)) { setStatus('sendStatus', 'מספר טלפון לא תקין', 'warn'); return; }
+  settings = { ...settings, reporterName: $('reporterName').value.trim(), recipientName: $('recipientName').value.trim(), recipientPhone: phone };
+  writeJSON(SK, settings); renderSendSettings(); setStatus('sendStatus', '✓ פרטי השליחה נשמרו');
+}
+
+/* ---------- team summary (for whoever receives the files) ---------- */
+const TEAM_KEY = 'shacharerTeamTrips';
+const getTeam = () => { const v = readJSON(TEAM_KEY, []); return Array.isArray(v) ? v : []; };
+async function importTeamFiles(files) {
+  let team = getTeam(), added = 0; const bad = [];
+  for (const file of files) {
+    try {
+      const rows = parseCSV(await file.text());
+      const head = rows[0] || [], col = name => head.indexOf(name);
+      if (col('תאריך') < 0 || col('רכב') < 0) throw Error('format');
+      const get = (r, n) => col(n) < 0 ? '' : unquote(r[col(n)] ?? '').trim();
+      const trips = rows.slice(1).map(r => {
+        const iso = keyToIso(get(r, 'תאריך')); if (!iso) return null;
+        return { worker: get(r, 'עובד') || 'לא צוין', k: isoToKey(iso), month: iso.slice(0, 7), vehicle: get(r, 'רכב'), from: get(r, 'יציאה מ'), to: get(r, 'יעד'),
+          depart: cleanTime(get(r, 'שעת יציאה')), ret: cleanTime(get(r, 'שעת חזרה')), km: get(r, 'ק״מ'), role: get(r, 'תפקיד') };
+      }).filter(Boolean);
+      const pairs = new Set(trips.map(t => t.worker + '|' + t.month));
+      team = team.filter(t => !pairs.has(t.worker + '|' + t.month)).concat(trips);
+      added += trips.length;
+    } catch { bad.push(file.name); }
+  }
+  writeJSON(TEAM_KEY, team);
+  setStatus('teamStatus', `✓ נטענו ${added} נסיעות` + (bad.length ? ` · לא זוהו: ${bad.join(', ')}` : ''), bad.length ? 'warn' : '');
+  const months = [...new Set(team.map(t => t.month))].sort();
+  if (added && !team.some(t => t.month === state.month) && months.length) setMonth(months[months.length - 1]); else renderTeam();
+}
+function renderTeam() {
+  const trips = getTeam().filter(t => t.month === state.month);
+  const kmOf = t => { const n = Number(t.km); return t.km !== '' && Number.isFinite(n) ? n : 0; };
+  const sum = (arr, f) => arr.reduce((n, t) => n + f(t), 0);
+  const days = arr => new Set(arr.map(t => t.worker + t.k)).size;
+  $('tWorkers').textContent = new Set(trips.map(t => t.worker)).size;
+  $('tTrips').textContent = trips.length;
+  $('tKm').textContent = sum(trips, kmOf).toLocaleString('he-IL');
+  $('tHours').textContent = fmt(sum(trips, t => tripMinutes(t) ?? 0));
+  const group = key => { const m = new Map(); trips.forEach(t => { const g = t[key] || 'לא צוין'; m.set(g, [...(m.get(g) || []), t]); }); return [...m].sort((a, b) => b[1].length - a[1].length); };
+  const cell = (tr, v, num) => { const td = document.createElement('td'); td.textContent = v; if (num) td.className = 'num'; tr.append(td); };
+  const empty = n => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = n; td.textContent = 'אין נתוני צוות לחודש זה'; tr.append(td); return [tr]; };
+  const byWorker = group('worker').map(([w, arr]) => { const tr = document.createElement('tr');
+    cell(tr, w); cell(tr, arr.length, true); cell(tr, days(arr), true); cell(tr, sum(arr, kmOf), true); cell(tr, fmt(sum(arr, t => tripMinutes(t) ?? 0)), true); cell(tr, arr.filter(t => t.role !== TRIP_ROLE.passenger).length, true); return tr; });
+  const byVehicle = group('vehicle').map(([v, arr]) => { const tr = document.createElement('tr');
+    cell(tr, v); cell(tr, arr.length, true); cell(tr, new Set(arr.map(t => t.k)).size, true); cell(tr, sum(arr, kmOf), true); cell(tr, fmt(sum(arr, t => tripMinutes(t) ?? 0)), true); cell(tr, [...new Set(arr.map(t => t.worker))].join(', ')); return tr; });
+  $('tByWorker').replaceChildren(...(byWorker.length ? byWorker : empty(6)));
+  $('tByVehicle').replaceChildren(...(byVehicle.length ? byVehicle : empty(6)));
+}
+function exportTeam() {
+  const trips = getTeam().filter(t => t.month === state.month); if (!trips.length) return toast('אין נתוני צוות לחודש זה');
+  trips.sort((a, b) => keyToIso(a.k).localeCompare(keyToIso(b.k)) || a.worker.localeCompare(b.worker));
+  download(toCsv([['עובד','תאריך','רכב','יציאה מ','יעד','שעת יציאה','שעת חזרה','משך','ק״מ','תפקיד'],
+    ...trips.map(t => [t.worker, t.k, t.vehicle, t.from, t.to, t.depart, t.ret, tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.km, t.role])]),
+    `shacharer_team_vehicle_${state.month}.csv`, 'text/csv;charset=utf-8');
+}
+function clearTeamMonth() {
+  if (!confirm(`למחוק את נתוני הצוות של ${monthLabel()} מהמכשיר הזה?`)) return;
+  writeJSON(TEAM_KEY, getTeam().filter(t => t.month !== state.month)); renderTeam(); setStatus('teamStatus', 'נתוני הצוות לחודש נמחקו');
 }
 
 function setMonth(value) {
@@ -986,6 +1184,7 @@ function renderSettings() {
   ['regular','thursdayRegular','meal1','meal2'].forEach(id => $(id).value = settings[id]);
   $('deductCoffee').checked = Boolean(settings.deductCoffee);
   renderVehicleSettings();
+  renderSendSettings();
   const b = getBalances();
   $('balVacInput').value = b.vacation ?? '';
   $('balSickInput').value = b.sick ?? '';
@@ -1163,6 +1362,54 @@ function installClockPicker() {
 }
 
 /* ---------- wiring ---------- */
+/* ---------- install prompt & first-run welcome ---------- */
+const APP_URL = 'https://avibito.github.io/shacharer/';
+let installEvent = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function installHowTo() {
+  if (installEvent) return 'לחץ על ״התקן״ והאפליקציה תתווסף למסך הבית.';
+  if (isIOS()) return 'באייפון: פתח ב-Safari, לחץ על כפתור השיתוף ⬆️ ובחר ״הוסף למסך הבית״.';
+  return 'בתפריט הדפדפן (⋮) בחר ״התקנת אפליקציה״ או ״הוספה למסך הבית״.';
+}
+function renderInstall() {
+  const installed = isStandalone();
+  let dismissed = 0; try { dismissed = Number(localStorage.getItem('shacharerInstallLater')) || 0; } catch {}
+  const snoozed = Date.now() - dismissed < 14 * 864e5;
+  $('installBar').classList.toggle('hidden', installed || snoozed);
+  $('installText').textContent = '📲 התקן את שחרר למסך הבית — נפתחת כמו אפליקציה ועובדת גם בלי אינטרנט. ' + (installEvent ? '' : installHowTo());
+  ['installBtn','installBtn2'].forEach(id => $(id).classList.toggle('hidden', !installEvent || installed));
+  $('installSettingsText').textContent = installed ? '✓ האפליקציה מותקנת במכשיר זה.' : installHowTo();
+  $('welcomeInstallHint').textContent = installed ? ' (✓ כבר מותקנת)' : ' — ' + installHowTo();
+}
+async function promptInstall() {
+  if (!installEvent) { toast(installHowTo()); return; }
+  installEvent.prompt();
+  try { await installEvent.userChoice; } catch {}
+  installEvent = null; renderInstall();
+}
+async function shareApp() {
+  const text = 'שחרר – אפליקציה לדיווח שעות ורכב תפעולי. להתקנה פתחו את הקישור ובחרו ״הוספה למסך הבית״:';
+  if (navigator.share) { try { await navigator.share({ title: 'שחרר', text, url: APP_URL }); } catch {} return; }
+  try { await navigator.clipboard.writeText(text + '\n' + APP_URL); toast('הקישור הועתק'); } catch { prompt('העתק את הקישור:', APP_URL); }
+}
+function setupWelcome() {
+  let seen = false; try { seen = Boolean(localStorage.getItem('shacharerWelcomed')); } catch {}
+  // Existing users who already have reports don't need the intro.
+  if (!seen && !Object.keys(getHistory()).length) $('welcome').classList.remove('hidden');
+  const done = () => { $('welcome').classList.add('hidden'); try { localStorage.setItem('shacharerWelcomed', '1'); } catch {} };
+  $('welcomeDone').onclick = done;
+  $('welcomeSettings').onclick = () => { done(); showTab('settings'); };
+  $('showWelcome').onclick = () => { $('welcome').classList.remove('hidden'); showTab('day'); };
+  $('installBtn').onclick = promptInstall;
+  $('installBtn2').onclick = promptInstall;
+  $('installLater').onclick = () => { try { localStorage.setItem('shacharerInstallLater', String(Date.now())); } catch {} renderInstall(); };
+  $('shareApp').onclick = shareApp;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; renderInstall(); });
+  window.addEventListener('appinstalled', () => { installEvent = null; renderInstall(); toast('✓ שחרר הותקנה למסך הבית'); });
+  renderInstall();
+}
+
 function updateTodayText() {
   $('todayText').textContent = new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
@@ -1181,6 +1428,12 @@ function init() {
   $('trips').addEventListener('change', onTripsEvent);
   $('addTrip').onclick = addTrip;
   $('addVehicle').onclick = addVehicle;
+  $('sendWhatsapp').onclick = sendWhatsapp;
+  $('sendFile').onclick = sendFile;
+  $('saveSend').onclick = saveSend;
+  $('teamFiles').onchange = async e => { if (e.target.files.length) await importTeamFiles([...e.target.files]); e.target.value = ''; };
+  $('teamCsv').onclick = exportTeam;
+  $('teamClear').onclick = clearTeamMonth;
   $('newVehicle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addVehicle(); } });
   $('goVehicleSummary').onclick = () => { state.month = state.date.slice(0,7); showTab('history'); $('vehicleSummary').scrollIntoView({ behavior:'smooth' }); };
   $('goVehicleSettings').onclick = () => { showTab('settings'); $('vehicleSettings').scrollIntoView({ behavior:'smooth' }); $('newVehicle').focus({ preventScroll:true }); };
@@ -1235,6 +1488,7 @@ function init() {
   renderDay();
   renderMonth();
 
+  setupWelcome();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 init();
