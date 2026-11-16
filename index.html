@@ -90,6 +90,15 @@ a{color:#50e5ff}
  .nav input{width:112px;flex-basis:112px;font-size:15px}
  .entry button{width:84px;font-size:12px}
 }
+/* Operational vehicle */
+.trip{border:1px solid #2b4a66;border-radius:14px;padding:10px 12px;margin:10px 0;background:#0b1a28}
+.trip-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.trip-head strong{color:var(--accent2)}
+.trip-head button{padding:6px 12px;font-size:13px;font-weight:400}
+.trip .field input:not([type=number]):not(.clock-input),.trip .field select{width:min(100%,210px)}
+.trip .km input{width:96px;flex:0 0 96px}
+.trip-sum{margin-top:6px}
+#vehiclesInput{min-height:70px}
 /* Clock picker */
 .clock-dialog{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.76);padding:14px}
 .clock-dialog[hidden],.clock-dial[hidden],.clock-wheels[hidden],.clock-keyboard[hidden]{display:none!important}
@@ -185,6 +194,14 @@ a{color:#50e5ff}
   <div class="status" id="saveStatus" role="status" aria-live="polite"></div>
  </div>
 
+ <div class="panel" id="vehiclePanel">
+  <h2>🚗 רכב תפעולי</h2>
+  <p class="small">דווח כל יציאה ברכב התפעולי של הצוות — מהבית או ממקום העבודה הקבוע.</p>
+  <div id="trips"></div>
+  <button type="button" id="addTrip" class="primary" style="width:100%">➕ הוסף נסיעה ברכב תפעולי</button>
+  <datalist id="vehicleList"></datalist>
+ </div>
+
  <div class="panel">
   <h2>סיכום וחישוב</h2>
   <div id="dayProblems"></div>
@@ -226,6 +243,23 @@ a{color:#50e5ff}
    <div class="tile"><small>מחלה שדווחה בחודש</small><strong id="usedSick">0</strong></div>
   </div>
   <p class="small" id="monthTypes"></p>
+ </div>
+
+ <div class="panel">
+  <h2>🚗 רכב תפעולי — סיכום חודשי</h2>
+  <div class="tiles">
+   <div class="tile"><small>נסיעות</small><strong id="vTrips">0</strong></div>
+   <div class="tile"><small>ימי שימוש</small><strong id="vDays">0</strong></div>
+   <div class="tile"><small>ק״מ (לפי מונה)</small><strong id="vKm">0</strong></div>
+   <div class="tile"><small>שעות בשימוש</small><strong id="vHours">—</strong></div>
+  </div>
+  <p class="small" id="vOrigins"></p>
+  <h3>לפי רכב</h3>
+  <div class="table-wrap"><table><thead><tr><th>רכב</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>כנהג</th></tr></thead><tbody id="vByVehicle"></tbody></table></div>
+  <h3>פירוט נסיעות</h3>
+  <div class="table-wrap"><table><thead><tr><th>תאריך</th><th>רכב</th><th>מ־</th><th>יעד</th><th>שעות</th><th>ק״מ</th><th>תפקיד</th></tr></thead><tbody id="vRows"></tbody></table></div>
+  <p class="small">ק״מ מחושב רק בנסיעות שבהן הוזן מונה ק״מ ביציאה ובחזרה. נסיעות עם נתונים חריגים מופיעות גם בבדיקת הדיווחים בדוח החודשי.</p>
+  <div class="actions"><button type="button" id="vehicleCsv" class="wide">ייצוא נסיעות רכב תפעולי CSV</button></div>
  </div>
 
  <div class="panel">
@@ -271,6 +305,8 @@ a{color:#50e5ff}
   <div class="field"><label for="meal1">סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="meal2">סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="deductCoffee">ניכוי הפסקת קפה מדווחת</label><input id="deductCoffee" type="checkbox"></div>
+  <label class="muted" for="vehiclesInput">רכבים תפעוליים של הצוות — מספר רישוי או כינוי, אחד בכל שורה</label>
+  <textarea id="vehiclesInput" placeholder="12-345-67 טנדר צוות"></textarea>
   <button type="button" id="saveSettings" class="primary">שמור הגדרות</button>
   <p id="settingsStatus" class="status"></p>
  </div>
@@ -294,7 +330,7 @@ a{color:#50e5ff}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.0';
+const VERSION = '17.1';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -312,7 +348,9 @@ const TIME_IDS = TIME_FIELDS.map(f => f[0]);
 const TYPES = { fixed:'מקום קבוע', external:'אתר חיצוני', fixedClock:'דווח בשעון נוכחות', abroad:'עבודה בחו״ל', vacation:'חופשה', sick:'מחלה' };
 const NON_TIMED = new Set(['fixedClock','vacation','sick']);
 const ABSENCE   = new Set(['vacation','sick']);
-const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, deductCoffee:false };
+const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, deductCoffee:false, vehicles:[] };
+const TRIP_FROM = { home:'הבית', fixed:'מקום העבודה הקבוע' };
+const TRIP_ROLE = { driver:'נהג', passenger:'נוסע' };
 const WEEKDAYS  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
 /* ---------- helpers ---------- */
@@ -342,6 +380,7 @@ const getHistory = () => readJSON(KEY, {});
 const setHistory = h => writeJSON(KEY, h);
 const getBalances = () => readJSON(BK, {});
 let settings = { ...DEFAULTS, ...readJSON(SK, {}) };
+if (!Array.isArray(settings.vehicles)) settings.vehicles = [];
 
 function setStatus(id, text, kind = '') { const el = $(id); el.textContent = text; el.className = 'status' + (kind ? ' ' + kind : ''); }
 let toastTimer;
@@ -350,6 +389,43 @@ function toast(text) {
   if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); document.body.append(t); }
   t.textContent = text; t.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
+}
+
+/* ---------- operational vehicle trips ---------- */
+const tripsOf = d => Array.isArray(d.vehicleTrips) ? d.vehicleTrips.filter(t => t && typeof t === 'object') : [];
+const kmNum = v => v === '' || v === null || v === undefined ? null : Number(v);
+function tripKm(t) { const a = kmNum(t.kmStart), b = kmNum(t.kmEnd); return Number.isFinite(a) && Number.isFinite(b) && b >= a ? b - a : null; }
+const tripMinutes = t => span(t.depart, t.ret);
+function tripProblems(d) {
+  const out = [];
+  tripsOf(d).forEach((t, i) => {
+    const n = `נסיעה ${i + 1} ברכב תפעולי`;
+    if (!t.vehicle) out.push(`${n}: לא צוין רכב`);
+    if (!t.depart) out.push(`${n}: חסרה שעת יציאה`);
+    if (t.depart && t.ret && tripMinutes(t) === null) out.push(`${n}: שעת החזרה מוקדמת משעת היציאה`);
+    const a = kmNum(t.kmStart), b = kmNum(t.kmEnd);
+    if (Number.isFinite(a) && Number.isFinite(b) && b < a) out.push(`${n}: ק״מ בחזרה קטן מק״מ ביציאה`);
+  });
+  return out;
+}
+function tripText(t) {
+  const km = tripKm(t);
+  return `${t.vehicle || 'רכב לא צוין'} · מ${TRIP_FROM[t.from] || TRIP_FROM.home} ל${t.to || '—'} · \u2066${t.depart || '—'}–${t.ret || '—'}\u2069` +
+    (km !== null ? ` · ${km} ק״מ` : '') + ` · ${TRIP_ROLE[t.role] || TRIP_ROLE.driver}`;
+}
+const cleanPipe = v => String(v ?? '').replace(/[|;]/g, '/').trim();
+const tripsToCell = d => tripsOf(d).map(t => [t.vehicle, t.from, t.to, t.depart, t.ret, t.kmStart, t.kmEnd, t.role].map(cleanPipe).join(' | ')).join(' ; ');
+function tripsFromCell(cell) {
+  if (!cell) return [];
+  return String(cell).split(' ; ').map(part => {
+    const [vehicle, from, to, depart, ret, kmStart, kmEnd, role] = part.split(' | ').map(x => (x ?? '').trim());
+    return { vehicle, from: TRIP_FROM[from] ? from : 'home', to, depart: cleanTime(depart), ret: cleanTime(ret), kmStart, kmEnd, role: TRIP_ROLE[role] ? role : 'driver' };
+  }).filter(t => t.vehicle || t.depart);
+}
+function knownVehicles() {
+  const set = new Set((settings.vehicles || []).filter(Boolean));
+  Object.values(getHistory()).forEach(d => tripsOf(d || {}).forEach(t => t.vehicle && set.add(t.vehicle)));
+  return [...set];
 }
 
 /* ---------- calculation (single source of truth) ---------- */
@@ -370,6 +446,7 @@ function analyze(d, key) {
 
   if (NON_TIMED.has(type)) {
     if (type === 'fixedClock' && !d.clockConfirmed) problems.push('נדרש אישור דיווח בשעון נוכחות');
+    if (!ABSENCE.has(type)) problems.push(...tripProblems(d));
     return { type, quota, absence, problems, excluded:true, complete:!problems.length, gross:null, net:null };
   }
 
@@ -392,6 +469,7 @@ function analyze(d, key) {
 
   if (ext && !d.siteName) problems.push('לא צוין שם האתר החיצוני');
   if (type === 'abroad' && !d.country) problems.push('לא צוינה מדינה בעבודה בחו״ל');
+  problems.push(...tripProblems(d));
 
   const net = gross === null ? null : Math.max(0, gross - deduct);
   return { type, quota, absence, problems, excluded:false, complete: !problems.length && net !== null, gross, net };
@@ -425,6 +503,7 @@ function buildDayForm() {
 function readForm() {
   const d = { dayType: $('dayType').value, siteName: $('siteName').value.trim(), notes: $('notes').value, country: $('country').value.trim(), clockConfirmed: $('clockConfirmed').checked };
   TIME_IDS.forEach(id => d[id] = $(id).value);
+  d.vehicleTrips = readTrips();
   if (ABSENCE.has(d.dayType)) {
     d.absenceUnit = $('absenceUnit').value;
     d.absenceDays = d.absenceUnit === 'days' ? Number($('absDays').value) : null;
@@ -451,6 +530,7 @@ function showTypeFields() {
   $('clockRow').classList.toggle('hidden', t !== 'fixedClock');
   $('absenceBox').classList.toggle('hidden', !ABSENCE.has(t));
   $('siteRow').classList.toggle('hidden', ABSENCE.has(t));
+  $('vehiclePanel').classList.toggle('hidden', ABSENCE.has(t) && !$('trips').children.length);
   const nonTimed = NON_TIMED.has(t);
   $('timeFields').classList.toggle('hidden', nonTimed);
   $('stamps').classList.toggle('hidden', nonTimed);
@@ -476,6 +556,7 @@ function renderDay() {
   $('absDays').value = d.absenceUnit === 'days' ? (d.absenceDays ?? 1) : (d.portion ?? 1);
   $('absHours').value = d.absenceUnit === 'hours' ? Math.floor((d.absenceMinutes || 0) / 60) : 0;
   $('absMinutes').value = d.absenceUnit === 'hours' ? (d.absenceMinutes || 0) % 60 : 0;
+  renderTrips(tripsOf(d));
   const loc = $('locationStatus');
   loc.replaceChildren();
   if (d.locationUrl && /^https:\/\/maps\.google\.com\/\?q=-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(d.locationUrl)) {
@@ -490,6 +571,7 @@ function renderDay() {
 function renderCalc() {
   const d = readForm();
   TIME_IDS.forEach(id => $('stamp_' + id).textContent = d[id] || '');
+  [...$('trips').children].forEach((card, i) => { const t = d.vehicleTrips[i]; if (t) card.querySelector('.trip-sum').textContent = tripText(t) + (tripMinutes(t) !== null ? ` · משך ${fmt(tripMinutes(t))}` : ''); });
   const r = analyze(d, selectedKey());
   const o = overtime(r);
   $('mAbsence').textContent = fmt(r.absence);
@@ -530,6 +612,7 @@ function saveDay() {
   approvedEdits.add(key);
   const rec = { ...(old || {}), ...form, date: key };
   if (!ABSENCE.has(rec.dayType)) { delete rec.absenceUnit; delete rec.absenceDays; delete rec.absenceMinutes; }
+  if (!rec.vehicleTrips.length) delete rec.vehicleTrips;
   const total = span(rec.leaveHome, rec.arriveDest);
   rec.totalTime = total === null ? '' : fmt(total);
   h[key] = rec;
@@ -540,6 +623,62 @@ function saveDay() {
   $('dateCaption').textContent = $('dateCaption').textContent.replace(/( · יש דיווח שמור)?$/, ' · יש דיווח שמור');
   if (state.month === state.date.slice(0,7)) renderMonth();
   return true;
+}
+
+function tripCard(t, i) {
+  const card = document.createElement('div');
+  card.className = 'trip';
+  card.innerHTML = `<div class="trip-head"><strong>נסיעה ${i + 1}</strong><button type="button" class="danger" data-del>מחק</button></div>
+   <div class="field"><label>רכב</label><input data-k="vehicle" list="vehicleList" placeholder="מס׳ רישוי / כינוי" autocomplete="off"></div>
+   <div class="field"><label>יציאה מ־</label><select data-k="from"><option value="home">הבית</option><option value="fixed">מקום העבודה הקבוע</option></select></div>
+   <div class="field"><label>יעד</label><input data-k="to" placeholder="שם האתר"></div>
+   <div class="field"><label>שעת יציאה</label><input data-k="depart" class="clock-input" readonly placeholder="HH:MM"></div>
+   <div class="field"><label>שעת חזרה</label><input data-k="ret" class="clock-input" readonly placeholder="HH:MM"></div>
+   <div class="field km"><label>ק״מ ביציאה</label><input data-k="kmStart" type="number" min="0" step="1" inputmode="numeric"></div>
+   <div class="field km"><label>ק״מ בחזרה</label><input data-k="kmEnd" type="number" min="0" step="1" inputmode="numeric"></div>
+   <div class="field"><label>תפקיד</label><select data-k="role"><option value="driver">נהג</option><option value="passenger">נוסע</option></select></div>
+   <div class="small trip-sum"></div>`;
+  card.querySelectorAll('[data-k]').forEach(el => { const v = t[el.dataset.k]; el.value = v ?? (el.tagName === 'SELECT' ? el.options[0].value : ''); });
+  return card;
+}
+function renderTrips(trips) {
+  const box = $('trips'); box.replaceChildren(...trips.map(tripCard));
+  $('vehicleList').replaceChildren(...knownVehicles().map(v => { const o = document.createElement('option'); o.value = v; return o; }));
+}
+function readTrips() {
+  return [...$('trips').children].map(card => {
+    const t = {}; card.querySelectorAll('[data-k]').forEach(el => t[el.dataset.k] = el.value.trim()); return t;
+  });
+}
+function addTrip() {
+  const trips = readTrips(), prev = trips[trips.length - 1];
+  const fixedDay = ['fixed','fixedClock'].includes($('dayType').value);
+  let lastVehicle = ''; try { lastVehicle = localStorage.getItem('shacharerLastVehicle') || ''; } catch {}
+  trips.push({
+    vehicle: prev?.vehicle || lastVehicle || (settings.vehicles || [])[0] || '',
+    from: prev ? prev.from : (fixedDay ? 'fixed' : 'home'),
+    to: $('siteName').value.trim(),
+    depart: state.date === todayIso() ? nowHHMM() : '', ret: '',
+    kmStart: prev?.kmEnd || '', kmEnd: '', role: prev?.role || 'driver',
+  });
+  renderTrips(trips);
+  $('vehiclePanel').classList.remove('hidden');
+  if (saveDay()) $('trips').lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  else renderTrips(tripsOf(current()));
+}
+function onTripsEvent(e) {
+  const del = e.target.closest('[data-del]');
+  if (e.type === 'click' && del) {
+    const card = del.closest('.trip'), i = [...$('trips').children].indexOf(card);
+    if (!confirm(`למחוק את נסיעה ${i + 1}?`)) return;
+    card.remove();
+    [...$('trips').children].forEach((c, j) => c.querySelector('.trip-head strong').textContent = `נסיעה ${j + 1}`);
+    saveDay(); return;
+  }
+  if (e.type === 'change' && e.target.dataset.k) {
+    if (e.target.dataset.k === 'vehicle' && e.target.value.trim()) { try { localStorage.setItem('shacharerLastVehicle', e.target.value.trim()); } catch {} }
+    saveDay();
+  }
 }
 
 function setDate(iso) {
@@ -597,6 +736,7 @@ function reportText(d, key) {
       `הפסקה: ${d.startCoffee||'—'} עד ${d.endCoffee||'—'}`, `חזרה הביתה: ${d.returnHome||'—'}`, `שעות מוכרות: ${fmt(r.net)}`);
     const o = overtime(r); if (o && o.extra) lines.push(`מעל מכסה: ${fmt(o.extra)}`);
   }
+  tripsOf(d).forEach((t, i) => lines.push(`🚗 נסיעה ${i + 1}: ${tripText(t).replace(/[\u2066\u2069]/g, '')}`));
   if (d.notes) lines.push(`הערות: ${d.notes}`);
   if (d.locationUrl && d.locationUrl.startsWith('https://')) lines.push(`מיקום: ${d.locationUrl}`);
   return lines.join('\n');
@@ -633,7 +773,8 @@ function renderMonth() {
     const from = (ext ? r.d.leaveHome : r.d.startWork) || '—', to = (ext ? r.d.returnHome : r.d.endWork) || '—';
     // ⁦…⁩ = LTR isolate, so "07:50–16:50" is not reordered inside the RTL line.
     const detail = r.excluded ? (absenceText(r.d) || '') : `⁦${from}–${to}⁩ · ⁦${fmt(r.net)}⁩`;
-    label.textContent = `${r.k} (${wd}) · ${typeLabel(r.d.dayType)}${r.d.siteName ? ' · ' + r.d.siteName : ''} · ${detail}${r.complete ? '' : ' ⚠'}`;
+    const nTrips = tripsOf(r.d).length;
+    label.textContent = `${r.k} (${wd}) · ${typeLabel(r.d.dayType)}${r.d.siteName ? ' · ' + r.d.siteName : ''} · ${detail}${nTrips ? ' · 🚗' + (nTrips > 1 ? '×' + nTrips : '') : ''}${r.complete ? '' : ' ⚠'}`;
     btn.type = 'button'; btn.textContent = 'פתח וערוך';
     btn.onclick = () => { setDate(keyToIso(r.k)); showTab('day'); };
     row.append(label, btn); list.append(row);
@@ -668,6 +809,8 @@ function renderMonth() {
     tbody.append(tr);
   });
 
+  renderVehicleMonth(data);
+
   // balances
   const b = getBalances();
   $('balVac').textContent = b.vacation == null ? 'טרם הוגדר' : b.vacation + ' ימים';
@@ -682,6 +825,42 @@ function renderMonth() {
   $('usedSick').textContent = used('sick');
   const count = t => data.filter(r => (r.d.dayType || 'fixed') === t).length;
   $('monthTypes').textContent = Object.keys(TYPES).map(t => `${TYPES[t]}: ${count(t)}`).join(' | ');
+}
+
+function monthTrips(data) {
+  return data.flatMap(r => tripsOf(r.d).map(t => ({ ...t, k: r.k, dayType: r.d.dayType, siteName: r.d.siteName || '' })));
+}
+function renderVehicleMonth(data) {
+  const trips = monthTrips(data);
+  const sum = (arr, f) => arr.reduce((n, t) => n + (f(t) ?? 0), 0);
+  const days = arr => new Set(arr.map(t => t.k)).size;
+  $('vTrips').textContent = trips.length;
+  $('vDays').textContent = days(trips);
+  $('vKm').textContent = sum(trips, tripKm).toLocaleString('he-IL');
+  $('vHours').textContent = fmt(sum(trips, tripMinutes));
+  const fromHome = trips.filter(t => t.from !== 'fixed').length;
+  $('vOrigins').textContent = trips.length ? `יציאות מהבית: ${fromHome} | ממקום העבודה הקבוע: ${trips.length - fromHome} | כנהג: ${trips.filter(t => t.role !== 'passenger').length} | כנוסע: ${trips.filter(t => t.role === 'passenger').length}` : 'לא דווחו נסיעות ברכב תפעולי בחודש זה.';
+  const groups = new Map();
+  trips.forEach(t => { const key = t.vehicle || 'לא צוין'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(t); });
+  const cell = (tr, v, num) => { const td = document.createElement('td'); td.textContent = v; if (num) td.className = 'num'; tr.append(td); };
+  $('vByVehicle').replaceChildren(...[...groups].map(([v, arr]) => {
+    const tr = document.createElement('tr');
+    cell(tr, v); cell(tr, arr.length, true); cell(tr, days(arr), true); cell(tr, sum(arr, tripKm), true); cell(tr, fmt(sum(arr, tripMinutes)), true); cell(tr, arr.filter(t => t.role !== 'passenger').length, true);
+    return tr;
+  }));
+  $('vRows').replaceChildren(...trips.map(t => {
+    const tr = document.createElement('tr'), km = tripKm(t);
+    cell(tr, t.k); cell(tr, t.vehicle || '—'); cell(tr, TRIP_FROM[t.from] || TRIP_FROM.home); cell(tr, t.to || '—');
+    cell(tr, `${t.depart || '—'}–${t.ret || '—'}`, true); cell(tr, km ?? '—', true); cell(tr, TRIP_ROLE[t.role] || TRIP_ROLE.driver);
+    return tr;
+  }));
+}
+function exportVehicles() {
+  const trips = monthTrips(monthEntries()); if (!trips.length) return toast('אין נסיעות ברכב תפעולי בחודש הנבחר');
+  const rows = [['תאריך','יום','רכב','יציאה מ','יעד','שעת יציאה','שעת חזרה','משך','ק״מ ביציאה','ק״מ בחזרה','ק״מ','תפקיד','סוג יום','שם אתר']];
+  trips.forEach(t => rows.push([t.k, WEEKDAYS[dateOf(keyToIso(t.k)).getDay()], t.vehicle, TRIP_FROM[t.from] || TRIP_FROM.home, t.to, t.depart, t.ret,
+    tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.kmStart, t.kmEnd, tripKm(t) ?? '', TRIP_ROLE[t.role] || TRIP_ROLE.driver, typeLabel(t.dayType), t.siteName]));
+  download(toCsv(rows), `shacharer_vehicle_${state.month}.csv`, 'text/csv;charset=utf-8');
 }
 
 function setMonth(value) {
@@ -709,13 +888,13 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 // Columns 0–17 keep the original v16 layout so older files still import; new columns are appended.
-const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','שעת הגעה','סהכ זמן היעדרות','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון'];
+const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','שעת הגעה','סהכ זמן היעדרות','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון','רכב תפעולי (רכב | מ | יעד | יציאה | חזרה | ק״מ התחלה | ק״מ סוף | תפקיד)'];
 function csvRow(d, key) {
   const r = analyze(d, key), o = overtime(r);
   return [key, d.leaveHome, d.startWork, d.endWork, d.arriveDest, d.totalTime || (r.absence === null ? '' : fmt(r.absence)), d.startCoffee, d.endCoffee,
     d.locationUrl || 'לא נדגם', d.notes, typeLabel(d.dayType), d.siteName || '', d.returnHome || '',
     o ? fmt(r.net) : '', o ? fmt(o.extra) : '', o ? fmt(o.short) : '', o ? fmt(o.ot125) : '', o ? fmt(o.ot150) : '',
-    d.country || '', absenceText(d), d.dayType === 'fixedClock' ? (d.clockConfirmed ? 'כן' : 'לא') : ''];
+    d.country || '', absenceText(d), d.dayType === 'fixedClock' ? (d.clockConfirmed ? 'כן' : 'לא') : '', tripsToCell(d)];
 }
 function exportDay() { download(toCsv([CSV_HEADERS, csvRow(readForm(), selectedKey())]), `shacharer_day_${state.date}.csv`, 'text/csv;charset=utf-8'); }
 function exportMonth() {
@@ -773,6 +952,7 @@ async function importData(file) {
         startCoffee:cleanTime(r[6]), endCoffee:cleanTime(r[7]), locationUrl:r[8] || 'לא נדגם', notes:unquote(r[9]), dayType:LABEL_TO_TYPE[r[10]] || 'fixed',
         siteName:unquote(r[11]), returnHome:cleanTime(r[12]), country:unquote(r[18]) };
       if (r[20]) rec.clockConfirmed = r[20] === 'כן';
+      const trips = tripsFromCell(r[21]); if (trips.length) rec.vehicleTrips = trips;
       const abs = (r[19] || '').match(/^([\d.]+)\s*ימים$|^(\d{2}):(\d{2})\s*שעות$/);
       if (abs && ABSENCE.has(rec.dayType)) {
         if (abs[1]) { rec.absenceUnit = 'days'; rec.absenceDays = Number(abs[1]); }
@@ -785,7 +965,7 @@ async function importData(file) {
   if (overlap.length && !confirm(`יש ${overlap.length} תאריכים קיימים. להחליף אותם בנתוני הקובץ? ביטול ישמור על הקיימים ויוסיף רק תאריכים חדשים.`)) overlap.forEach(k => delete incoming[k]);
   const count = Object.keys(incoming).length;
   setHistory({ ...h, ...incoming });
-  if (newSettings && typeof newSettings === 'object' && confirm('לייבא גם הגדרות חישוב מקובץ הגיבוי?')) { settings = { ...DEFAULTS, ...newSettings }; writeJSON(SK, settings); }
+  if (newSettings && typeof newSettings === 'object' && confirm('לייבא גם הגדרות חישוב מקובץ הגיבוי?')) { settings = { ...DEFAULTS, ...newSettings }; if (!Array.isArray(settings.vehicles)) settings.vehicles = []; writeJSON(SK, settings); }
   if (newBalances && typeof newBalances === 'object' && (newBalances.vacation != null || newBalances.sick != null) && confirm('לייבא גם יתרות חופשה ומחלה מקובץ הגיבוי?')) writeJSON(BK, { vacation: newBalances.vacation ?? null, sick: newBalances.sick ?? null });
   renderDay(); renderMonth(); renderSettings();
   setStatus('importStatus', `✓ יובאו ${count} דיווחים.`);
@@ -795,6 +975,7 @@ async function importData(file) {
 function renderSettings() {
   ['regular','thursdayRegular','meal1','meal2'].forEach(id => $(id).value = settings[id]);
   $('deductCoffee').checked = Boolean(settings.deductCoffee);
+  $('vehiclesInput').value = (settings.vehicles || []).join('\n');
   const b = getBalances();
   $('balVacInput').value = b.vacation ?? '';
   $('balSickInput').value = b.sick ?? '';
@@ -814,8 +995,9 @@ function saveSettings() {
     next[id] = v;
   }
   next.deductCoffee = $('deductCoffee').checked;
+  next.vehicles = [...new Set($('vehiclesInput').value.split('\n').map(v => v.trim()).filter(Boolean))];
   settings = next; writeJSON(SK, settings);
-  setStatus('settingsStatus', '✓ ההגדרות נשמרו'); renderCalc();
+  setStatus('settingsStatus', '✓ ההגדרות נשמרו'); renderTrips(readTrips()); renderCalc();
 }
 function saveBalances() {
   const parse = id => $(id).value === '' ? null : Number($(id).value);
@@ -921,7 +1103,7 @@ function installClockPicker() {
   el('cM').onclick = () => { part = 'minute'; changeView('dial'); };
 
   function close() { modal.hidden = true; active = null; document.body.style.overflow = ''; prevFocus?.focus(); }
-  function commit(value) { const target = active; if (!target) return; close(); if (target.value !== value) { target.value = value; saveDay(); } }
+  function commit(value) { const target = active; if (!target) return; close(); if (target.value !== value) { target.value = value; target.dispatchEvent(new Event('change', { bubbles: true })); } }
   function open(target) {
     prevFocus = document.activeElement; active = target;
     const m = /^(\d{2}):(\d{2})$/.exec(target.value), now = new Date();
@@ -940,12 +1122,10 @@ function installClockPicker() {
     if (e.key === 'Escape') { e.preventDefault(); close(); }
     else if (e.key === 'Enter' && view === 'keyboard') { e.preventDefault(); el('cSet').click(); }
   });
-  TIME_IDS.forEach(id => {
-    const input = $(id);
-    input.setAttribute('aria-label', 'בחר שעה: ' + TIME_FIELDS.find(f => f[0] === id)[1]);
-    input.addEventListener('click', () => open(input));
-    input.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(input); } });
-  });
+  TIME_IDS.forEach(id => $(id).setAttribute('aria-label', 'בחר שעה: ' + TIME_FIELDS.find(f => f[0] === id)[1]));
+  // Delegated, so clock fields added later (vehicle trips) work too.
+  document.addEventListener('click', e => { const input = e.target.closest('.clock-input'); if (input) open(input); });
+  document.addEventListener('keydown', e => { const input = e.target.closest?.('.clock-input'); if (input && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(input); } });
 }
 
 /* ---------- wiring ---------- */
@@ -962,7 +1142,11 @@ function init() {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => showTab(b.dataset.tab));
   $('stamps').addEventListener('click', e => { const b = e.target.closest('[data-stamp]'); if (b) stamp(b.dataset.stamp); });
 
-  ['notes','siteName','country','clockConfirmed','absDays','absHours','absMinutes'].forEach(id => $(id).addEventListener('change', saveDay));
+  [...TIME_IDS, 'notes','siteName','country','clockConfirmed','absDays','absHours','absMinutes'].forEach(id => $(id).addEventListener('change', saveDay));
+  $('trips').addEventListener('click', onTripsEvent);
+  $('trips').addEventListener('change', onTripsEvent);
+  $('addTrip').onclick = addTrip;
+  $('vehicleCsv').onclick = exportVehicles;
   $('dayType').addEventListener('change', () => { showTypeFields(); renderCalc(); saveDay(); });
   $('absenceUnit').addEventListener('change', () => { showTypeFields(); saveDay(); });
   $('saveBtn').onclick = saveDay;
