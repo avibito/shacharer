@@ -110,6 +110,10 @@ a{color:#50e5ff}
 .install .later{font-weight:400;border-color:#637a9b;font-size:12px;padding:6px 10px}
 details summary{cursor:pointer;list-style-position:inside}
 #teamFiles{width:100%;margin:6px 0}
+.login-card{width:min(100%,340px);background:var(--panel);border:1px solid #25f4e8;border-radius:20px;padding:20px;box-shadow:0 12px 55px #000c}
+.login-card input#managerCode{width:100%;font-size:22px;text-align:center;letter-spacing:2px;margin-top:6px}
+.show-code{display:flex;align-items:center;gap:6px;margin-top:8px}
+.dev-logo{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -378,13 +382,9 @@ details summary{cursor:pointer;list-style-position:inside}
   <button type="button" id="saveSend" class="primary">שמור פרטי שליחה</button>
   <p id="sendStatus" class="status"></p>
  </div>
- <div class="panel" id="managerPanel">
-  <h2>🔐 כניסת ממונה</h2>
-  <div id="managerLocked">
-   <p class="small">לממונים שקיבלו קוד הרשאה מהמפתח בלבד. הקוד פותח את מסך ״סיכום צוות״ במכשיר הזה.</p>
-   <div class="veh-add"><input id="managerCode" class="ltr" placeholder="XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" aria-label="קוד ממונה"><button type="button" id="managerLogin" class="primary">כניסה</button></div>
-  </div>
-  <div id="managerOpen" class="hidden">
+ <div class="panel hidden" id="managerPanel">
+  <h2>🔐 מצב ממונה</h2>
+  <div id="managerOpen">
    <p class="note" id="managerWho"></p>
    <button type="button" id="managerLogout" class="danger">יציאה ממצב ממונה</button>
    <div id="adminTools" class="hidden">
@@ -455,13 +455,24 @@ details summary{cursor:pointer;list-style-position:inside}
 </div>
 </main>
 
+<div class="clock-dialog" id="loginDialog" hidden>
+ <div class="login-card" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <h2 id="loginTitle">🔐 כניסה מורשית</h2>
+  <p class="small">הזן את קוד ההרשאה שקיבלת מהמפתח.</p>
+  <input id="managerCode" type="password" class="ltr" placeholder="XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="קוד הרשאה">
+  <label class="small show-code"><input type="checkbox" id="showCode"> הצג קוד</label>
+  <p class="status" id="loginStatus" role="alert"></p>
+  <div class="actions"><button type="button" id="managerLogin" class="primary">כניסה</button><button type="button" id="loginCancel">ביטול</button></div>
+ </div>
+</div>
+
 <script>
 'use strict';
 /* ==========================================================================
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.5';
+const VERSION = '17.6';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1064,26 +1075,56 @@ function managerSession() {
 }
 function renderManager() {
   const r = managerSession();
-  $('managerLocked').classList.toggle('hidden', Boolean(r));
-  $('managerOpen').classList.toggle('hidden', !r);
+  $('managerPanel').classList.toggle('hidden', !r);
   $('adminTools').classList.toggle('hidden', !(r && r.admin));
   $('teamPanel').classList.toggle('hidden', !r);
   if (r) $('managerWho').textContent = `✓ מחובר כ${r.admin ? 'מנהל' : 'ממונה'}: ${r.name}. מסך ״סיכום צוות״ פתוח בלשונית היסטוריה.`;
 }
+// Hidden entry: 5 quick taps on the developer logo open the login dialog.
+const MAX_FAILS = 5, LOCK_MS = 10 * 60 * 1000;
+let logoTaps = [];
+function onLogoTap() {
+  const now = Date.now();
+  logoTaps = logoTaps.filter(t => now - t < 3000).concat(now);
+  if (logoTaps.length < 5) return;
+  logoTaps = [];
+  if (managerSession()) { showTab('settings'); $('managerPanel').scrollIntoView({ behavior: 'smooth' }); return; }
+  openLogin();
+}
+function lockInfo() { const v = readJSON('shacharerLoginFails', {}); return { count: v.count || 0, until: v.until || 0 }; }
+function lockedMessage() {
+  const { until } = lockInfo(), left = until - Date.now();
+  return left > 0 ? `יותר מדי ניסיונות שגויים. נסה שוב בעוד ${Math.ceil(left / 60000)} דקות.` : '';
+}
+function openLogin() {
+  $('loginDialog').hidden = false; document.body.style.overflow = 'hidden';
+  $('managerCode').value = ''; $('showCode').checked = false; $('managerCode').type = 'password';
+  const msg = lockedMessage(); setStatus('loginStatus', msg, msg ? 'err' : '');
+  $('managerCode').focus();
+}
+function closeLogin() { $('loginDialog').hidden = true; document.body.style.overflow = ''; }
 async function managerLogin() {
+  const locked = lockedMessage(); if (locked) { setStatus('loginStatus', locked, 'err'); return; }
   const code = $('managerCode').value;
-  if (normCode(code).length < 8) { setStatus('managerStatus', 'יש להזין את הקוד המלא', 'warn'); return; }
-  if (!crypto.subtle) { setStatus('managerStatus', 'הכניסה זמינה רק דרך כתובת האתר המאובטחת (https)', 'err'); return; }
+  if (normCode(code).length < 8) { setStatus('loginStatus', 'יש להזין את הקוד המלא', 'warn'); return; }
+  if (!crypto.subtle) { setStatus('loginStatus', 'הכניסה זמינה רק דרך כתובת האתר המאובטחת (https)', 'err'); return; }
   const h = await hashCode(code);
   const r = recipients().find(x => x.codeHash === h);
-  if (!r) { setStatus('managerStatus', 'קוד שגוי או שההרשאה בוטלה', 'err'); return; }
+  if (!r) {
+    const f = lockInfo(), count = f.count + 1;
+    writeJSON('shacharerLoginFails', count >= MAX_FAILS ? { count: 0, until: Date.now() + LOCK_MS } : { count, until: 0 });
+    setStatus('loginStatus', count >= MAX_FAILS ? lockedMessage() : `קוד שגוי (נותרו ${MAX_FAILS - count} ניסיונות)`, 'err');
+    $('managerCode').select(); return;
+  }
+  localStorage.removeItem('shacharerLoginFails');
   writeJSON('shacharerManager', { id: r.id, hash: h });
-  $('managerCode').value = ''; setStatus('managerStatus', '');
-  renderManager(); toast(`ברוך הבא, ${r.name}`);
+  closeLogin(); renderManager();
+  showTab('settings'); $('managerPanel').scrollIntoView({ behavior: 'smooth' });
+  toast(`ברוך הבא, ${r.name}`);
 }
 function managerLogout() {
   if (!confirm('לצאת ממצב ממונה במכשיר זה? נתוני הצוות שנטענו יישארו שמורים.')) return;
-  localStorage.removeItem('shacharerManager'); renderManager();
+  localStorage.removeItem('shacharerManager'); renderManager(); showTab('day');
 }
 async function createManager() {
   const name = $('newMgrName').value.trim(), phone = $('newMgrPhone').value.trim();
@@ -1556,6 +1597,11 @@ function init() {
   $('sendFile').onclick = sendFile;
   $('saveSend').onclick = saveSend;
   $('managerLogin').onclick = managerLogin;
+  $('loginCancel').onclick = closeLogin;
+  $('loginDialog').addEventListener('click', e => { if (e.target === $('loginDialog')) closeLogin(); });
+  $('loginDialog').addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+  $('showCode').onchange = () => { $('managerCode').type = $('showCode').checked ? 'text' : 'password'; };
+  document.querySelector('.dev-logo').addEventListener('click', onLogoTap);
   $('managerCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); managerLogin(); } });
   $('managerLogout').onclick = managerLogout;
   $('newMgrCreate').onclick = createManager;
