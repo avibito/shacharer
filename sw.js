@@ -1,5 +1,5 @@
 // שחרר — offline support. Network first (so updates arrive immediately), cache as fallback.
-const CACHE = 'shacharer-v17-6';
+const CACHE = 'shacharer-v17-7';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './config.json', './shacharer-icon-192.png', './shacharer-icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -16,7 +16,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(req).then(res => {
+    // Bypass the browser HTTP cache (GitHub Pages sets max-age=600) so a new version shows up at once.
+    fetch(req, { cache: 'no-cache' }).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true })
