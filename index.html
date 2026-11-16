@@ -114,6 +114,7 @@ details summary{cursor:pointer;list-style-position:inside}
 .login-card input#managerCode{width:100%;font-size:22px;text-align:center;letter-spacing:2px;margin-top:6px}
 .show-code{display:flex;align-items:center;gap:6px;margin-top:8px}
 .dev-logo{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.update-bar{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;margin:0 auto;z-index:60;width:fit-content;background:#063b41;border:1px solid #25f4e8;border-radius:12px;padding:12px 16px;color:#eaffff;font:inherit;font-weight:700;box-shadow:0 6px 24px #000a;cursor:pointer}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -472,7 +473,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.6';
+const VERSION = '17.7';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1575,6 +1576,29 @@ function setupWelcome() {
   renderInstall();
 }
 
+/* ---------- new version notice ---------- */
+// Compares the VERSION in the live index.html with the running one whenever the app comes back to the foreground.
+async function checkNewVersion() {
+  if (location.protocol !== 'https:') return;
+  try {
+    const html = await (await fetch('./index.html', { cache: 'no-store' })).text();
+    const live = (html.match(/const VERSION = '([^']+)'/) || [])[1];
+    if (live && live !== VERSION) showUpdateBanner(live);
+  } catch {}
+}
+function showUpdateBanner(live) {
+  if (document.querySelector('.update-bar')) return;
+  const bar = document.createElement('button');
+  bar.type = 'button'; bar.className = 'update-bar';
+  bar.textContent = `✨ גרסה חדשה זמינה (${live}) — לחץ לרענון`;
+  bar.onclick = () => location.reload();
+  document.body.append(bar);
+}
+function watchForNewVersion() {
+  checkNewVersion();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkNewVersion(); });
+}
+
 function updateTodayText() {
   $('todayText').textContent = new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
@@ -1667,7 +1691,13 @@ function init() {
   setupWelcome();
   renderManager();
   loadConfig();
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+      const check = () => reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    }).catch(() => {});
+  }
+  watchForNewVersion();
 }
 init();
 </script>
