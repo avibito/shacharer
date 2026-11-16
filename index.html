@@ -98,6 +98,13 @@ a{color:#50e5ff}
 .trip .field input:not([type=number]):not(.clock-input),.trip .field select{width:min(100%,210px)}
 .trip .km input{width:96px;flex:0 0 96px}
 .trip-sum{margin-top:6px}
+.welcome{border-color:#25f4e8;background:linear-gradient(160deg,#0d2a33,#101826)}
+.welcome ol,.welcome ul{margin:8px 0;padding-inline-start:22px;line-height:1.8;font-size:14px}
+.install{display:flex;align-items:center;gap:10px;border-color:#25f4e8}
+.install .txt{flex:1;font-size:14px;line-height:1.6}
+.install .btns{display:flex;flex-direction:column;gap:6px}
+.install button{padding:9px 12px;font-size:14px}
+.install .later{font-weight:400;border-color:#637a9b;font-size:12px;padding:6px 10px}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -145,6 +152,11 @@ a{color:#50e5ff}
  <div class="muted" id="todayText"></div>
 </header>
 
+<div class="panel install hidden" id="installBar" role="region" aria-label="התקנת האפליקציה">
+ <div class="txt" id="installText"></div>
+ <div class="btns"><button type="button" id="installBtn" class="primary hidden">📲 התקן</button><button type="button" id="installLater" class="later">לא עכשיו</button></div>
+</div>
+
 <nav class="tabs" role="tablist">
  <button type="button" data-tab="day" class="primary" role="tab">דיווח יומי</button>
  <button type="button" data-tab="history" role="tab">היסטוריה</button>
@@ -153,6 +165,22 @@ a{color:#50e5ff}
 
 <!-- ============ DAY ============ -->
 <section id="day">
+ <div class="panel welcome hidden" id="welcome">
+  <h2>👋 ברוכים הבאים לשחרר</h2>
+  <ul>
+   <li><b>דיווח יומי</b> — לוחצים על כפתורי ההחתמה (יציאה מהבית, התחלת עבודה, סיום…) והשעה נרשמת לבד.</li>
+   <li><b>רכב תפעולי</b> — כל יציאה ברכב הצוות: ״➕ הוסף נסיעה״.</li>
+   <li><b>היסטוריה</b> — סיכום חודשי של שעות ושל הרכב, וייצוא ל-CSV.</li>
+   <li><b>פרטיות</b> — הנתונים נשמרים רק בטלפון שלך. אין שרת ואף אחד אחר לא רואה אותם.</li>
+  </ul>
+  <b>3 צעדים להתחלה:</b>
+  <ol>
+   <li>בהגדרות: בדוק את מכסת השעות היומית והוסף את רכבי הצוות.</li>
+   <li>התקן את האפליקציה למסך הבית<span id="welcomeInstallHint"></span></li>
+   <li>מדי פעם: הגדרות ← ״הורד גיבוי מלא״.</li>
+  </ol>
+  <div class="actions"><button type="button" id="welcomeSettings">⚙ פתח הגדרות</button><button type="button" id="welcomeDone" class="primary">הבנתי, נתחיל</button></div>
+ </div>
  <div class="panel">
   <h2>יום העבודה</h2>
   <div class="subnav"><span class="muted" id="dateCaption">בחר תאריך לדיווח / עריכה</span><button type="button" id="todayBtn">היום</button></div>
@@ -313,6 +341,11 @@ a{color:#50e5ff}
   <button type="button" id="saveSettings" class="primary">שמור הגדרות</button>
   <p id="settingsStatus" class="status"></p>
  </div>
+ <div class="panel" id="installSettings">
+  <h2>📲 התקנה ושיתוף</h2>
+  <p class="small" id="installSettingsText"></p>
+  <div class="actions"><button type="button" id="installBtn2" class="primary hidden">📲 התקן אפליקציה</button><button type="button" id="shareApp">🔗 שתף קישור לאפליקציה</button><button type="button" id="showWelcome">📖 הצג שוב את ההסבר</button></div>
+ </div>
  <div class="panel" id="vehicleSettings">
   <h2>🚗 רכבים תפעוליים</h2>
   <p class="small">רכבי הצוות שיופיעו לבחירה מהירה בדיווח נסיעה. אפשר מספר רישוי, כינוי או שניהם.</p>
@@ -340,7 +373,7 @@ a{color:#50e5ff}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.2';
+const VERSION = '17.3';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1163,6 +1196,54 @@ function installClockPicker() {
 }
 
 /* ---------- wiring ---------- */
+/* ---------- install prompt & first-run welcome ---------- */
+const APP_URL = 'https://avibito.github.io/shacharer/';
+let installEvent = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function installHowTo() {
+  if (installEvent) return 'לחץ על ״התקן״ והאפליקציה תתווסף למסך הבית.';
+  if (isIOS()) return 'באייפון: פתח ב-Safari, לחץ על כפתור השיתוף ⬆️ ובחר ״הוסף למסך הבית״.';
+  return 'בתפריט הדפדפן (⋮) בחר ״התקנת אפליקציה״ או ״הוספה למסך הבית״.';
+}
+function renderInstall() {
+  const installed = isStandalone();
+  let dismissed = 0; try { dismissed = Number(localStorage.getItem('shacharerInstallLater')) || 0; } catch {}
+  const snoozed = Date.now() - dismissed < 14 * 864e5;
+  $('installBar').classList.toggle('hidden', installed || snoozed);
+  $('installText').textContent = '📲 התקן את שחרר למסך הבית — נפתחת כמו אפליקציה ועובדת גם בלי אינטרנט. ' + (installEvent ? '' : installHowTo());
+  ['installBtn','installBtn2'].forEach(id => $(id).classList.toggle('hidden', !installEvent || installed));
+  $('installSettingsText').textContent = installed ? '✓ האפליקציה מותקנת במכשיר זה.' : installHowTo();
+  $('welcomeInstallHint').textContent = installed ? ' (✓ כבר מותקנת)' : ' — ' + installHowTo();
+}
+async function promptInstall() {
+  if (!installEvent) { toast(installHowTo()); return; }
+  installEvent.prompt();
+  try { await installEvent.userChoice; } catch {}
+  installEvent = null; renderInstall();
+}
+async function shareApp() {
+  const text = 'שחרר – אפליקציה לדיווח שעות ורכב תפעולי. להתקנה פתחו את הקישור ובחרו ״הוספה למסך הבית״:';
+  if (navigator.share) { try { await navigator.share({ title: 'שחרר', text, url: APP_URL }); } catch {} return; }
+  try { await navigator.clipboard.writeText(text + '\n' + APP_URL); toast('הקישור הועתק'); } catch { prompt('העתק את הקישור:', APP_URL); }
+}
+function setupWelcome() {
+  let seen = false; try { seen = Boolean(localStorage.getItem('shacharerWelcomed')); } catch {}
+  // Existing users who already have reports don't need the intro.
+  if (!seen && !Object.keys(getHistory()).length) $('welcome').classList.remove('hidden');
+  const done = () => { $('welcome').classList.add('hidden'); try { localStorage.setItem('shacharerWelcomed', '1'); } catch {} };
+  $('welcomeDone').onclick = done;
+  $('welcomeSettings').onclick = () => { done(); showTab('settings'); };
+  $('showWelcome').onclick = () => { $('welcome').classList.remove('hidden'); showTab('day'); };
+  $('installBtn').onclick = promptInstall;
+  $('installBtn2').onclick = promptInstall;
+  $('installLater').onclick = () => { try { localStorage.setItem('shacharerInstallLater', String(Date.now())); } catch {} renderInstall(); };
+  $('shareApp').onclick = shareApp;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; renderInstall(); });
+  window.addEventListener('appinstalled', () => { installEvent = null; renderInstall(); toast('✓ שחרר הותקנה למסך הבית'); });
+  renderInstall();
+}
+
 function updateTodayText() {
   $('todayText').textContent = new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
@@ -1235,6 +1316,7 @@ function init() {
   renderDay();
   renderMonth();
 
+  setupWelcome();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 init();
