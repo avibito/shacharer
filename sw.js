@@ -1,5 +1,5 @@
 // שחרר — offline support. Network first (so updates arrive immediately), cache as fallback.
-const CACHE = 'shacharer-v17-1';
+const CACHE = 'shacharer-v17-2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './shacharer-icon-192.png', './shacharer-icon-512.png'];
 
 self.addEventListener('install', e => {

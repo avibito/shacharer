@@ -98,7 +98,11 @@ a{color:#50e5ff}
 .trip .field input:not([type=number]):not(.clock-input),.trip .field select{width:min(100%,210px)}
 .trip .km input{width:96px;flex:0 0 96px}
 .trip-sum{margin-top:6px}
-#vehiclesInput{min-height:70px}
+.veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
+.veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
+.veh-add{display:flex;gap:8px;margin-top:10px}
+.veh-add input{flex:1}
+.veh-add button{flex:0 0 auto}
 /* Clock picker */
 .clock-dialog{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.76);padding:14px}
 .clock-dialog[hidden],.clock-dial[hidden],.clock-wheels[hidden],.clock-keyboard[hidden]{display:none!important}
@@ -199,6 +203,7 @@ a{color:#50e5ff}
   <p class="small">דווח כל יציאה ברכב התפעולי של הצוות — מהבית או ממקום העבודה הקבוע.</p>
   <div id="trips"></div>
   <button type="button" id="addTrip" class="primary" style="width:100%">➕ הוסף נסיעה ברכב תפעולי</button>
+  <div class="actions"><button type="button" id="goVehicleSummary">📊 סיכום חודשי</button><button type="button" id="goVehicleSettings">⚙ רשימת רכבים</button></div>
   <datalist id="vehicleList"></datalist>
  </div>
 
@@ -246,7 +251,7 @@ a{color:#50e5ff}
  </div>
 
  <div class="panel">
-  <h2>🚗 רכב תפעולי — סיכום חודשי</h2>
+  <h2 id="vehicleSummary">🚗 רכב תפעולי — סיכום חודשי</h2>
   <div class="tiles">
    <div class="tile"><small>נסיעות</small><strong id="vTrips">0</strong></div>
    <div class="tile"><small>ימי שימוש</small><strong id="vDays">0</strong></div>
@@ -305,10 +310,15 @@ a{color:#50e5ff}
   <div class="field"><label for="meal1">סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="meal2">סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="deductCoffee">ניכוי הפסקת קפה מדווחת</label><input id="deductCoffee" type="checkbox"></div>
-  <label class="muted" for="vehiclesInput">רכבים תפעוליים של הצוות — מספר רישוי או כינוי, אחד בכל שורה</label>
-  <textarea id="vehiclesInput" placeholder="12-345-67 טנדר צוות"></textarea>
   <button type="button" id="saveSettings" class="primary">שמור הגדרות</button>
   <p id="settingsStatus" class="status"></p>
+ </div>
+ <div class="panel" id="vehicleSettings">
+  <h2>🚗 רכבים תפעוליים</h2>
+  <p class="small">רכבי הצוות שיופיעו לבחירה מהירה בדיווח נסיעה. אפשר מספר רישוי, כינוי או שניהם.</p>
+  <div id="vehicleItems"></div>
+  <div class="veh-add"><input id="newVehicle" placeholder="לדוגמה: 12-345-67 טנדר" aria-label="רכב חדש"><button type="button" id="addVehicle" class="primary">➕ הוסף רכב</button></div>
+  <p id="vehicleStatus" class="status"></p>
  </div>
  <div class="panel">
   <h2>אחסון וגיבוי</h2>
@@ -330,7 +340,7 @@ a{color:#50e5ff}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.1';
+const VERSION = '17.2';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -975,7 +985,7 @@ async function importData(file) {
 function renderSettings() {
   ['regular','thursdayRegular','meal1','meal2'].forEach(id => $(id).value = settings[id]);
   $('deductCoffee').checked = Boolean(settings.deductCoffee);
-  $('vehiclesInput').value = (settings.vehicles || []).join('\n');
+  renderVehicleSettings();
   const b = getBalances();
   $('balVacInput').value = b.vacation ?? '';
   $('balSickInput').value = b.sick ?? '';
@@ -995,10 +1005,34 @@ function saveSettings() {
     next[id] = v;
   }
   next.deductCoffee = $('deductCoffee').checked;
-  next.vehicles = [...new Set($('vehiclesInput').value.split('\n').map(v => v.trim()).filter(Boolean))];
   settings = next; writeJSON(SK, settings);
   setStatus('settingsStatus', '✓ ההגדרות נשמרו'); renderTrips(readTrips()); renderCalc();
 }
+function renderVehicleSettings() {
+  const list = settings.vehicles || [];
+  const box = $('vehicleItems'); box.replaceChildren();
+  if (!list.length) { box.textContent = 'עדיין לא הוגדרו רכבים.'; box.className = 'small'; return; }
+  box.className = '';
+  list.forEach(v => {
+    const row = document.createElement('div'), name = document.createElement('span'), del = document.createElement('button');
+    row.className = 'veh-item'; name.textContent = '🚗 ' + v;
+    del.type = 'button'; del.className = 'danger'; del.textContent = 'הסר';
+    del.onclick = () => { if (!confirm(`להסיר את "${v}" מרשימת הרכבים? נסיעות שכבר דווחו לא ישתנו.`)) return; saveVehicles(list.filter(x => x !== v)); };
+    row.append(name, del); box.append(row);
+  });
+}
+function saveVehicles(list) {
+  settings = { ...settings, vehicles: list }; writeJSON(SK, settings);
+  renderVehicleSettings(); renderTrips(readTrips()); renderCalc();
+}
+function addVehicle() {
+  const v = $('newVehicle').value.trim().replace(/\s+/g, ' ');
+  if (!v) { setStatus('vehicleStatus', 'יש להקליד מספר רישוי או כינוי', 'warn'); $('newVehicle').focus(); return; }
+  if ((settings.vehicles || []).includes(v)) { setStatus('vehicleStatus', 'הרכב כבר ברשימה', 'warn'); return; }
+  saveVehicles([...(settings.vehicles || []), v]);
+  $('newVehicle').value = ''; setStatus('vehicleStatus', `✓ "${v}" נוסף לרשימה`);
+}
+
 function saveBalances() {
   const parse = id => $(id).value === '' ? null : Number($(id).value);
   const vacation = parse('balVacInput'), sick = parse('balSickInput');
@@ -1146,6 +1180,10 @@ function init() {
   $('trips').addEventListener('click', onTripsEvent);
   $('trips').addEventListener('change', onTripsEvent);
   $('addTrip').onclick = addTrip;
+  $('addVehicle').onclick = addVehicle;
+  $('newVehicle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addVehicle(); } });
+  $('goVehicleSummary').onclick = () => { state.month = state.date.slice(0,7); showTab('history'); $('vehicleSummary').scrollIntoView({ behavior:'smooth' }); };
+  $('goVehicleSettings').onclick = () => { showTab('settings'); $('vehicleSettings').scrollIntoView({ behavior:'smooth' }); $('newVehicle').focus({ preventScroll:true }); };
   $('vehicleCsv').onclick = exportVehicles;
   $('dayType').addEventListener('change', () => { showTypeFields(); renderCalc(); saveDay(); });
   $('absenceUnit').addEventListener('change', () => { showTypeFields(); saveDay(); });
