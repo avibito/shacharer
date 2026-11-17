@@ -124,6 +124,10 @@ details summary{cursor:pointer;list-style-position:inside}
 .bank-form{border-top:1px solid #253246;margin-top:10px;padding-top:4px}
 .bank-form h3{color:var(--accent2);margin:10px 0 0}
 .date-in{width:130px;flex:0 0 130px;text-align:center}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}
+.seg button{padding:9px 4px;font-size:14px;font-weight:400;border-color:#42617b}
+.seg button.selected{background:#063b41;border-color:#25f4e8;font-weight:700}
+.nav .range{flex:1.4;text-align:center;font-weight:700;font-size:14px;direction:ltr;unicode-bidi:isolate}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -325,7 +329,9 @@ details summary{cursor:pointer;list-style-position:inside}
    <textarea id="teamPaste" placeholder="או הדבק כאן ידנית את הודעות הסיכום ולחץ ״טען״" style="margin-top:8px;min-height:70px"></textarea>
    <div class="actions"><button type="button" id="teamPasteLoad">טען מהטקסט</button><label class="small" style="display:flex;align-items:center;justify-content:center;border:1px dashed #42617b;border-radius:11px;cursor:pointer">קובץ CSV ישן<input type="file" id="teamFiles" accept=".csv,text/csv" multiple style="display:none"></label></div>
    <p class="status" id="teamStatus"></p>
-   <p class="small">מוצג החודש שנבחר למעלה. נתוני הרכב נספרים לפי דיווח הנהג בלבד, כדי שנסיעה משותפת לא תיספר פעמיים; הטבלה לפי עובד כוללת גם נסיעות כנוסע.</p>
+   <div class="seg" id="teamModes" role="tablist"><button type="button" data-mode="day">יום</button><button type="button" data-mode="week">שבוע</button><button type="button" data-mode="month" class="selected">חודש</button></div>
+   <div class="nav"><button type="button" id="teamPrev">◀ קודם</button><span id="teamRange" class="range"></span><button type="button" id="teamNext">הבא ▶</button></div>
+   <p class="small">נתוני הרכב נספרים לפי דיווח הנהג בלבד, כדי שנסיעה משותפת לא תיספר פעמיים; הטבלה לפי עובד כוללת גם נסיעות כנוסע. שבוע = ראשון עד שבת.</p>
    <div class="tiles">
     <div class="tile"><small>עובדים שדיווחו</small><strong id="tWorkers">0</strong></div>
     <div class="tile"><small>נסיעות רכב (לפי נהג)</small><strong id="tTrips">0</strong></div>
@@ -336,7 +342,13 @@ details summary{cursor:pointer;list-style-position:inside}
    <div class="table-wrap"><table><thead><tr><th>עובד</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>כנהג</th></tr></thead><tbody id="tByWorker"></tbody></table></div>
    <h3>לפי רכב</h3>
    <div class="table-wrap"><table><thead><tr><th>רכב</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>עובדים</th></tr></thead><tbody id="tByVehicle"></tbody></table></div>
-   <div class="actions"><button type="button" id="teamCsv">⬇ ייצוא סיכום צוות CSV</button><button type="button" id="teamClear" class="danger">נקה נתוני צוות לחודש</button></div>
+   <div id="tByWeekWrap"><h3>לפי שבוע</h3>
+   <div class="table-wrap"><table><thead><tr><th>שבוע</th><th>נסיעות</th><th>ק״מ</th><th>שעות</th><th>עובדים</th></tr></thead><tbody id="tByWeek"></tbody></table></div></div>
+   <div id="tByDayWrap"><h3>לפי יום</h3>
+   <div class="table-wrap"><table><thead><tr><th>תאריך</th><th>יום</th><th>נסיעות</th><th>ק״מ</th><th>שעות</th><th>עובדים</th></tr></thead><tbody id="tByDay"></tbody></table></div></div>
+   <div id="tTripsWrap"><h3>פירוט נסיעות</h3>
+   <div class="table-wrap"><table><thead><tr><th>עובד</th><th>רכב</th><th>מ־</th><th>יעד</th><th>שעות</th><th>ק״מ</th><th>תפקיד</th></tr></thead><tbody id="tTripRows"></tbody></table></div></div>
+   <div class="actions"><button type="button" id="teamXlsx" class="primary wide">📊 דוח Excel לחודש</button><button type="button" id="teamCsv">⬇ CSV</button><button type="button" id="teamClear" class="danger">נקה נתוני צוות לחודש</button></div>
   </details>
  </div>
 
@@ -497,7 +509,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '18.1';
+const VERSION = '18.2';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1332,28 +1344,76 @@ async function importTeamFiles(files) {
   const added = mergeTeam(groups);
   setStatus('teamStatus', `✓ נטענו ${added} נסיעות` + (bad.length ? ` · לא זוהו: ${bad.join(', ')}` : ''), bad.length ? 'warn' : '');
 }
+/* ---------- team summary: day / week / month ---------- */
+const teamView = { mode: 'month', day: null };
+const kmOfTeam = t => { const n = Number(t.km); return t.km !== '' && Number.isFinite(n) ? n : 0; };
+const isDriverT = t => t.role !== TRIP_ROLE.passenger;
+const minsT = t => tripMinutes(t) ?? 0;
+const sumT = (arr, f) => arr.reduce((n, t) => n + f(t), 0);
+const addDays = (iso, n) => { const d = dateOf(iso); d.setDate(d.getDate() + n); return isoLocal(d); };
+const weekStart = iso => addDays(iso, -dateOf(iso).getDay()); // Sunday
+const monthEnd = month => { const [y, m] = month.split('-').map(Number); return isoLocal(new Date(y, m, 0)); };
+const shortDate = iso => { const [, m, d] = iso.split('-'); return `${d}.${m}`; };
+function teamRange() {
+  if (teamView.mode === 'month') return { from: state.month + '-01', to: monthEnd(state.month), label: monthLabel() };
+  const day = teamView.day;
+  if (teamView.mode === 'day') return { from: day, to: day, label: `${isoToDisplay(day)} (${WEEKDAYS[dateOf(day).getDay()]})` };
+  const from = weekStart(day), to = addDays(from, 6);
+  return { from, to, label: `${shortDate(from)}–${isoToDisplay(to)}` };
+}
+const teamTripsIn = (from, to) => getTeam().filter(t => { const iso = keyToIso(t.k); return iso && iso >= from && iso <= to; })
+  .sort((a, b) => keyToIso(a.k).localeCompare(keyToIso(b.k)) || (a.depart || '').localeCompare(b.depart || '') || a.worker.localeCompare(b.worker));
+function ensureTeamDay() {
+  if (teamView.day && teamView.day.startsWith(state.month)) return;
+  const inMonth = getTeam().map(t => keyToIso(t.k)).filter(iso => iso && iso.startsWith(state.month)).sort();
+  const today = todayIso();
+  teamView.day = today.startsWith(state.month) ? today : inMonth[inMonth.length - 1] || state.month + '-01';
+}
+function setTeamMode(mode) { teamView.mode = mode; if (mode !== 'month') ensureTeamDay(); renderTeam(); }
+function shiftTeam(dir) {
+  if (teamView.mode === 'month') return shiftMonth(dir);
+  teamView.day = addDays(teamView.day, dir * (teamView.mode === 'week' ? 7 : 1));
+  if (!teamView.day.startsWith(state.month)) { state.month = teamView.day.slice(0, 7); renderMonth(); } else renderTeam();
+}
+/** Aggregates used by both the screen and the Excel report. */
+function teamAggregate(trips) {
+  const group = key => { const m = new Map(); trips.forEach(t => { const g = t[key] || 'לא צוין'; m.set(g, [...(m.get(g) || []), t]); }); return [...m].sort((a, b) => b[1].length - a[1].length || String(a[0]).localeCompare(String(b[0]))); };
+  const driven = trips.filter(isDriverT);
+  return {
+    trips, driven,
+    workers: new Set(trips.map(t => t.worker)).size,
+    byWorker: group('worker').map(([w, arr]) => ({ name: w, trips: arr.length, days: new Set(arr.map(t => t.k)).size, km: sumT(arr.filter(isDriverT), kmOfTeam), mins: sumT(arr, minsT), driver: arr.filter(isDriverT).length, passenger: arr.length - arr.filter(isDriverT).length })),
+    byVehicle: group('vehicle').map(([v, arr]) => { const d = arr.filter(isDriverT); return { name: v, trips: d.length, days: new Set(arr.map(t => t.k)).size, km: sumT(d, kmOfTeam), mins: sumT(d, minsT), workers: [...new Set(arr.map(t => t.worker))].join(', ') }; }),
+    byDay: [...new Set(trips.map(t => keyToIso(t.k)))].sort().map(iso => { const arr = trips.filter(t => keyToIso(t.k) === iso), d = arr.filter(isDriverT);
+      return { iso, trips: d.length, km: sumT(d, kmOfTeam), mins: sumT(d, minsT), workers: [...new Set(arr.map(t => t.worker))].join(', ') }; }),
+  };
+}
+function weeksOfMonth(month) {
+  const out = []; let start = month + '-01'; const end = monthEnd(month);
+  while (start <= end) { const ws = weekStart(start), we = addDays(ws, 6); const to = we > end ? end : we; out.push({ from: start, to }); start = addDays(to, 1); }
+  return out;
+}
 function renderTeam() {
-  const trips = getTeam().filter(t => t.month === state.month);
-  const kmOf = t => { const n = Number(t.km); return t.km !== '' && Number.isFinite(n) ? n : 0; };
-  const sum = (arr, f) => arr.reduce((n, t) => n + f(t), 0);
-  const days = arr => new Set(arr.map(t => t.worker + t.k)).size;
-  $('tWorkers').textContent = new Set(trips.map(t => t.worker)).size;
-  // Vehicle usage counts the driver's report only, so a shared ride is not counted twice.
-  const isDriver = t => t.role !== TRIP_ROLE.passenger;
-  const driven = trips.filter(isDriver);
-  $('tTrips').textContent = driven.length;
-  $('tKm').textContent = sum(driven, kmOf).toLocaleString('he-IL');
-  $('tHours').textContent = fmt(sum(driven, t => tripMinutes(t) ?? 0));
-  const group = key => { const m = new Map(); trips.forEach(t => { const g = t[key] || 'לא צוין'; m.set(g, [...(m.get(g) || []), t]); }); return [...m].sort((a, b) => b[1].length - a[1].length); };
-  const cell = (tr, v, num) => { const td = document.createElement('td'); td.textContent = v; if (num) td.className = 'num'; tr.append(td); };
-  const empty = n => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = n; td.textContent = 'אין נתוני צוות לחודש זה'; tr.append(td); return [tr]; };
-  const byWorker = group('worker').map(([w, arr]) => { const tr = document.createElement('tr');
-    cell(tr, w); cell(tr, arr.length, true); cell(tr, days(arr), true); cell(tr, sum(arr, kmOf), true); cell(tr, fmt(sum(arr, t => tripMinutes(t) ?? 0)), true); cell(tr, arr.filter(t => t.role !== TRIP_ROLE.passenger).length, true); return tr; });
-  const byVehicle = group('vehicle').map(([v, arr]) => { const tr = document.createElement('tr');
-    const d = arr.filter(isDriver);
-    cell(tr, v); cell(tr, d.length, true); cell(tr, new Set(arr.map(t => t.k)).size, true); cell(tr, sum(d, kmOf), true); cell(tr, fmt(sum(d, t => tripMinutes(t) ?? 0)), true); cell(tr, [...new Set(arr.map(t => t.worker))].join(', ')); return tr; });
-  $('tByWorker').replaceChildren(...(byWorker.length ? byWorker : empty(6)));
-  $('tByVehicle').replaceChildren(...(byVehicle.length ? byVehicle : empty(6)));
+  if (teamView.mode !== 'month') ensureTeamDay();
+  document.querySelectorAll('#teamModes [data-mode]').forEach(b => b.classList.toggle('selected', b.dataset.mode === teamView.mode));
+  const range = teamRange();
+  $('teamRange').textContent = range.label;
+  const a = teamAggregate(teamTripsIn(range.from, range.to));
+  $('tWorkers').textContent = a.workers;
+  $('tTrips').textContent = a.driven.length;
+  $('tKm').textContent = sumT(a.driven, kmOfTeam).toLocaleString('he-IL');
+  $('tHours').textContent = fmt(sumT(a.driven, minsT));
+  const row = (vals, nums = []) => { const tr = document.createElement('tr'); vals.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (nums.includes(i)) td.className = 'num'; tr.append(td); }); return tr; };
+  const fill = (id, rows, cols) => $(id).replaceChildren(...(rows.length ? rows : [(() => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = cols; td.textContent = 'אין נתוני צוות לתקופה זו'; tr.append(td); return tr; })()]));
+  fill('tByWorker', a.byWorker.map(w => row([w.name, w.trips, w.days, w.km, fmt(w.mins), w.driver], [1, 2, 3, 4, 5])), 6);
+  fill('tByVehicle', a.byVehicle.map(v => row([v.name, v.trips, v.days, v.km, fmt(v.mins), v.workers], [1, 2, 3, 4])), 6);
+  fill('tByDay', a.byDay.map(d => row([shortDate(d.iso), WEEKDAYS[dateOf(d.iso).getDay()], d.trips, d.km, fmt(d.mins), d.workers], [2, 3, 4])), 6);
+  if (teamView.mode === 'month') fill('tByWeek', weeksOfMonth(state.month).map(w => { const x = teamAggregate(teamTripsIn(w.from, w.to));
+    return row([`${shortDate(w.from)}–${shortDate(w.to)}`, x.driven.length, sumT(x.driven, kmOfTeam), fmt(sumT(x.driven, minsT)), x.workers], [1, 2, 3, 4]); }), 5);
+  fill('tTripRows', a.trips.map(t => row([t.worker, t.vehicle || '—', t.from || '—', t.to || '—', `${t.depart || '—'}–${t.ret || '—'}`, t.km === '' ? '—' : t.km, t.role], [4, 5])), 7);
+  $('tByWeekWrap').classList.toggle('hidden', teamView.mode !== 'month');
+  $('tByDayWrap').classList.toggle('hidden', teamView.mode === 'day');
+  $('tTripsWrap').classList.toggle('hidden', teamView.mode !== 'day');
 }
 function exportTeam() {
   const trips = getTeam().filter(t => t.month === state.month); if (!trips.length) return toast('אין נתוני צוות לחודש זה');
@@ -1362,6 +1422,135 @@ function exportTeam() {
     ...trips.map(t => [t.worker, t.k, t.vehicle, t.from, t.to, t.depart, t.ret, tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.km, t.role])]),
     `shacharer_team_vehicle_${state.month}.csv`, 'text/csv;charset=utf-8');
 }
+
+/* ---------- minimal .xlsx writer (no library; works offline) ---------- */
+const XL = (() => {
+  const CRC = new Uint32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zip(files) { // stored (no compression) — Excel reads it fine
+    const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint16(10, 0, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true);
+      h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, 0, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+      c.setUint16(28, name.length, true); c.setUint32(42, offset, true);
+      central.push(new Uint8Array(c.buffer), name);
+      offset += 30 + name.length + data.length;
+    }
+    const cdSize = central.reduce((n, p) => n + p.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+  const col = n => { let s = ''; for (n++; n; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+  // styles: 0 normal, 1 header, 2 date, 3 [h]:mm, 4 total text, 5 total [h]:mm, 6 total number, 7 title
+  const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="2"><numFmt numFmtId="164" formatCode="dd.mm.yyyy"/><numFmt numFmtId="165" formatCode="[h]:mm"/></numFmts>
+<fonts count="4"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/></font><font><b/><sz val="14"/><color rgb="FF0B6F73"/><name val="Arial"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0B6F73"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDF3F2"/></patternFill></fill></fills>
+<borders count="2"><border/><border><top style="thin"><color rgb="FF0B6F73"/></top></border></borders>
+<cellStyleXfs count="1"><xf/></cellStyleXfs>
+<cellXfs count="8"><xf/>
+<xf fontId="1" fillId="2" applyFont="1" applyFill="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+<xf numFmtId="164" applyNumberFormat="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="165" applyNumberFormat="1"><alignment horizontal="center"/></xf>
+<xf fontId="2" fillId="3" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="2" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
+<xf numFmtId="3" fontId="2" fillId="3" borderId="1" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
+<xf fontId="3" applyFont="1"/></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+  // cell: string | number | {d: iso} | {m: minutes} | {f: formula, s: style} | {v, s}
+  function cellXml(c, ref) {
+    if (c === null || c === undefined || c === '') return '';
+    if (typeof c === 'number') return `<c r="${ref}"><v>${c}</v></c>`;
+    if (typeof c === 'string') return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${esc(c)}</t></is></c>`;
+    if (c.d) { const [y, m, d] = c.d.split('-').map(Number); return `<c r="${ref}" s="2"><v>${(Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 864e5}</v></c>`; }
+    if (c.m !== undefined) return `<c r="${ref}" s="${c.s ?? 3}"><v>${c.m / 1440}</v></c>`;
+    if (c.f) return `<c r="${ref}" s="${c.s ?? 0}"><f>${esc(c.f)}</f></c>`;
+    if (typeof c.v === 'number') return `<c r="${ref}" s="${c.s ?? 0}"><v>${c.v}</v></c>`;
+    return `<c r="${ref}" s="${c.s ?? 0}" t="inlineStr"><is><t xml:space="preserve">${esc(c.v)}</t></is></c>`;
+  }
+  function sheetXml(sh) {
+    const head = sh.headerRow ?? 0;
+    const rows = sh.rows.map((r, i) => `<row r="${i + 1}"${i === head && sh.header !== false ? ' ht="22" customHeight="1"' : ''}>${r.map((c, j) => {
+      const ref = col(j) + (i + 1);
+      if (i === head && sh.header !== false && typeof c === 'string') return `<c r="${ref}" s="1" t="inlineStr"><is><t xml:space="preserve">${esc(c)}</t></is></c>`;
+      return cellXml(c, ref);
+    }).join('')}</row>`).join('');
+    const cols = sh.cols ? `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+    const pane = sh.header !== false ? `<pane ySplit="${head + 1}" topLeftCell="A${head + 2}" activePane="bottomLeft" state="frozen"/>` : '';
+    const af = sh.autoFilter && sh.rows.length > head + 1 ? `<autoFilter ref="A${head + 1}:${col(sh.rows[head].length - 1)}${sh.dataEnd ?? sh.rows.length}"/>` : '';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0">${pane}</sheetView></sheetViews>${cols}<sheetData>${rows}</sheetData>${af}</worksheet>`;
+  }
+  function build(sheets) {
+    const n = sheets.length, ids = sheets.map((_, i) => i + 1);
+    const files = [
+      { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ids.map(i => `<Override PartName="/xl/worksheets/sheet${i}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>` },
+      { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+      { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>${sheets.map((sh, i) => `<sheet name="${esc(sh.name.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>` },
+      { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${ids.map(i => `<Relationship Id="rId${i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i}.xml"/>`).join('')}<Relationship Id="rId${n + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+      { name: 'xl/styles.xml', data: STYLES },
+      ...sheets.map((sh, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: sheetXml(sh) })),
+    ];
+    return zip(files);
+  }
+  return { build, col };
+})();
+
+/** Table sheet with a header row, data rows and a SUM total row for the given numeric columns. */
+function tableSheet(name, header, rows, cols, sumCols = {}) {
+  const first = 2, last = rows.length + 1;
+  const total = rows.length ? [ { v: 'סה״כ', s: 4 }, ...header.slice(1).map((_, k) => { const j = k + 1, kind = sumCols[j];
+    return kind ? { f: `SUM(${XL.col(j)}${first}:${XL.col(j)}${last})`, s: kind === 'time' ? 5 : 6 } : { v: '', s: 4 }; }) ] : null;
+  return { name, cols, rows: [header, ...rows, ...(total ? [total] : [])], autoFilter: true, dataEnd: last };
+}
+function exportTeamXlsx() {
+  const from = state.month + '-01', to = monthEnd(state.month), trips = teamTripsIn(from, to);
+  if (!trips.length) return toast('אין נתוני צוות לחודש זה');
+  const a = teamAggregate(trips);
+  const weeks = weeksOfMonth(state.month).map(w => ({ ...w, a: teamAggregate(teamTripsIn(w.from, w.to)) }));
+  const summary = { name: 'סיכום', header: false, cols: [34, 18], rows: [
+    [{ v: `סיכום רכב תפעולי — ${monthLabel()}`, s: 7 }],
+    [`הופק ב-${isoToDisplay(todayIso())} מאפליקציית שחרר`],
+    [],
+    ['עובדים שדיווחו', a.workers],
+    ['נסיעות רכב (לפי נהג)', a.driven.length],
+    ['ק״מ רכב', sumT(a.driven, kmOfTeam)],
+    ['שעות שימוש ברכב', { m: sumT(a.driven, minsT) }],
+    ['ימים עם נסיעות', a.byDay.length],
+    [],
+    ['נתוני רכב נספרים לפי דיווח הנהג בלבד; נסיעות כנוסע מופיעות בגיליון "לפי עובד" ובפירוט.'],
+  ] };
+  const sheets = [
+    summary,
+    tableSheet('לפי עובד', ['עובד', 'נסיעות', 'ימים', 'ק״מ (כנהג)', 'שעות', 'כנהג', 'כנוסע'],
+      a.byWorker.map(w => [w.name, w.trips, w.days, w.km, { m: w.mins }, w.driver, w.passenger]), [22, 10, 9, 12, 10, 9, 9], { 1: 'n', 2: 'n', 3: 'n', 4: 'time', 5: 'n', 6: 'n' }),
+    tableSheet('לפי רכב', ['רכב', 'נסיעות', 'ימים', 'ק״מ', 'שעות', 'עובדים'],
+      a.byVehicle.map(v => [v.name, v.trips, v.days, v.km, { m: v.mins }, v.workers]), [24, 10, 9, 10, 10, 36], { 1: 'n', 3: 'n', 4: 'time' }),
+    tableSheet('לפי שבוע', ['מתאריך', 'עד תאריך', 'נסיעות', 'ק״מ', 'שעות', 'עובדים'],
+      weeks.map(w => [{ d: w.from }, { d: w.to }, w.a.driven.length, sumT(w.a.driven, kmOfTeam), { m: sumT(w.a.driven, minsT) }, w.a.workers]), [13, 13, 10, 10, 10, 10], { 2: 'n', 3: 'n', 4: 'time' }),
+    tableSheet('לפי יום', ['תאריך', 'יום', 'נסיעות', 'ק״מ', 'שעות', 'עובדים'],
+      a.byDay.map(d => [{ d: d.iso }, WEEKDAYS[dateOf(d.iso).getDay()], d.trips, d.km, { m: d.mins }, d.workers]), [13, 9, 10, 10, 10, 36], { 2: 'n', 3: 'n', 4: 'time' }),
+    tableSheet('פירוט נסיעות', ['תאריך', 'יום', 'עובד', 'רכב', 'יציאה מ', 'יעד', 'שעת יציאה', 'שעת חזרה', 'משך', 'ק״מ', 'תפקיד'],
+      a.trips.map(t => { const iso = keyToIso(t.k), km = Number(t.km); return [{ d: iso }, WEEKDAYS[dateOf(iso).getDay()], t.worker, t.vehicle, t.from, t.to, t.depart, t.ret,
+        tripMinutes(t) === null ? '' : { m: tripMinutes(t) }, t.km !== '' && Number.isFinite(km) ? km : '', t.role]; }),
+      [13, 9, 18, 22, 18, 16, 10, 10, 9, 9, 9], { 8: 'time', 9: 'n' }),
+  ];
+  const blob = XL.build(sheets), url = URL.createObjectURL(blob), link = document.createElement('a');
+  link.href = url; link.download = `shacharer_team_${state.month}.xlsx`; document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast('📊 דוח Excel הורד');
+}
+
 function clearTeamMonth() {
   if (!confirm(`למחוק את נתוני הצוות של ${monthLabel()} מהמכשיר הזה?`)) return;
   writeJSON(TEAM_KEY, getTeam().filter(t => t.month !== state.month)); renderTeam(); setStatus('teamStatus', 'נתוני הצוות לחודש נמחקו');
@@ -1777,6 +1966,10 @@ function init() {
   $('newMgrEdit').onclick = () => window.open('https://github.com/avibito/shacharer/edit/main/config.json', '_blank', 'noopener');
   $('teamFiles').onchange = async e => { if (e.target.files.length) await importTeamFiles([...e.target.files]); e.target.value = ''; };
   $('teamCsv').onclick = exportTeam;
+  $('teamXlsx').onclick = exportTeamXlsx;
+  document.querySelectorAll('#teamModes [data-mode]').forEach(b => b.onclick = () => setTeamMode(b.dataset.mode));
+  $('teamPrev').onclick = () => shiftTeam(-1);
+  $('teamNext').onclick = () => shiftTeam(1);
   $('teamClear').onclick = clearTeamMonth;
   $('newVehicle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addVehicle(); } });
   $('goVehicleSummary').onclick = () => { state.month = state.date.slice(0,7); showTab('history'); $('vehicleSummary').scrollIntoView({ behavior:'smooth' }); };
