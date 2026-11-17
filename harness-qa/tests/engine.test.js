@@ -210,6 +210,7 @@ test E3
  Continuité + Test de Non-Continuité / inférieurs B(J1-4) ... (J2-4) - BON
  Non-continuité A(J1-4) B[...] R > 2 kΩ
  Continuité A(J1-4) B(J2-4) R = 1.2 Ω
+ Continuité A(J1-4) B(J2-4B) R = 1.3 Ω
 Paramètres de Résistance 4 fils
 Résistance minimum = 3.132 Ω
 Résistance maximum = 3.828 Ω
@@ -218,7 +219,7 @@ TEST BON`;
 test('tester log: parse continuity / insulation / non-continuity / 4-wire',()=>{
   assert.ok(HQA.isTesterLog(LOG));
   const r=HQA.parseTesterLog(LOG);
-  assert.equal(r.stats.CONT,3);assert.equal(r.stats.ISO,2);assert.equal(r.stats.NONCONT,1);assert.equal(r.stats.RES,1);
+  assert.equal(r.stats.CONT,4);assert.equal(r.stats.ISO,2);assert.equal(r.stats.NONCONT,1);assert.equal(r.stats.RES,1);
   assert.equal(r.meta.drawingRev,'B');assert.equal(r.meta.pn,'DEMO1');assert.equal(r.meta.result,'PASS');
   const t=HQA.parseTests(r.csv).tests;
   const iso=t.find(x=>x.type==='ISO'&&x.from==='J1-1');assert.equal(iso.low,1e8);assert.equal(iso.voltage,500);assert.equal(iso.measured,5e9);
@@ -279,6 +280,20 @@ test('verification: list nets from the tester draft, mark ok / mismatch, effect 
   assert.equal(parseInt(before.el)-parseInt(unv.el),4);
   // undo returns the net to open
   d=HQA.setVerify(d,net.key,{status:'open'});assert.equal(HQA.verifyItems(d).find(x=>x.key===net.key).status,'open');
+});
+
+test('4-wire second contacts (<pin>B) are folded onto the pin',()=>{
+  const r=HQA.parseTesterLog(LOG);
+  assert.equal(r.stats.kelvin.join(),'J2-4B→J2-4');
+  assert.ok(!r.csv.includes('J2-4B,'),'no J2-4B point in the generated tests');
+  assert.ok(r.csv.includes('מגע 4 חוטים J2-4B = J2-4'));
+  const n=HQA.testsToNetlist(r.csv);assert.ok(!n.csv.includes('J2-4B'));
+  // analysis against a real drawing: a <pin>B point in the program becomes the pin, as info
+  const a=run('WIRE,,J1-4,J2-4\nR,R1,J2-4,J2-5,3.48,10','1,CONT,J1-4,J2-4B,,1\n2,RES,J2-4,J2-5,3.132,3.828');
+  const c=codes(a);assert.ok(c.includes('kelvin'));assert.ok(!c.includes('unknownpt'));
+  assert.equal(metric(a,'wires').covered,1);
+  // a B-point without a 4-wire measurement on its base is still an unknown point
+  const b=run('WIRE,,J1-4,J2-4','1,CONT,J1-4,J2-4B,,1');assert.ok(codes(b).includes('unknownpt'));
 });
 
 console.log(`\n${pass} passed`);

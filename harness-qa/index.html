@@ -85,7 +85,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
 <h1>בודק כיסוי רתמות</h1>
 <p class="muted small" style="margin:0">Harness QA Inspector</p>
-<b>גרסה 4.6: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>גרסה 4.7: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -323,7 +323,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div></div>
 
 <script id="hqa-engine">
-/* Harness QA engine v4.6: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.7: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -571,7 +571,7 @@ function analyze(input){
   const F=[...M.findings,...P.findings];
   const add0=(sev,cat,el,msg,rec,code)=>F.push({sev,cat,el:String(el),msg,rec:rec||'',key:(code||msg)+'|'+el});
   /* per-step warnings that repeat across a whole program are grouped into one finding per message */
-  const AGG=new Set(['nohigh','highlimit','isonolow','isolow','hvnov','hvlow','dup','internalpt','self','allbad','nopt']),aggMap=new Map();
+  const AGG=new Set(['kelvin','nohigh','highlimit','isonolow','isolow','hvnov','hvlow','dup','internalpt','self','allbad','nopt']),aggMap=new Map();
   const add=(sev,cat,el,msg,rec,code)=>{
     if(!AGG.has(code))return add0(sev,cat,el,msg,rec,code);
     const k=code+'|'+msg.replace(/\(צעד [^)]*\)|צעד \S+/g,'').replace(/\([^)]*\)/g,'');
@@ -593,6 +593,9 @@ function analyze(input){
   const nG=groups.length,isoCov=new Uint8Array(nG*nG),hipCov=new Uint8Array(nG*nG),isoSteps=new Map(),hipSteps=new Map();
   const markPair=(cov,stepsMap,a,b,step)=>{if(a===b)return;cov[a*nG+b]=1;cov[b*nG+a]=1;for(const x of [a,b]){if(!stepsMap.has(x))stepsMap.set(x,new Set());stepsMap.get(x).add(step);}};
   const seenTests=new Map();
+  /* 4-wire (Kelvin) measurements use a second tester contact per pin, often named <pin>B (JU1-49B). */
+  const resEnds=new Set(P.tests.filter(t=>t.type==='RES').flatMap(t=>[t.from,t.to]));
+  const kelvin=p=>(!nodes.has(p)&&/B$/.test(p)&&nodes.has(p.slice(0,-1))&&resEnds.has(p.slice(0,-1)))?p.slice(0,-1):null;
   const capWarned=new Set(),weakIso=[],fullIsoFrom=new Set();let fullIsoAll=false;
   const groupHasDiode=new Set(comps.filter(c=>c.kind==='D').map(c=>nets[netOf.get(c.a)].group));
   const resValues=(mode)=>new Map(comps.filter(c=>c.kind==='R'&&c.value>0).map(c=>{const t=Number.isFinite(c.tol)?c.tol/100:0;return[c.id,mode==='min'?c.value*(1-t):mode==='max'?c.value*(1+t):c.value];}));
@@ -614,9 +617,11 @@ function analyze(input){
     if(rep&&t.computed&&rep!==t.computed)add('warn','תוצאות מדידה',S_,'התוצאה המדווחת ('+rep+') לא מתאימה לחישוב מול הגבולות ('+t.computed+')','לבדוק את הגבולות בתוכנית מול הדוח','repmis');
     /* resolve points */
     const pts=[];let bad=false;
-    for(const [p,isA] of [[t.from,allFrom],[t.to,allTo]]){
+    for(let [p,isA] of [[t.from,allFrom],[t.to,allTo]]){
       if(isA){if(!['ISO','HIPOT'].includes(t.type)){add('warn','תוכנית בדיקה',S_,'"כולם" נתמך רק בבדיקות בידוד / מתח גבוה','','allbad');bad=true;}continue;}
       if(!p){add('warn','תוכנית בדיקה',S_,'חסרה נקודת בדיקה','','nopt');bad=true;continue;}
+      const kb=kelvin(p);
+      if(kb){add('info','תוכנית בדיקה',S_+' '+p+'→'+kb,'נקודה עם סיומת B שאינה בשרטוט טופלה כמגע כפול של מדידת 4 חוטים על אותו פין','לאמת מול תיק המתאם של הבודק','kelvin');p=kb;}
       if(!nodes.has(p)){add('critical','הצלבה שרטוט–בדיקה',p,'נקודת בדיקה ('+S_+') לא קיימת בשרטוט החשמלי','לבדוק אם זה שם פין שגוי בתוכנית או חוסר בשרטוט','unknownpt');bad=true;continue;}
       const nd=nodes.get(p);
       if(nd.internal)add('info','תוכנית בדיקה',S_+' '+p,'בדיקה על נקודה פנימית (ספלייס / רכיב) – לוודא שהנקודה נגישה בפועל','','internalpt');
@@ -1133,6 +1138,12 @@ function parseTesterLog(text){
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const res=r=>/MAUVAIS|FAIL|NOK/i.test(r)?'FAIL':/BON|PASS|OK/i.test(r)?'PASS':'';
   const num=v=>{const x=typeof v==='number'?v:parseQty(v);return Number.isFinite(x)?fmtQty(x,'Ω').replace(/\s+/g,''):'';};
+  /* first pass: 4-wire endpoints, so their second contacts (<pin>B) can be folded onto the pin */
+  const four=new Set();
+  for(const raw of String(text).split(/\r?\n/)){const m=deacc(raw).match(/Mesure de Resistance.*?A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)/i);if(m){four.add(m[1].trim());four.add(m[2].trim());}}
+  const kel=new Map();
+  const pt=x=>{x=x.trim();if(/B$/.test(x)&&four.has(x.slice(0,-1))){kel.set(x,x.slice(0,-1));return x.slice(0,-1);}return x;};
+  const kn=(orig,mapped)=>orig.trim()!==mapped?'מגע 4 חוטים '+orig.trim()+' = '+mapped:'';
   for(const raw of String(text).split(/\r?\n/)){
     const line=raw.replace(/\s+/g,' ').replace(/^[^\p{L}\p{N}]+/u,'').trim(),L=deacc(line);if(!line)continue;
     let m;
@@ -1153,17 +1164,18 @@ function parseTesterLog(text){
     const note=x=>[x,group&&group.label?'test '+group.label:''].filter(Boolean).join(' | ');
     const gres=()=>group?group.result:'';
     if((m=L.match(/^Isolement A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
-      rows.push([++n,HE_TEST.ISO,m[1].trim(),ALL_HE,num(P.iso.min),'',HE_UNIT.ohm,P.iso.v,m[2]==='='?m[3]:m[2]+m[3],gres(),note('Isolement / inférieurs')]);stats.ISO++;continue;}
+      rows.push([++n,HE_TEST.ISO,pt(m[1]),ALL_HE,num(P.iso.min),'',HE_UNIT.ohm,P.iso.v,m[2]==='='?m[3]:m[2]+m[3],gres(),note('Isolement / inférieurs')]);stats.ISO++;continue;}
     if((m=L.match(/^Non-continuite A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
       const thr=m[2].startsWith('>')?num(m[3]):'';
-      rows.push([++n,HE_TEST.ISO,m[1].trim(),ALL_HE,thr,'',HE_UNIT.ohm,'',m[2].startsWith('>')?'':m[3],gres(),note('Non-continuité (R'+m[2]+m[3]+')')]);stats.NONCONT++;continue;}
+      rows.push([++n,HE_TEST.ISO,pt(m[1]),ALL_HE,thr,'',HE_UNIT.ohm,'',m[2].startsWith('>')?'':m[3],gres(),note('Non-continuité (R'+m[2]+m[3]+')')]);stats.NONCONT++;continue;}
     if((m=L.match(/^Continuite A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*R\s*=\s*(.+)$/i))){
-      rows.push([++n,HE_TEST.CONT,m[1].trim(),m[2].trim(),num(P.cont.min),num(P.cont.max),HE_UNIT.ohm,'',m[3],gres(),note('')]);stats.CONT++;continue;}
+      const a=pt(m[1]),b=pt(m[2]);rows.push([++n,HE_TEST.CONT,a,b,num(P.cont.min),num(P.cont.max),HE_UNIT.ohm,'',m[3],gres(),note([kn(m[1],a),kn(m[2],b)].filter(Boolean).join(' | '))]);stats.CONT++;continue;}
     if((m=L.match(/^Mesure de Resistance.*?A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*-?\s*R\s*=\s*(.+)$/i))){
       rows.push([++n,HE_TEST.RES,m[1].trim(),m[2].trim(),num(P.res.min),num(P.res.max),HE_UNIT.ohm,'',m[3],'',note('Résistance 4 fils')]);stats.RES++;continue;}
   }
   stats.fail=rows.filter(r=>r[9]==='FAIL').length;
   for(const r of rows)r[9]=r[9]==='PASS'?'עבר':r[9]==='FAIL'?'נכשל':r[9];
+  stats.kelvin=[...kel].map(([a,b])=>a+'→'+b);
   meta.contMax=P.cont.max;meta.isoMin=P.iso.min;meta.isoV=P.iso.v;
   const csv=[HEADERS.tests,...rows.map(r=>r.map(q).join(','))].join('\n');
   return{meta,csv,count:rows.length,stats};
@@ -1452,6 +1464,7 @@ function buildPdfView(keepMsg){
     const add=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;box.append(d);};
     add('זוהה דוח בודק: '+(m.program||'')+(m.date?' | '+m.date:'')+(m.result?' | תוצאה כוללת: '+m.result:''));
     add('מהדורת סכמה חשמלית לפי הבודק: '+(m.drawingRev||'לא צוינה')+(m.harnessRev?' | מהדורת תיק רתמה: '+m.harnessRev:'')+(data.meta.drawingRev?' | בפרויקט: '+data.meta.drawingRev:' | יש להזין בפרטי הפרויקט את מהדורת השרטוט שבידך'),m.drawingRev&&data.meta.drawingRev&&m.drawingRev!==data.meta.drawingRev?'warn':'');
+    if(st.kelvin&&st.kelvin.length)add('זוהו מגעים כפולים של מדידת 4 חוטים, והם שויכו לפין עצמו: '+st.kelvin.join(', '));
     add(st.CONT+' בדיקות רציפות, '+st.ISO+' בדיקות בידוד'+(Number.isFinite(m.isoMin)?' ('+H.fmtQty(m.isoMin,'Ω')+(m.isoV?' / '+m.isoV+'V':'')+')':'')+', '+st.NONCONT+' בדיקות Non-continuité, '+st.RES+' מדידות התנגדות, '+st.groups+' קבוצות'+(st.fail?' | כשלים: '+st.fail:''),st.fail?'warn':'');
     $('pdfHint').textContent='בדוח בודק כל שורת Continuité הופכת לבדיקת רציפות, Isolement לבידוד מול כל השאר, Non-continuité לבידוד בסף הנמוך, ו־Mesure 4 fils למדידת התנגדות. הגבולות נלקחים מבלוקי ה־Paramètres.';
   }else{
