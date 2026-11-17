@@ -215,7 +215,7 @@ details summary{cursor:pointer;list-style-position:inside}
   <div class="field stack" id="countryRow"><label for="country">מדינה / עיר</label><input id="country" placeholder="מדינה / עיר"></div>
   <div class="field" id="clockRow"><label for="clockConfirmed">הדיווח בוצע בשעון המעסיק</label><input type="checkbox" id="clockConfirmed"></div>
   <div id="absenceBox" class="note">
-   <div class="field"><label for="absenceUnit">אופן דיווח</label><select id="absenceUnit"><option value="days">לפי ימים</option><option value="hours">לפי שעות ודקות</option></select></div>
+   <div class="field"><label for="absenceUnit">אופן דיווח</label><select id="absenceUnit"><option value="hours">לפי שעות ודקות</option><option value="days">לפי ימים</option></select></div>
    <div class="field" id="absDaysRow"><label for="absDays">מספר ימים</label><input id="absDays" type="number" min="0.5" step="0.5" value="1" inputmode="decimal"></div>
    <div class="field" id="absHoursRow"><span>שעות : דקות</span><span class="inline ltr"><input id="absHours" type="number" min="0" max="23" step="1" value="0" inputmode="numeric" aria-label="שעות"> : <input id="absMinutes" type="number" min="0" max="59" step="1" value="0" inputmode="numeric" aria-label="דקות"></span></div>
    <div class="small">הכמות נשמרת כפי שדווחה. אין המרה אוטומטית משעות לימי מכסה.</div>
@@ -278,7 +278,7 @@ details summary{cursor:pointer;list-style-position:inside}
 
  <div class="panel">
   <h2>יתרות חופשה ומחלה</h2>
-  <p class="small">היתרות אישיות וניתנות להזנה בהגדרות כשתקבל את הנתונים מהמעסיק. ריק פירושו ״טרם הוגדר״, לא אפס. ניצול מוצג בנפרד ואינו מופחת אוטומטית מיתרת המעסיק.</p>
+  <p class="small">היתרות אישיות וניתנות להזנה בהגדרות כשתקבל את הנתונים מהמעסיק. ריק פירושו ״טרם הוגדר״, לא אפס. ניצול מוצג בנפרד ואינו מופחת אוטומטית מיתרת המעסיק. הכול מוצג בשעות; יום שדווח ״לפי ימים״ מומר לפי מכסת אותו יום.</p>
   <div class="tiles">
    <div class="tile"><small>יתרת חופשה לפי המעסיק</small><strong id="balVac">טרם הוגדר</strong></div>
    <div class="tile"><small>יתרת מחלה לפי המעסיק</small><strong id="balSick">טרם הוגדר</strong></div>
@@ -358,8 +358,8 @@ details summary{cursor:pointer;list-style-position:inside}
  <div class="panel">
   <h2>יתרות אישיות מהמעסיק</h2>
   <p class="note">השאר ריק עד שתקבל נתונים מאומתים. הזנת יתרה לא משנה דיווחים קיימים.</p>
-  <div class="field"><label for="balVacInput">יתרת חופשה (ימים)</label><input type="number" id="balVacInput" min="0" step="0.5" placeholder="—"></div>
-  <div class="field"><label for="balSickInput">יתרת מחלה (ימים)</label><input type="number" id="balSickInput" min="0" step="0.5" placeholder="—"></div>
+  <div class="field"><label for="balVacInput">יתרת חופשה (שעות)</label><input type="number" id="balVacInput" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
+  <div class="field"><label for="balSickInput">יתרת מחלה (שעות)</label><input type="number" id="balSickInput" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
   <button type="button" id="saveBalances">שמור יתרות אישיות</button>
   <p id="balanceStatus" class="status"></p>
  </div>
@@ -473,7 +473,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.7';
+const VERSION = '17.8';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -618,6 +618,17 @@ function analyze(d, key) {
   return { type, quota, absence, problems, excluded:false, complete: !problems.length && net !== null, gross, net };
 }
 
+/** A full absence day in minutes: the day's quota (weekends fall back to the regular quota). */
+const fullDayMinutes = iso => quotaFor(iso) || Math.round(settings.regular * 60);
+/** Absence report converted to minutes; days are converted by that date's quota. */
+function absenceMinutes(d, key) {
+  if (d.absenceUnit === 'hours') return Number(d.absenceMinutes) || 0;
+  const days = Number(d.absenceDays ?? d.portion ?? 1) || 0;
+  return Math.round(days * fullDayMinutes(keyToIso(key)));
+}
+const balanceText = (b, field) => b[field] == null ? 'טרם הוגדר'
+  : b.unit === 'hours' ? `${fmt(Math.round(b[field] * 60))} שעות` : `${b[field]} ימים (לעדכן בשעות)`;
+
 function overtime(r) {
   if (r.net === null) return null;
   const extra = Math.max(0, r.net - r.quota);
@@ -695,10 +706,13 @@ function renderDay() {
   $('siteName').value = d.siteName || '';
   $('country').value = d.country || '';
   $('clockConfirmed').checked = Boolean(d.clockConfirmed);
-  $('absenceUnit').value = d.absenceUnit === 'hours' ? 'hours' : 'days';
+  // New absence reports default to hours, pre-filled with that day's quota (a full day).
+  const legacyDays = d.absenceUnit === 'days' || (!d.absenceUnit && d.portion != null);
+  const absMin = d.absenceUnit === 'hours' ? (d.absenceMinutes || 0) : fullDayMinutes(state.date);
+  $('absenceUnit').value = legacyDays ? 'days' : 'hours';
   $('absDays').value = d.absenceUnit === 'days' ? (d.absenceDays ?? 1) : (d.portion ?? 1);
-  $('absHours').value = d.absenceUnit === 'hours' ? Math.floor((d.absenceMinutes || 0) / 60) : 0;
-  $('absMinutes').value = d.absenceUnit === 'hours' ? (d.absenceMinutes || 0) % 60 : 0;
+  $('absHours').value = Math.floor(absMin / 60);
+  $('absMinutes').value = absMin % 60;
   renderTrips(tripsOf(d));
   const loc = $('locationStatus');
   loc.replaceChildren();
@@ -958,14 +972,9 @@ function renderMonth() {
 
   // balances
   const b = getBalances();
-  $('balVac').textContent = b.vacation == null ? 'טרם הוגדר' : b.vacation + ' ימים';
-  $('balSick').textContent = b.sick == null ? 'טרם הוגדר' : b.sick + ' ימים';
-  const used = t => {
-    const rows = data.filter(r => r.d.dayType === t);
-    const days = rows.filter(r => r.d.absenceUnit !== 'hours').reduce((n,r) => n + (Number(r.d.absenceDays ?? r.d.portion ?? 1) || 0), 0);
-    const minutes = rows.filter(r => r.d.absenceUnit === 'hours').reduce((n,r) => n + (Number(r.d.absenceMinutes) || 0), 0);
-    return `${days} ימים` + (minutes ? ` + ${fmt(minutes)} ש׳` : '');
-  };
+  $('balVac').textContent = balanceText(b, 'vacation');
+  $('balSick').textContent = balanceText(b, 'sick');
+  const used = t => `${fmt(data.filter(r => r.d.dayType === t).reduce((n, r) => n + absenceMinutes(r.d, r.k), 0))} שעות`;
   $('usedVac').textContent = used('vacation');
   $('usedSick').textContent = used('sick');
   const count = t => data.filter(r => (r.d.dayType || 'fixed') === t).length;
@@ -1340,7 +1349,7 @@ async function importData(file) {
   const count = Object.keys(incoming).length;
   setHistory({ ...h, ...incoming });
   if (newSettings && typeof newSettings === 'object' && confirm('לייבא גם הגדרות חישוב מקובץ הגיבוי?')) { settings = { ...DEFAULTS, ...newSettings }; if (!Array.isArray(settings.vehicles)) settings.vehicles = []; writeJSON(SK, settings); }
-  if (newBalances && typeof newBalances === 'object' && (newBalances.vacation != null || newBalances.sick != null) && confirm('לייבא גם יתרות חופשה ומחלה מקובץ הגיבוי?')) writeJSON(BK, { vacation: newBalances.vacation ?? null, sick: newBalances.sick ?? null });
+  if (newBalances && typeof newBalances === 'object' && (newBalances.vacation != null || newBalances.sick != null) && confirm('לייבא גם יתרות חופשה ומחלה מקובץ הגיבוי?')) writeJSON(BK, { vacation: newBalances.vacation ?? null, sick: newBalances.sick ?? null, ...(newBalances.unit ? { unit: newBalances.unit } : {}) });
   renderDay(); renderMonth(); renderSettings();
   setStatus('importStatus', `✓ יובאו ${count} דיווחים.`);
 }
@@ -1352,8 +1361,9 @@ function renderSettings() {
   renderVehicleSettings();
   renderSendSettings();
   const b = getBalances();
-  $('balVacInput').value = b.vacation ?? '';
-  $('balSickInput').value = b.sick ?? '';
+  // Legacy balances were in days; leave the hour fields empty so they get re-entered in hours.
+  $('balVacInput').value = b.unit === 'hours' ? (b.vacation ?? '') : '';
+  $('balSickInput').value = b.unit === 'hours' ? (b.sick ?? '') : '';
   renderStorageInfo();
 }
 function renderStorageInfo() {
@@ -1402,7 +1412,7 @@ function saveBalances() {
   const parse = id => $(id).value === '' ? null : Number($(id).value);
   const vacation = parse('balVacInput'), sick = parse('balSickInput');
   if ([vacation, sick].some(v => v !== null && (!Number.isFinite(v) || v < 0))) { setStatus('balanceStatus', 'יש להזין מספר לא שלילי', 'warn'); return; }
-  writeJSON(BK, { vacation, sick });
+  writeJSON(BK, { vacation, sick, unit: 'hours' });
   setStatus('balanceStatus', '✓ היתרות נשמרו בדפדפן');
 }
 
