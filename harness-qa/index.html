@@ -88,7 +88,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
 <h1>בודק כיסוי רתמות</h1>
 <p class="muted small" style="margin:0">Harness QA Inspector</p>
-<b>גרסה 4.9: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>גרסה 5.0: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -134,6 +134,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <button data-tab="tMech">שרטוט מכני</button>
 <button data-tab="tTests">תוכנית בדיקה</button>
 <button data-tab="tVerify">אימות רשתות</button>
+<button data-tab="tFai">FAI (AS9102)</button>
 <button data-tab="tReport">ייבוא דוח בודק (HTML)</button>
 </div>
 
@@ -205,6 +206,23 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <p class="small muted" id="vNote"></p>
 </div>
 
+<div class="tab" id="tFai">
+<p>דוח ביקורת פריט ראשון לפי AS9102. ממלאים את שדות הכותרת ומדביקים או מייבאים את טבלאות הטפסים, והמנוע בודק אותם יחד עם השרטוטים ודוח הבודק. קובץ FAI סרוק אי אפשר לקרוא אוטומטית, אז צריך להזין את הערכים ידנית או לבקש את הקובץ המקורי (Word / Excel / PDF מיוצא).</p>
+<div class="toolbar"><button id="faiDemo" class="secondary">טען FAI לדוגמה</button></div>
+<h3>כותרת (טופס 1, וטופס 2 שדות 11–12)</h3>
+<div class="grid" id="faiHead"></div>
+<h3>טופס 1: אינדקס פריטים</h3>
+<div class="toolbar"><button class="secondary" data-tpl="fai1">הכנס כותרת</button></div>
+<textarea id="fai1" class="code" spellcheck="false" placeholder="מק״ט,שם פריט,סוג / מס׳ סידורי,מזהה FAIR"></textarea>
+<h3>טופס 2: חומרים, תהליכים מיוחדים ובדיקות פונקציונליות</h3>
+<div class="toolbar"><button class="secondary" data-tpl="fai2">הכנס כותרת</button></div>
+<textarea id="fai2" class="code" spellcheck="false" placeholder="חומר או תהליך,מספר מפרט,קוד,ספק תהליך מיוחד,אישור לקוח,תעודת התאמה"></textarea>
+<h3>טופס 3: מאפיינים</h3>
+<div class="toolbar"><button class="secondary" data-tpl="fai3">הכנס כותרת</button></div>
+<textarea id="fai3" class="code" spellcheck="false" placeholder="מס׳,מיקום בשרטוט,מאפיין,דרישה,תוצאה,כלי,אי־התאמה,הערה"></textarea>
+<p class="small muted">דרישות עם טולרנס נקראות בצורות כמו <code>280 MM + 5 MM</code>, <code>10000 -0+50 mm</code>, <code>12.5±0.2</code>, <code>min 10</code>, <code>3.1–3.6</code>. תוצאה טקסטואלית (IMPLEMENTED, PASS, עבר) מתקבלת לדרישה לא מספרית. תאריך תפוגה של חומר נקרא מתוך טקסט כמו <code>Exp. date: 25/03/26</code> או <code>EXP.06.2027</code>.</p>
+</div>
+
 <div class="tab" id="tReport">
 <p>ייבוא דוח HTML שהופק ממערכת הבדיקה, בפורמט <code>Net1 (SIDE A - x, SIDE B - y) resistance: … mOhm</code>. הקובץ נקרא מקומית, והקוד שבתוכו לא מורץ. כל רשת בדוח הופכת לבדיקת רציפות, וכל תוצאת בידוד לבדיקת בידוד מול כל השאר. זה מאפשר להריץ עליו את אותה הצלבה מול השרטוט.</p>
 <div class="grid">
@@ -221,7 +239,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <p>טען PDF של שרטוט, רשימת חוטים, תוכנית ATP או BOM. המנוע קורא את שכבת הטקסט שבקובץ, בונה ממנה טבלה ומעביר את השורות למקור שבחרת. הקובץ נקרא בדפדפן בלבד, ושום דבר לא נשלח לשרת.</p>
 <div class="grid">
 <div><label for="pdfFile">קובץ PDF</label><input type="file" id="pdfFile" accept=".pdf,application/pdf"></div>
-<div><label for="pdfTarget">מה יש בקובץ?</label><select id="pdfTarget"><option value="drawing">שרטוט חשמלי / רשימת חוטים</option><option value="tests">תוכנית בדיקה / ATP / דוח תוצאות</option><option value="mech">שרטוט מכני / BOM</option></select></div>
+<div><label for="pdfTarget">מה יש בקובץ?</label><select id="pdfTarget"><option value="drawing">שרטוט חשמלי / רשימת חוטים</option><option value="tests">תוכנית בדיקה / ATP / דוח תוצאות</option><option value="mech">שרטוט מכני / BOM</option><option value="fai1">FAI – טופס 1 (פריטים)</option><option value="fai2">FAI – טופס 2 (חומרים / תהליכים)</option><option value="fai3">FAI – טופס 3 (מאפיינים)</option></select></div>
 <div><label for="pdfPages">עמודים (ריק = הכל, למשל 2-4,7)</label><input id="pdfPages" dir="ltr" placeholder="1-3"></div>
 <div><label for="pdfMode">שיטת קריאה</label><select id="pdfMode"><option value="table">טבלה (עמודות)</option><option value="pairs">טקסט חופשי: חיפוש זוגות נקודות</option><option value="tester">דוח בודק (Continuité / Isolement)</option></select></div>
 </div>
@@ -333,7 +351,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div></div>
 
 <script id="hqa-engine">
-/* Harness QA engine v4.9: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v5.0: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -345,7 +363,8 @@ const HE_TEST={CONT:'רציפות',RES:'התנגדות',DIODE:'דיודה',CAP:'
 const DRAW_HE_IN={'חוט':'WIRE','ספלייס':'SPLICE','פיצול':'SPLICE','גשר':'JUMPER','סיכוך':'SHIELD','נגד':'R','דיודה':'D','קבל':'C','לא מחובר':'NC','לא-מחובר':'NC','מחבר':'CONN','רשת':'NET'};
 const HE_UNIT={ohm:'אוהם',V:'וולט',F:'פאראד'};
 const ALL_HE='כולם';
-const HEADERS={drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה,חתך',tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה',mech:'מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך'};
+const HEADERS={drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה,חתך',tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה',mech:'מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך',
+  fai1:'מק״ט,שם פריט,סוג / מס׳ סידורי,מזהה FAIR',fai2:'חומר או תהליך,מספר מפרט,קוד,ספק תהליך מיוחד,אישור לקוח,תעודת התאמה',fai3:'מס׳,מיקום בשרטוט,מאפיין,דרישה,תוצאה,כלי,אי־התאמה,הערה'};
 
 /* ---------- CSV ---------- */
 function parseCsv(text){
@@ -367,7 +386,7 @@ function parseCsv(text){
   push();
   return rows;
 }
-const normH=h=>String(h??'').trim().toLowerCase().replace(/[\s"'״׳\/._\-]/g,'');
+const normH=h=>String(h??'').trim().toLowerCase().replace(/^\d+\s*[.)]\s*/,'').replace(/[\s"'״׳\/._\-־–]/g,'');
 function readTable(text,spec){
   const rows=parseCsv(text);
   if(!rows.length)return{idx:{},items:[],empty:true};
@@ -591,8 +610,11 @@ function analyze(input){
   const flushAgg=()=>{for(const a of aggMap.values()){const n=a.els.length;
     add0(a.sev,a.cat,n===1?a.els[0]:n+' צעדים',n===1?a.msg:a.msg+' | '+list(a.els,15),a.rec,a.code);}};
   const suggestions=[],trace=[],metrics=[];
-  const res={findings:F,suggestions,trace,metrics,model:M,tests:P.tests,settings:S};
-  if(M.empty){add('critical','שרטוט חשמלי','—','לא הוזנה רשימת חיבורים מהשרטוט החשמלי','הזן בלשונית "שרטוט חשמלי" או טען דוגמה','nodraw');return finish(res);}
+  const res={findings:F,suggestions,trace,metrics,model:M,tests:P.tests,settings:S,fai:null};
+  const faiOnly=!!(input.fai1||input.fai2||input.fai3||(input.faiH&&Object.values(input.faiH).some(Boolean)));
+  const mechItems=parseMech(input.mech||'')||[];
+  if(M.empty){if(!faiOnly)add('critical','שרטוט חשמלי','—','לא הוזנה רשימת חיבורים מהשרטוט החשמלי','הזן בלשונית "שרטוט חשמלי" או טען דוגמה','nodraw');
+    faiChecks({...input,mechItems},add,metrics,res);flushAgg();return finish(res);}
   if(P.empty)add('critical','תוכנית בדיקה','—','לא הוזנה תוכנית בדיקה','הזן בלשונית "תוכנית בדיקה" או ייבא דוח בודק','notests');
   const {nets,netOf,nodes,groups,comps}=M;
   const isoMin=S.isoMinM*1e6;
@@ -928,9 +950,125 @@ function analyze(input){
   }
   if(!meta.drawingRev)add('info','תצורה ומהדורות','—','לא הוזנה מהדורת שרטוט – לא ניתן לתעד מול איזו מהדורה בוצעה ההצלבה','להשלים בפרטי הפרויקט','norev');
 
+  faiChecks({...input,mechItems},add,metrics,res);
   flushAgg();
   return finish(res);
 }
+/* ---------- AS9102 First Article Inspection ---------- */
+const FAI_SPEC={
+  fai1:{pn:['מקט','partnumber','pn'],name:['שםפריט','partname','name'],type:['סוגמססידורי','parttype','partserialnumber','serialnumber','type','סוג'],fairId:['מזההfair','fairidentifier','fairid']},
+  fai2:{material:['חומראותהליך','materialorprocessname','materialorprocess','material','process'],spec:['מספרמפרט','specificationnumber','specification','spec'],code:['קוד','code'],supplier:['ספקתהליךמיוחד','specialprocesssuppliercodename','specialprocesssupplier','supplier'],approval:['אישורלקוח','customerapprovalverification','customerapproval'],cert:['תעודתהתאמה','certificateofconformancenumber','certificateofconformance','coc','cert']},
+  fai3:{no:['מס','charno','characteristicnumber','charnumber','no'],loc:['מיקוםבשרטוט','referencelocation','location','zone'],char:['מאפיין','characteristicdesignator','characteristic'],req:['דרישה','requirement'],result:['תוצאה','results','result'],tool:['כלי','designedqualifiedtooling','tooling','tool'],nc:['איהתאמה','nonconformancenumber','nonconformance','ncr'],comment:['הערה','additionaldatacomments','comments','comment','remarks']}
+};
+const FAI_FIELDS=[['pn','1. מק״ט',1],['partName','2. שם הפריט',1],['sn','3. מספר סידורי',1],['fairId','4. מזהה FAIR',1],['partRev','5. מהדורת פריט',1],['drawingNo','6. מספר שרטוט',1],['drawingRev','7. מהדורת שרטוט',1],['addChanges','8. שינויים נוספים',0],['mfgRef','9. תהליך ייצור',0],['org','10. שם הארגון',1],['supplierCode','11. קוד ספק',0],['po','12. הזמנת רכש',0],['kind','13. פריט / מכלול',1],['faiType','14. FAI מלא / חלקי',1],['partialReason','סיבה ל־FAI חלקי',0],['nc','19. אי־התאמות מתועדות',1],['verifiedBy','20. אומת על ידי',1],['verifiedDate','21. תאריך',1],['reviewedBy','22. נסקר ואושר על ידי',1],['reviewedDate','23. תאריך',1],['customerBy','24. אישור לקוח',0],['customerDate','25. תאריך',0],['testProc','טופס 2, 11: נוהל בדיקה פונקציונלית',0],['acceptReport','טופס 2, 12: מספר דוח קבלה',0]];
+function parseDate(s){
+  s=String(s||'').trim();let m=s.match(/(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(\d{2,4})/);
+  if(m){let y=+m[3];if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1]);return isNaN(d)?null:d;}
+  m=s.match(/(?:^|[^\d])(\d{1,2})\s*[./-]\s*(\d{4})(?!\d)/);if(m){return new Date(+m[2],+m[1],0);}   /* month-year: end of month */
+  return null;
+}
+const fmtDate=d=>d?d.getDate()+'.'+(d.getMonth()+1)+'.'+d.getFullYear():'';
+function parseReq(s){
+  const t=String(s||'').replace(/,(?=\d)/g,'.').replace(/\s+/g,' ').trim();if(!t)return null;let m;
+  const unit=(t.match(/(mm|מ"מ|מ״מ|cm|°|deg|ohm|Ω|kg|in)/i)||[])[1]||'';
+  if((m=t.match(/(-?\d+(?:\.\d+)?)\s*(?:mm|cm|°)?\s*±\s*(\d+(?:\.\d+)?)/i)))return{nom:+m[1],lo:+m[1]-m[2],hi:+m[1]+ +m[2],unit};
+  const mn=t.match(/(?:min(?:imum)?|מינ(?:ימום)?|≥|>=)\.?\s*(\d+(?:\.\d+)?)/i),mx=t.match(/(?:max(?:imum)?|מקס(?:ימום)?|≤|<=)\.?\s*(\d+(?:\.\d+)?)/i);
+  if(mn||mx)return{nom:NaN,lo:mn?+mn[1]:-Infinity,hi:mx?+mx[1]:Infinity,unit};
+  if((m=t.match(/^(-?\d+(?:\.\d+)?)\s*[–~]\s*(-?\d+(?:\.\d+)?)/)))return{nom:NaN,lo:Math.min(+m[1],+m[2]),hi:Math.max(+m[1],+m[2]),unit};
+  if(!(m=t.match(/^(-?\d+(?:\.\d+)?)(.*)$/)))return null;
+  const nom=+m[1],rest=m[2];let plus=null,minus=null;
+  for(const k of rest.matchAll(/([+-])\s*(\d+(?:\.\d+)?)/g)){if(k[1]==='+')plus=+k[2];else minus=+k[2];}
+  if(plus===null&&minus===null){if(/[a-zA-Zא-ת]{3,}/.test(rest.replace(/mm|cm|deg|ohm|kg/ig,'')))return null;return{nom,lo:nom,hi:nom,unit,exact:true};}
+  return{nom,lo:nom-(minus||0),hi:nom+(plus||0),unit};
+}
+const ACCEPT_TXT=/^(implemented|pass(ed)?|ok|yes|accept(ed)?|conform(s|ing)?|complies|done|verified|כן|עבר|תקין|בוצע|יושם|מיושם|תואם)\b/i;
+const REJECT_TXT=/^(fail(ed)?|reject(ed)?|no|nok|not\s|לא|נכשל|חריגה)/i;
+function faiChecks(input,add,metrics,res){
+  const h=input.faiH||{},meta=input.meta||{};
+  const f1=readTable(input.fai1||'',FAI_SPEC.fai1),f2=readTable(input.fai2||'',FAI_SPEC.fai2),f3=readTable(input.fai3||'',FAI_SPEC.fai3);
+  const has=Object.values(h).some(v=>String(v||'').trim())||!f1.empty||!f2.empty||!f3.empty;
+  if(!has)return;
+  const C1='FAI – טופס 1',C2='FAI – טופס 2',C3='FAI – טופס 3',v=k=>String(h[k]||'').trim();
+  /* required header fields */
+  const req=FAI_FIELDS.filter(f=>f[2]);let filled=0;const missing=[];
+  for(const [k,label] of req){if(v(k))filled++;else missing.push(label);}
+  if(missing.length)add('gap',C1,'שדות חובה','שדות חובה ריקים: '+missing.join(', '),'להשלים בטופס לפני אישור ה־FAI','faireq');
+  metrics.push({key:'faiReq',label:'שדות חובה ב־FAI שמולאו',covered:filled,total:req.length});
+  if(/חלקי|partial/i.test(v('faiType'))&&!v('partialReason'))add('gap',C1,'14','FAI חלקי ללא סיבה','לרשום את הסיבה (שינוי תכן, שינוי תהליך, הפסקת ייצור וכו׳)','faipartial');
+  if(!v('customerBy'))add('info',C1,'24','אין אישור לקוח','לוודא אם החוזה דורש אישור לקוח ל־FAI','faicust');
+  const dV=parseDate(v('verifiedDate')),dR=parseDate(v('reviewedDate'));
+  if(v('verifiedDate')&&!dV)add('warn',C1,'21','תאריך לא מזוהה: '+v('verifiedDate'),'לרשום תאריך בפורמט יום/חודש/שנה','faidate');
+  if(dV&&dR&&dR<dV)add('warn',C1,'23','תאריך האישור ('+fmtDate(dR)+') מוקדם מתאריך האימות ('+fmtDate(dV)+')','לבדוק את סדר החתימות','faidates');
+  const faiDate=dV||dR;
+  /* identity against the project */
+  const same=(a,b)=>normH(a)===normH(b);
+  if(v('pn')&&meta.pn&&!same(v('pn'),meta.pn))add('critical',C1,'1','מק״ט ב־FAI ('+v('pn')+') שונה מהמק״ט בפרויקט ('+meta.pn+')','לוודא שה־FAI שייך לפריט הנבדק','faipn');
+  if(v('drawingNo')){
+    const pairs=[[meta.drawingNo,meta.drawingRev,'החשמלי'],[meta.mechNo,meta.mechRev,'המכני']].filter(x=>x[0]);
+    const hit=pairs.find(x=>same(x[0],v('drawingNo')));
+    if(hit){if(hit[1]&&v('drawingRev')&&!same(hit[1],v('drawingRev')))add('critical',C1,'7','מהדורת השרטוט ב־FAI ('+v('drawingRev')+') שונה ממהדורת השרטוט '+hit[2]+' בפרויקט ('+hit[1]+')','לוודא שה־FAI בוצע למהדורה הנכונה','fairev');}
+    else if(pairs.length)add('warn',C1,'6','מספר השרטוט ב־FAI ('+v('drawingNo')+') לא תואם לשרטוטים שבפרויקט ('+pairs.map(x=>x[0]).join(', ')+')','לבדוק שמדובר באותו פריט','faidrawing');
+  }
+  /* form 1: parts list */
+  const p1=f1.items.filter(r=>r.pn||r.name);
+  if(/מכלול|assembly/i.test(v('kind'))&&!p1.length)add('gap',C1,'15–18','FAI למכלול ללא רשימת פריטים','למלא את אינדקס הפריטים בטופס 1','faiindex');
+  for(const r of p1){if(!r.pn)add('warn',C1,'שורה '+r.line,'פריט ללא מק״ט ('+(r.name||'')+')','','faipnmiss');
+    if(!r.fairId)add('info',C1,r.pn||('שורה '+r.line),'לא צוין מזהה FAIR / N/A לפריט','למלא N/A או את מזהה ה־FAIR של תת־המכלול','faisubfair');}
+  const bom=(input.mechItems||[]).filter(x=>x.pn&&!(x.from&&x.to));
+  if(bom.length&&p1.length){
+    const inFai=new Set(p1.map(r=>normH(r.pn).replace(/rev.*$/,'')));
+    const miss=bom.filter(b=>!inFai.has(normH(b.pn)));
+    if(miss.length)add('gap',C1,miss.length===1?'פריט אחד':miss.length+' פריטים','פריטים מהשרטוט המכני שלא מופיעים ברשימת הפריטים של ה־FAI: '+list(miss.map(b=>b.ref+' '+b.pn),12),'להוסיף לטופס 1 או לנמק','faibom');
+  }
+  /* form 2: materials, special processes, functional test */
+  const tp=v('testProc'),ar=v('acceptReport');
+  const claimsTest=f3.items.some(r=>/electric|חשמל|continuity|רציפות|בידוד|test/i.test((r.char||'')+' '+(r.req||'')))||!!input.reportMeta;
+  if(!tp&&claimsTest)add('gap',C2,'11','לא צוין נוהל בדיקה פונקציונלית, אף שבוצעה בדיקה חשמלית','לרשום את מספר הנוהל / תוכנית הבודק'+(input.reportMeta&&input.reportMeta.program?' (בדוח הבודק: '+input.reportMeta.program+')':''),'faitestproc');
+  if(!ar&&claimsTest)add('gap',C2,'12','לא צוין מספר דוח קבלה של הבדיקה הפונקציונלית','לצרף את דוח הבודק ולרשום את מספרו','faiaccept');
+  if(tp&&ar&&same(tp,ar))add('warn',C2,'11–12','מספר הנוהל ומספר דוח הקבלה זהים ('+tp+')','לרשום את מספר הדוח בפועל (לא את מספר הנוהל) ולוודא שהתוצאות מצורפות','faisameref');
+  if(input.reportMeta&&input.reportMeta.result==='FAIL')add('critical',C2,'דוח בודק','דוח הבודק המצורף נכשל','','faitestfail');
+  for(const r of f2.items.filter(x=>x.material||x.spec)){
+    const id=r.material||r.spec,all=Object.values(r).join(' ');
+    const em=all.match(/exp(?:iry|\.)?\s*(?:date)?\s*[:.]?\s*([\d][\d./ -]*\d)/i);
+    if(em){const de=parseDate(em[1]);if(de&&faiDate&&de<faiDate)add('critical',C2,id,'החומר פג תוקף ('+fmtDate(de)+') לפני תאריך ה־FAI ('+fmtDate(faiDate)+')','לפתוח אי־התאמה ולבדוק את המוצרים שיוצרו עם החומר','faiexp');}
+    if(!r.cert&&!/^(ipc|n\/?a)/i.test(id)&&!/ipc|whma|mil-std|spec/i.test(r.spec||''))add('info',C2,id,'לא צוינה תעודת התאמה / אצווה לחומר','להשלים מספר תעודה או N/A מנומק','faicert');
+  }
+  /* form 3: characteristics */
+  const rows=f3.items.filter(r=>r.req||r.result||r.char);
+  const fai3=[];let okC=0;
+  for(const r of rows){
+    const id=(r.no?'#'+r.no:'שורה '+r.line)+(r.comment&&/\d/.test(r.comment)?' ('+r.comment+')':'');
+    let st='',sev='';const q=parseReq(r.req),res_=String(r.result||'').trim();
+    if(!res_){st='אין תוצאה';sev='gap';add('gap',C3,id,'אין תוצאה למאפיין'+(r.req?' ('+r.req+')':''),'למדוד ולרשום תוצאה','fainores');}
+    else if(/^n\/?a$/i.test(res_)){st='לא ישים';okC++;}
+    else if(REJECT_TXT.test(res_)){st='לא עומד';sev='critical';add(r.nc?'warn':'critical',C3,id,'התוצאה "'+res_+'" אינה עומדת בדרישה'+(r.nc?' (מתועד באי־התאמה '+r.nc+')':''),r.nc?'':'לפתוח אי־התאמה','faifail');}
+    else if(q&&/\d/.test(res_)){
+      const val=parseFloat(res_.replace(/,(?=\d)/g,'.').replace(/^[^\d-]*/,''));
+      if(!Number.isFinite(val)){st='לא נקרא';sev='warn';add('warn',C3,id,'לא ניתן לקרוא את התוצאה "'+res_+'"','','faibadres');}
+      else if(val<q.lo-1e-9||val>q.hi+1e-9){
+        if(q.exact){st='לבדוק טולרנס';sev='warn';add('warn',C3,id,'התוצאה '+res_+' שונה מהדרישה '+r.req+', ולדרישה לא נרשם טולרנס','לבדוק מול הטולרנס הכללי בשרטוט','faiexact');}
+        else{st='מחוץ לתחום';sev='critical';add(r.nc?'warn':'critical',C3,id,'התוצאה '+res_+' מחוץ לתחום '+r.req+' ('+(Number.isFinite(q.lo)?q.lo:'')+'–'+(Number.isFinite(q.hi)?q.hi:'')+')'+(r.nc?' – מתועד באי־התאמה '+r.nc:''),r.nc?'לוודא את סגירת אי־ההתאמה':'לפתוח אי־התאמה','faiout');}
+      }else{st='בתחום';okC++;}
+      if(!r.tool&&!sev)add('info',C3,id,'לא צוין כלי מדידה לתוצאה מספרית','להשלים כלי מדידה ומספר כיול','faitool');
+    }else if(ACCEPT_TXT.test(res_)){st=q&&!q.exact?'תוצאה טקסטואלית':'מאושר';okC++;
+      if(q&&!q.exact)add('warn',C3,id,'לדרישה מספרית ('+r.req+') נרשמה תוצאה לא מספרית ("'+res_+'")','לרשום את הערך שנמדד','faitextres');}
+    else{st='לבדוק';sev='warn';add('warn',C3,id,'תוצאה לא מוכרת: "'+res_+'"','','faiunk');}
+    if(r.nc&&!sev)add('info',C3,id,'רשום מספר אי־התאמה ('+r.nc+') לתוצאה תקינה','לבדוק את הרישום','faincok');
+    fai3.push({...r,status:st,sev});
+  }
+  if(rows.length)metrics.push({key:'faiChar',label:'מאפיינים בטופס 3 שעומדים בדרישה',covered:okC,total:rows.length});
+  const nums=[...new Set(rows.map(r=>parseInt(r.no)).filter(Number.isFinite))].sort((a,b)=>a-b);
+  if(nums.length>1){const gaps=[];for(let i=nums[0];i<nums[nums.length-1]&&gaps.length<20;i++)if(!nums.includes(i))gaps.push(i);
+    if(gaps.length)add('warn',C3,'מספור','מספור המאפיינים לא רציף: חסרים '+gaps.join(', '),'לוודא שכל המאפיינים המסומנים בשרטוט מופיעים','faigaps');}
+  if(/מלא|full/i.test(v('faiType'))&&nums.length&&nums.length<3)add('warn',C3,'היקף','FAI מלא עם '+nums.length+' מאפיינים בלבד','לוודא מול השרטוט המסומן (ballooned) שכל המאפיינים נבדקו','faifew');
+  if(!rows.length)add('gap',C3,'—','טופס 3 ריק','למלא את טבלת המאפיינים','faiempty3');
+  const anyBad=fai3.some(r=>r.sev==='critical')||fai3.some(r=>r.nc);
+  const ncv=v('nc');
+  if(/^(לא|no)$/i.test(ncv)&&anyBad)add('critical',C1,'19','בשדה 19 סומן "אין אי־התאמות", אבל בטופס 3 יש תוצאות חריגות או מספרי אי־התאמה','לתקן את שדה 19 או את התוצאות','fainc19');
+  if(/^(כן|yes)$/i.test(ncv)&&!fai3.some(r=>r.nc))add('warn',C1,'19','בשדה 19 סומן שיש אי־התאמות, אבל בטופס 3 לא רשום מספר אי־התאמה','לרשום את מספרי אי־ההתאמה בעמודה 11 של טופס 3','fainc19b');
+  res.fai={h,rows:fai3,parts:p1.length,materials:f2.items.length};
+}
+
 function pickPin(M,netIdx){const n=M.nets[netIdx];return n.testable.find(p=>!M.nodes.get(p).nc)||n.testable[0]||null;}
 function pickGroupPin(M,g){for(const i of g.nets){const p=pickPin(M,i);if(p)return p;}return null;}
 function suggestCont(M,n,uncovered,wireCov,S){
@@ -1028,13 +1166,14 @@ function pdfLines(items){
   return lines.filter(l=>l.cells.length);
 }
 function pageAnchors(lines){
-  const xs=[];lines.forEach((l,i)=>l.cells.forEach(c=>xs.push({x:c.x0,i})));
+  const xs=[];lines.forEach((l,i)=>l.cells.forEach(c=>xs.push({x:c.x0,i,t:c.text})));
   xs.sort((p,q)=>p.x-q.x);
   const clusters=[];
-  for(const p of xs){const last=clusters[clusters.length-1];if(last&&p.x-last.max<=6){last.max=p.x;last.lines.add(p.i);}else clusters.push({min:p.x,max:p.x,lines:new Set([p.i])});}
+  for(const p of xs){const hd=HDR.some(([,re])=>re.test(hClean(p.t)));const last=clusters[clusters.length-1];if(last&&p.x-last.max<=6){last.max=p.x;last.lines.add(p.i);last.hd=last.hd||hd;}else clusters.push({min:p.x,max:p.x,lines:new Set([p.i]),hd});}
   const multi=lines.filter(l=>l.cells.length>1).length;
   const need=Math.max(2,Math.ceil(multi*0.15));
-  let anchors=clusters.filter(c=>c.lines.size>=need).map(c=>c.min);
+  /* a column with a recognised header is kept even when it is empty in every row (e.g. no nonconformances) */
+  let anchors=clusters.filter(c=>c.lines.size>=need||c.hd).map(c=>c.min);
   if(!anchors.length)anchors=[xs.length?xs[0].x:0];
   if(anchors.length>24)anchors=clusters.sort((p,q)=>q.lines.size-p.lines.size).slice(0,24).map(c=>c.min).sort((p,q)=>p-q);
   return anchors;
@@ -1060,9 +1199,15 @@ function tableFromLines(lines){
 const PDF_FIELDS={
   drawing:{gauge:'חתך',type:'סוג',id:'מזהה / מס׳ חוט',from:'מוצא (מחבר או נקודה)',from_pin:'פין מוצא',to:'יעד (מחבר או נקודה)',to_pin:'פין יעד',value:'ערך / מק״ט',tol:'טולרנס',net:'שם אות / רשת',note:'הערה'},
   tests:{step:'צעד',type:'סוג בדיקה',from:'מוצא',from_pin:'פין מוצא',to:'יעד',to_pin:'פין יעד',low:'גבול תחתון',high:'גבול עליון',unit:'יחידה',voltage:'מתח',measured:'מדוד',result:'תוצאה',note:'הערה'},
+  fai1:{pn:'מק״ט',name:'שם פריט',type:'סוג / מס׳ סידורי',fairId:'מזהה FAIR'},
+  fai2:{material:'חומר או תהליך',spec:'מספר מפרט',code:'קוד',supplier:'ספק תהליך מיוחד',approval:'אישור לקוח',cert:'תעודת התאמה'},
+  fai3:{no:'מס׳',loc:'מיקום בשרטוט',char:'מאפיין',req:'דרישה',result:'תוצאה',tool:'כלי',nc:'אי־התאמה',comment:'הערה'},
   mech:{ref:'מזהה / מס׳ חוט',pn:'מק״ט',desc:'תיאור',pins:'מספר מגעים',qty:'כמות',from:'מוצא',from_pin:'פין מוצא',to:'יעד',to_pin:'פין יעד',gauge:'חתך',color:'צבע',length:'אורך'}
 };
 const HDR=[
+  ['fairId',/^fair\s*identifier:?$/i],['name',/^part\s*name:?$/i],['type',/^(part\s*type|part\s*serial\s*number|serial\s*number)$/i],
+  ['material',/^material\s*(or\s*process)?(\s*name)?$/i],['spec',/^specification\s*(number)?$/i],['code',/^code$/i],['supplier',/^special\s*process\s*supplier.*$/i],['approval',/^customer\s*approval.*$/i],['cert',/^certificate\s*(of\s*conformance)?.*$/i],
+  ['no',/^(char\.?\s*no\.?|characteristic\s*n(o|umber)\.?)$/i],['loc',/^reference\s*location$/i],['char',/^characteristic\s*designator$/i],['req',/^requirement$/i],['result',/^results?$/i],['tool',/^designed\s*\/?\s*qualified\s*tooling$/i],['nc',/^non-?\s*conformance\s*(number)?$/i],['comment',/^additional\s*data\s*\/?\s*comments?$/i],
   ['from_pin',/^(from|src|source)\s*(pin|cav|cavity|contact|term)/i],['to_pin',/^(to|dest)\s*(pin|cav|cavity|contact|term)/i],
   ['from',/^(from|src|source|origin|end\s*1|side\s*a|מוצא|מ־?)(\s*(conn|connector|ref|loc|location|point|desig.*))?$/i],
   ['to',/^(to|dest|destination|end\s*2|side\s*b|יעד|אל)(\s*(conn|connector|ref|loc|location|point|desig.*))?$/i],
@@ -1080,7 +1225,8 @@ const HDR=[
   ['note',/^(note|notes|remark|remarks|הערה|הערות)$/i],
   ['gauge',/^(awg|gauge|ga|wire\s*size|size|חתך)$/i],['color',/^(colou?r|צבע)$/i],['length',/^(length|len|אורך)(\s*[\(\[].*)?$/i],['qty',/^(qty|quantity|כמות)$/i]
 ];
-function headerScore(cells){let n=0;for(const c of cells)if(c&&HDR.some(([,re])=>re.test(c.trim())))n++;return n;}
+const hClean=c=>String(c||'').trim().replace(/^\d+\s*[.)]\s*/,'').replace(/:$/,'').trim();
+function headerScore(cells){let n=0;for(const c of cells)if(c&&HDR.some(([,re])=>re.test(hClean(c))))n++;return n;}
 function autoMap(table,target){
   const fields=PDF_FIELDS[target];let best=null,bs=1;
   for(const r of table.rows){const sc=headerScore(r.cells);if(sc>bs){bs=sc;best=r;}}
@@ -1088,7 +1234,7 @@ function autoMap(table,target){
   if(!best)return{map,header:null};
   let lastSide='';
   best.cells.forEach((c,i)=>{
-    c=(c||'').trim();if(!c)return;
+    c=hClean(c);if(!c)return;
     for(const [f,re] of HDR){if(!re.test(c))continue;
       let field=f;
       if(f==='from'||f==='to')lastSide=f;
@@ -1113,6 +1259,9 @@ function tableToCsv(table,map,target,opts={}){
   for(const r of table.rows){
     if(headerScore(r.cells)>=2){skipped++;continue;}
     const g={};map.forEach((f,i)=>{if(f&&r.cells[i])g[f]=g[f]?g[f]+' '+r.cells[i]:r.cells[i];});
+    if(/^fai/.test(target)){const keys=Object.keys(PDF_FIELDS[target]);const row=keys.map(k=>g[k]||'');
+      const key={fai1:['pn','name'],fai2:['material','spec'],fai3:['req','result']}[target];
+      if(!key.some(k=>g[k])){skipped++;continue;}out.push(row);continue;}
     if(target==='mech'){
       let mf=normPoint(g.from),mt=normPoint(g.to);
       if(g.from_pin)mf=mf?mf+join+normPoint(g.from_pin):normPoint(g.from_pin);
@@ -1343,7 +1492,11 @@ function reportHtml(o){
     h+='<h2>4. אימות רשימת החיבורים מול השרטוט</h2><p>רשימת החיבורים נגזרה מתוכנית הבודק ונבדקה רשת אחרי רשת מול השרטוט: <b>'+v.ok+'</b> תואמות, <b>'+v.bad+'</b> לא תואמות, <b>'+v.open+'</b> טרם אומתו, מתוך '+v.total+'.</p>';
     if(v.badList.length)h+='<table><tr><th>רשת / רכיב</th><th>נקודות</th><th>מיקום בשרטוט</th><th>אי־התאמה</th></tr>'+v.badList.map(x=>tr([esc(x.name),'<span class="ltr">'+esc(x.points.join(', '))+'</span>',esc([x.sheet?'גיליון '+x.sheet:'',x.zone?'אזור '+x.zone:''].filter(Boolean).join(', ')),esc(x.note)])).join('')+'</table>';
   }
-  const sec=v&&v.total?5:4;
+  let sec=v&&v.total?5:4;
+  if(res.fai){const F=res.fai,fh=F.h||{};
+    h+='<h2>'+sec+'. FAI לפי AS9102</h2>'+kv([['FAIR',esc(fh.fairId)],['מק״ט / מהדורה',esc([fh.pn,fh.partRev].filter(Boolean).join(' / '))],['מספר סידורי',esc(fh.sn)],['שרטוט',esc([fh.drawingNo,fh.drawingRev].filter(Boolean).join(' מהדורה '))],['סוג',esc([fh.kind,fh.faiType,fh.partialReason].filter(Boolean).join(', '))],['אי־התאמות מתועדות (19)',esc(fh.nc||'לא סומן')],['נוהל / דוח בדיקה פונקציונלית',esc([fh.testProc,fh.acceptReport].filter(Boolean).join(' / '))],['אומת / אושר',esc([fh.verifiedBy,fh.verifiedDate,fh.reviewedBy,fh.reviewedDate].filter(Boolean).join(' | '))]]);
+    if(F.rows.length)h+='<table><tr><th>מס׳</th><th>מיקום</th><th>מאפיין</th><th>דרישה</th><th>תוצאה</th><th>כלי</th><th>אי־התאמה</th><th>סטטוס</th></tr>'+F.rows.map(r=>tr([esc(r.no),esc(r.loc),esc(r.char),esc(r.req),esc(r.result),esc(r.tool),esc(r.nc),'<span class="sev s-'+(r.sev||'ok')+'">'+esc(r.status)+'</span>'])).join('')+'</table>';
+    sec++;}
   const rv=o.reviews||{};
   const st={};for(const f of res.findings){const s_=(rv[f.key]||{}).status||REV[0];st[s_]=(st[s_]||0)+1;}
   h+='<h2>'+sec+'. ממצאים</h2><p class="muted">סטטוס סקירה: '+Object.entries(st).map(([k,n])=>esc(k)+' '+n).join(', ')+'.</p>';
@@ -1359,7 +1512,7 @@ function reportHtml(o){
 }
 function reportDocument(inner,title){return '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>body{background:#fff;margin:0;padding:16px}@page{size:A4;margin:12mm}'+REPORT_CSS+'</style></head><body>'+inner+'</body></html>';}
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS,verifyItems,setVerify,parseVerifyNote,reportHtml,reportDocument,REPORT_CSS,esc};
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS,verifyItems,setVerify,parseVerifyNote,parseReq,parseDate,FAI_FIELDS,reportHtml,reportDocument,REPORT_CSS,esc};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -1383,7 +1536,7 @@ const say=msg=>dialog({msg});
 const KEY='harness-qa-v4',OLD_KEY='harness-qa-engineering-private-v2';
 const REVIEW=['פתוח','מאושר – להעביר לטיפול','לא רלוונטי – מנומק','תוקן – לאמת','סגור'];
 const TPL=H.HEADERS;
-const fresh=()=>({v:4,meta:{},settings:{...H.DEFAULT_SETTINGS},drawing:'',mech:'',tests:'',reviews:{},reportMeta:null,docs:{}});
+const fresh=()=>({v:4,meta:{},settings:{...H.DEFAULT_SETTINGS},drawing:'',mech:'',tests:'',fai1:'',fai2:'',fai3:'',faiH:{},reviews:{},reportMeta:null,docs:{}});
 let data=fresh(),last=null;
 
 const DEMO={
@@ -1443,6 +1596,28 @@ tests:`צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מ
 meta:{pn:'DEMO-100',drawingNo:'DEMO-100-E',drawingRev:'B',mechNo:'DEMO-100-M',mechRev:'B',atpNo:'ATP-DEMO-100',atpRev:'A'}
 };
 
+const FAI_DEMO={faiH:{pn:'DEMO-100',partName:'רתמת הדגמה',sn:'SN-0001',fairId:'FAIR-001',partRev:'B',drawingNo:'DEMO-100-M',drawingRev:'B',org:'מפעל לדוגמה',kind:'מכלול',faiType:'מלא',nc:'',verifiedBy:'מבקר א׳',verifiedDate:'10/03/2026',reviewedBy:'מאשר ב׳',reviewedDate:'08/03/2026',testProc:'ATP-DEMO-100',acceptReport:'ATP-DEMO-100'},
+fai1:`מק״ט,שם פריט,סוג / מס׳ סידורי,מזהה FAIR
+M83723/75R1415N,מחבר ראשי,DC2121,N/A
+D38999/26WB35SN,מחבר ציוד,DC2138,N/A
+MS27467T11B35S,מחבר מנורה,DC2003,N/A
+1N4148,דיודה,LOT 2210,N/A
+TAG-100,תווית זיהוי,202110741,N/A
+M22759/16-22-9,חוט 22AWG,ECO039622-1,`,
+fai2:`חומר או תהליך,מספר מפרט,קוד,ספק תהליך מיוחד,אישור לקוח,תעודת התאמה
+IPC,IPC/WHMA-A-620 CLASS III,N/A,N/A,N/A,N/A
+דבק אפוקסי,S-1125-KIT-8,N/A,N/A,N/A,43000 Exp. date: 25/02/26
+שרוול מתכווץ,DR-25-1/2-0,N/A,N/A,N/A,`,
+fai3:`מס׳,מיקום בשרטוט,מאפיין,דרישה,תוצאה,כלי,אי־התאמה,הערה
+1,A1,הערות כלליות,ALL DIMENSIONS IN MM,IMPLEMENTED,N/A,,
+2,B2,אורך ענף J1,850 -0+50 mm,870 mm,סרט מדידה,,
+3,B3,אורך ענף J2,400 -0+50 mm,460 mm,סרט מדידה,,
+4,C4,סימון,DEMO-100 REV B,IMPLEMENTED,N/A,,
+6,D1,זווית יציאה,180°,180°,מד זווית,,
+7,C2-C4,אורך,280 MM + 5 MM,,סרט מדידה,,
+8,,בדיקה חשמלית,ATP-DEMO-100,PASS,בודק אוטומטי,,`};
+$('faiDemo').onclick=async()=>{if((data.fai1||data.fai3)&&!await ask('להחליף את נתוני ה־FAI בדוגמה?'))return;Object.assign(data,JSON.parse(JSON.stringify(FAI_DEMO)));fill();save();};
+
 /* ---- persistence ---- */
 let saveTimer=null;
 function notify(s){$('msg').textContent=s;}
@@ -1457,12 +1632,22 @@ function load(){
 function fill(){
   for(const el of document.querySelectorAll('[data-meta]'))el.value=data.meta[el.dataset.meta]||'';
   for(const el of document.querySelectorAll('[data-set]')){const v=data.settings[el.dataset.set];if(el.type==='checkbox')el.checked=!!v;else el.value=v??'';}
-  for(const k of ['drawing','mech','tests'])$(k).value=data[k]||'';
+  for(const k of ['drawing','mech','tests','fai1','fai2','fai3'])$(k).value=data[k]||'';
+  for(const el of document.querySelectorAll('[data-fai]'))el.value=(data.faiH||{})[el.dataset.fai]||'';
   renderRepMeta();
 }
 for(const el of document.querySelectorAll('[data-meta]'))el.addEventListener('input',()=>{data.meta[el.dataset.meta]=el.value;saveSoon();});
 for(const el of document.querySelectorAll('[data-set]'))el.addEventListener(el.type==='checkbox'?'change':'input',()=>{data.settings[el.dataset.set]=el.type==='checkbox'?el.checked:el.value;saveSoon();});
-for(const k of ['drawing','mech','tests'])$(k).addEventListener('input',()=>{data[k]=$(k).value;saveSoon();});
+for(const k of ['drawing','mech','tests','fai1','fai2','fai3'])$(k).addEventListener('input',()=>{data[k]=$(k).value;saveSoon();});
+/* FAI header fields */
+for(const [k,label] of H.FAI_FIELDS){
+  const w=document.createElement('div'),l=Object.assign(document.createElement('label'),{textContent:label,htmlFor:'fai_'+k});let el;
+  const opts={kind:['','מכלול','פריט בודד'],faiType:['','מלא','חלקי'],nc:['','לא','כן']}[k];
+  if(opts){el=document.createElement('select');for(const o of opts)el.add(new Option(o||'—',o));}else el=document.createElement('input');
+  el.id='fai_'+k;el.dataset.fai=k;
+  el.addEventListener(opts?'change':'input',()=>{data.faiH={...(data.faiH||{}),[k]:el.value};saveSoon();});
+  w.append(l,el);$('faiHead').append(w);
+}
 
 /* ---- tabs ---- */
 function tabs(attr){for(const b of document.querySelectorAll('['+attr+']'))b.addEventListener('click',()=>{
@@ -1485,10 +1670,10 @@ $('genRun').onclick=async()=>{
 };
 $('demoLoad').onclick=async()=>{
   if((data.drawing||data.tests||data.mech)&&!await ask('להחליף את כל המקורות בנתוני הדוגמה?'))return;
-  data.drawing=DEMO.drawing;data.mech=DEMO.mech;data.tests=DEMO.tests;data.meta={...data.meta,...DEMO.meta};data.reportMeta=null;fill();save();run();
+  data.drawing=DEMO.drawing;data.mech=DEMO.mech;data.tests=DEMO.tests;Object.assign(data,FAI_DEMO);data.meta={...data.meta,...DEMO.meta};data.reportMeta=null;fill();save();run();
 };
 $('clearAll').onclick=async()=>{if(!await ask('לנקות את השרטוט החשמלי, המכני ותוכנית הבדיקה? (פרטי הפרויקט וסטטוסי הסקירה יישמרו)'))return;
-  data.drawing=data.mech=data.tests='';data.reportMeta=null;fill();save();$('results').hidden=true;};
+  data.drawing=data.mech=data.tests=data.fai1=data.fai2=data.fai3='';data.faiH={};data.reportMeta=null;fill();save();$('results').hidden=true;};
 
 /* ---- tester HTML report ---- */
 function htmlToText(raw){
@@ -1541,7 +1726,7 @@ function pageList(spec,n){
     for(let i=+m[1];i<=Math.min(n,+(m[2]||m[1]));i++)out.add(i);}
   return[...out].sort((x,y)=>x-y);
 }
-const TARGET_LABEL={drawing:'השרטוט החשמלי',tests:'תוכנית הבדיקה',mech:'השרטוט המכני'};
+const TARGET_LABEL={drawing:'השרטוט החשמלי',tests:'תוכנית הבדיקה',mech:'השרטוט המכני',fai1:'טופס 1 של ה־FAI',fai2:'טופס 2 של ה־FAI',fai3:'טופס 3 של ה־FAI'};
 function setDefTypes(){
   const t=$('pdfTarget').value,sel=$('pdfDefType');sel.replaceChildren();
   const opts=t==='drawing'?[['WIRE','חוט'],['SHIELD','סיכוך'],['JUMPER','גשר']]:t==='tests'?[['CONT','רציפות'],['ISO','בידוד'],['HIPOT','מתח גבוה'],['RES','התנגדות'],['DIODE','דיודה']]:[['','—']];
@@ -1651,7 +1836,7 @@ async function pdfApply(replace){
   if($('pdfMode').value==='tester'){data.reportMeta={...pdfState.log.meta,file:pdfState.file};if(!data.meta.pn&&pdfState.log.meta.pn)data.meta.pn=pdfState.log.meta.pn;if(!data.meta.atpNo&&pdfState.log.meta.program)data.meta.atpNo=pdfState.log.meta.program;fill();}
   save();
   notify('הועברו '+res.count+' שורות אל '+TARGET_LABEL[t]+' – לבדוק מול המסמך');
-  document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech'})[t]+']').click();
+  document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech',fai1:'tFai',fai2:'tFai',fai3:'tFai'})[t]+']').click();
 }
 $('pdfNetlist').onclick=async()=>{
   if(!pdfState?.log)return;const n=H.testsToNetlist(pdfState.log.csv);
@@ -1707,7 +1892,7 @@ function renderVerify(){
 const td=(v,cls)=>{const e=document.createElement('td');e.textContent=v??'';if(cls)e.className=cls;return e;};
 const badge=(sev,txt)=>{const s=document.createElement('span');s.className='badge s-'+sev;s.textContent=txt;return s;};
 function run(scroll=true){
-  last=H.analyze({drawing:data.drawing,tests:data.tests,mech:data.mech,settings:data.settings,meta:data.meta,reportMeta:data.reportMeta});
+  last=H.analyze({drawing:data.drawing,tests:data.tests,mech:data.mech,settings:data.settings,meta:data.meta,reportMeta:data.reportMeta,faiH:data.faiH,fai1:data.fai1,fai2:data.fai2,fai3:data.fai3});
   $('results').hidden=false;
   const c=last.counts;
   const v=$('verdict');
@@ -1731,7 +1916,7 @@ function run(scroll=true){
   renderFindings();renderTrace();renderSugg();renderNets();if($('rDoc').classList.contains('on'))renderDoc();
   if(scroll)$('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
-$('run').onclick=()=>{data.drawing=$('drawing').value;data.tests=$('tests').value;data.mech=$('mech').value;save();run();};
+$('run').onclick=()=>{for(const k of ['drawing','tests','mech','fai1','fai2','fai3'])data[k]=$(k).value;save();run();};
 
 const fStatus=$('fStatus');for(const s of REVIEW)fStatus.add(new Option(s,s));
 for(const id of ['fSev','fStatus','fText'])$(id).addEventListener('input',renderFindings);

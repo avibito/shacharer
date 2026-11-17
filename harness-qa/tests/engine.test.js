@@ -359,4 +359,63 @@ test('PDF import of a mechanical BOM: ITEM is not the reference designator',()=>
   assert.equal(JSON.stringify(map),JSON.stringify(['','ref','pn','desc','qty']));
 });
 
+/* ---- AS9102 FAI ---- */
+const grabObj=k=>html.match(new RegExp(k+':`([\\s\\S]*?)`'))[1];
+test('FAI requirement parser: +x, -a+b, ±, min/max, ranges, exact, text',()=>{
+  const r=x=>{const q=HQA.parseReq(x);return q?[q.lo,q.hi,!!q.exact].join(','):'null';};
+  assert.equal(r('280 MM + 5 MM'),'280,285,false');
+  assert.equal(r('10000 -0+50 mm'),'10000,10050,false');
+  assert.equal(r('5000 -0+50 mm'),'5000,5050,false');
+  assert.equal(r('12.5±0.2'),'12.3,12.7,false');
+  assert.equal(r('20 +5/-2 mm'),'18,25,false');
+  assert.equal(r('min 10'),'10,Infinity,false');
+  assert.equal(r('3.1–3.6'),'3.1,3.6,false');
+  assert.equal(r('180°'),'180,180,true');
+  assert.equal(r('ALL DIMENSIONS IN MM'),'null');
+  assert.equal(r('DEMO-100 REV B'),'null');
+});
+test('FAI dates: dd/mm/yy, dd.mm.yyyy, month-year expiry',()=>{
+  assert.equal(HQA.parseDate('25/03/26').toISOString().slice(0,10),new Date(2026,2,25).toISOString().slice(0,10));
+  assert.equal(HQA.parseDate('24.03.25').getFullYear(),2025);
+  const e=HQA.parseDate('EXP.06.2027');assert.equal(e.getMonth(),5);assert.equal(e.getDate(),30);
+});
+test('FAI demo: every planted issue is found',()=>{
+  const faiH={pn:'DEMO-100',partName:'רתמת הדגמה',sn:'SN-0001',fairId:'FAIR-001',partRev:'B',drawingNo:'DEMO-100-M',drawingRev:'B',org:'מפעל לדוגמה',kind:'מכלול',faiType:'מלא',nc:'',verifiedBy:'א',verifiedDate:'10/03/2026',reviewedBy:'ב',reviewedDate:'08/03/2026',testProc:'ATP-DEMO-100',acceptReport:'ATP-DEMO-100'};
+  const r=HQA.analyze({drawing:grab('drawing'),tests:grab('tests'),mech:grab('mech'),meta:{pn:'DEMO-100',mechNo:'DEMO-100-M',mechRev:'B',drawingRev:'B'},faiH,fai1:grabObj('fai1'),fai2:grabObj('fai2'),fai3:grabObj('fai3')});
+  const c=codes(r),f=k=>r.findings.find(x=>x.key.startsWith(k));
+  assert.ok(f('faireq').msg.includes('19.'),'field 19 not answered');
+  assert.ok(c.includes('faidates'),'review date before verification date');
+  assert.ok(c.includes('faisameref'),'same procedure and report number');
+  assert.equal(f('faiexp').sev,'critical');assert.ok(f('faiexp').el.includes('דבק'));
+  assert.ok(f('faibom').msg.includes('RCR07G3R3JS'),'BOM resistor missing from form 1');
+  assert.equal(f('faiout').el,'#3');assert.equal(f('faiout').sev,'critical');
+  assert.equal(f('fainores').el,'#7');
+  assert.ok(f('faigaps').msg.includes('5'));
+  assert.ok(!c.includes('fairev')&&!c.includes('faipn')&&!c.includes('faidrawing'),'identity matches the project');
+  const m=r.metrics.find(x=>x.key==='faiChar');assert.equal(m.total,7);assert.equal(m.covered,5);
+  assert.equal(r.fai.rows.find(x=>x.no==='2').status,'בתחום');
+  // field 19 = "no" while form 3 has a deviation -> critical contradiction
+  const r2=HQA.analyze({drawing:'',tests:'',faiH:{...faiH,nc:'לא'},fai3:grabObj('fai3')});
+  assert.ok(codes(r2).includes('fainc19'));assert.ok(!codes(r2).includes('nodraw'),'FAI-only run needs no drawing');
+  // deviation recorded with a nonconformance number is a warning, not critical
+  const r3=HQA.analyze({drawing:'',tests:'',faiH,fai3:'מס׳,מיקום בשרטוט,מאפיין,דרישה,תוצאה,כלי,אי־התאמה,הערה\n1,B3,אורך,400 -0+50 mm,460 mm,סרט,NCR-17,'});
+  assert.equal(r3.findings.find(x=>x.key.startsWith('faiout')).sev,'warn');
+  // project drawing revision differs from the FAI
+  const r4=HQA.analyze({drawing:'',tests:'',meta:{mechNo:'DEMO-100-M',mechRev:'C'},faiH});assert.ok(codes(r4).includes('fairev'));
+  // report contains the FAI section
+  const html_=HQA.reportHtml({meta:{},res:r,reviews:{},date:'',reportNo:''});assert.ok(html_.includes('FAI לפי AS9102')&&html_.includes('מחוץ לתחום'));
+});
+test('FAI forms import from a PDF table with AS9102 headers ("8. Requirement")',()=>{
+  const items=[];let y=700;
+  ['5. Char. No.','6. Reference Location','7. Characteristic Designator','8. Requirement','9. Results','10. Designed / Qualified Tooling','11. Nonconformance Number','12. Additional Data / Comments'].forEach((h,i)=>items.push(item(h,40+i*200,y)));
+  [['1','C2 – C4','LENGTH','280 MM + 5 MM','283 MM','METER','','2628-0001'],['1','C2 – C4','LENGTH','280 MM + 5 MM','284 MM','METER','','2628-0003']].forEach(r=>{y-=16;r.forEach((v,i)=>items.push(item(v,40+i*200,y)));});
+  const tbl=HQA.tableFromLines(HQA.pdfLines(items));const {map}=HQA.autoMap(tbl,'fai3');
+  assert.equal(JSON.stringify(map),JSON.stringify(['no','loc','char','req','result','tool','nc','comment']));
+  const out=HQA.tableToCsv(tbl,map,'fai3',{});assert.equal(out.count,2);
+  const r=HQA.analyze({drawing:'',tests:'',faiH:{faiType:'מלא'},fai3:out.csv});
+  assert.equal(r.metrics.find(x=>x.key==='faiChar').covered,2);
+  assert.ok(codes(r).includes('faifew'),'a full FAI with one characteristic');
+  assert.ok(!codes(r).includes('faigaps'),'repeated number with different serials is not a gap');
+});
+
 console.log(`\n${pass} passed`);
