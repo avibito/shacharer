@@ -262,7 +262,7 @@ details summary{cursor:pointer;list-style-position:inside}
   <h2>סיכום וחישוב</h2>
   <div id="dayProblems"></div>
   <div class="metrics">
-   <div class="metric"><span class="muted">משך יציאה עד הגעה</span><strong id="mAbsence">—</strong></div>
+   <div class="metric"><span class="muted">משך יציאה עד הגעה ליעד</span><strong id="mAbsence">—</strong></div>
    <div class="metric"><span class="muted">שעות מוכרות</span><strong id="mNet">—</strong></div>
    <div class="metric"><span class="muted">מעל מכסה (לבדיקת תשלום)</span><strong id="mExtra">—</strong></div>
    <div class="metric"><span class="muted">חוסר מהמכסה</span><strong id="mShort">—</strong></div>
@@ -509,7 +509,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '18.2';
+const VERSION = '18.3';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -518,7 +518,7 @@ const TIME_FIELDS = [
   ['leaveHome',  'יציאה מהבית',      '🏠'],
   ['startWork',  'התחלת עבודה',      '🧰'],
   ['endWork',    'סיום עבודה',       '🏁'],
-  ['arriveDest', 'שעת הגעה',         '📍'],
+  ['arriveDest', 'הגעה ליעד',        '📍'],
   ['startCoffee','תחילת הפסקה',      '☕'],
   ['endCoffee',  'סיום הפסקה',       '✔'],
   ['returnHome', 'חזרה הביתה',       '🏠'],
@@ -644,7 +644,7 @@ function analyze(d, key) {
   if (d.startCoffee && d.endCoffee && coffee === null) problems.push('שעות ההפסקה אינן תקינות');
   const deduct = settings.deductCoffee ? (coffee || 0) : 0;
   if (settings.deductCoffee && gross !== null && deduct > gross) problems.push('משך ההפסקה ארוך ממשך העבודה');
-  if (d.leaveHome && d.arriveDest && absence === null) problems.push('שעת ההגעה מוקדמת משעת היציאה');
+  if (d.leaveHome && d.arriveDest && absence === null) problems.push('ההגעה ליעד מוקדמת משעת היציאה');
 
   if (ext && !d.siteName) problems.push('לא צוין שם האתר החיצוני');
   if (type === 'abroad' && !d.country) problems.push('לא צוינה מדינה בעבודה בחו״ל');
@@ -990,7 +990,7 @@ function reportText(d, key) {
   if (d.country) lines.push(`מדינה: ${d.country}`);
   if (ABSENCE.has(d.dayType)) lines.push(`היקף: ${absenceText(d)}`);
   if (!NON_TIMED.has(d.dayType)) {
-    lines.push(`יציאה מהבית: ${d.leaveHome||'—'}`, `שעת הגעה: ${d.arriveDest||'—'}`, `תחילת עבודה: ${d.startWork||'—'}`, `סיום עבודה: ${d.endWork||'—'}`,
+    lines.push(`יציאה מהבית: ${d.leaveHome||'—'}`, `הגעה ליעד: ${d.arriveDest||'—'}`, `תחילת עבודה: ${d.startWork||'—'}`, `סיום עבודה: ${d.endWork||'—'}`,
       `הפסקה: ${d.startCoffee||'—'} עד ${d.endCoffee||'—'}`, `חזרה הביתה: ${d.returnHome||'—'}`, `שעות מוכרות: ${fmt(r.net)}`);
     const o = overtime(r); if (o && o.extra) lines.push(`מעל מכסה: ${fmt(o.extra)}`);
   }
@@ -1581,7 +1581,7 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 // Columns 0–17 keep the original v16 layout so older files still import; new columns are appended.
-const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','שעת הגעה','סהכ זמן היעדרות','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון','רכב תפעולי (רכב | מ | יעד | יציאה | חזרה | ק״מ התחלה | ק״מ סוף | תפקיד)'];
+const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','הגעה ליעד','משך יציאה עד הגעה ליעד','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון','רכב תפעולי (רכב | מ | יעד | יציאה | חזרה | ק״מ התחלה | ק״מ סוף | תפקיד)'];
 function csvRow(d, key) {
   const r = analyze(d, key), o = overtime(r);
   return [key, d.leaveHome, d.startWork, d.endWork, d.arriveDest, d.totalTime || (r.absence === null ? '' : fmt(r.absence)), d.startCoffee, d.endCoffee,
