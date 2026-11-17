@@ -314,14 +314,16 @@ details summary{cursor:pointer;list-style-position:inside}
   <p class="small">ק״מ מחושב רק בנסיעות שבהן הוזן מונה ק״מ ביציאה ובחזרה. נסיעות עם נתונים חריגים מופיעות גם בבדיקת הדיווחים בדוח החודשי.</p>
   <h3>📤 שליחת הסיכום</h3>
   <p class="small" id="sendInfo"></p>
-  <div class="actions"><button type="button" id="sendWhatsapp" class="primary">📤 שלח בוואטסאפ</button><button type="button" id="sendFile">📎 שלח קובץ</button><button type="button" id="vehicleCsv" class="wide">⬇ הורד קובץ CSV למכשיר</button></div>
+  <div class="actions"><button type="button" id="sendWhatsapp" class="primary wide">📤 שלח למקבל המורשה בוואטסאפ</button><button type="button" id="vehicleCsv" class="wide">⬇ הורד קובץ CSV לעיון אישי</button></div>
  </div>
 
  <div class="panel hidden" id="teamPanel">
   <details id="teamDetails">
    <summary><h2 style="display:inline">👥 סיכום צוות — לממונה</h2></summary>
-   <p class="small">לאחראי או לממונה: טען כאן את קובצי הסיכום שחברי הצוות שלחו לך בוואטסאפ (אפשר כמה קבצים יחד). קובץ חדש של אותו עובד לאותו חודש מחליף את הקודם. הנתונים נשמרים רק במכשיר שלך.</p>
-   <input type="file" id="teamFiles" accept=".csv,text/csv" multiple>
+   <p class="small">בוואטסאפ: לחיצה ארוכה על הודעת הסיכום שקיבלת ← ״העתק״ (אפשר לסמן כמה הודעות יחד). אחר כך כאן: ״הדבק סיכום״. סיכום חדש של אותו עובד לאותו חודש מחליף את הקודם. הנתונים נשמרים רק במכשיר שלך.</p>
+   <div class="actions"><button type="button" id="teamPasteBtn" class="primary wide">📋 הדבק סיכום מהלוח</button></div>
+   <textarea id="teamPaste" placeholder="או הדבק כאן ידנית את הודעות הסיכום ולחץ ״טען״" style="margin-top:8px;min-height:70px"></textarea>
+   <div class="actions"><button type="button" id="teamPasteLoad">טען מהטקסט</button><label class="small" style="display:flex;align-items:center;justify-content:center;border:1px dashed #42617b;border-radius:11px;cursor:pointer">קובץ CSV ישן<input type="file" id="teamFiles" accept=".csv,text/csv" multiple style="display:none"></label></div>
    <p class="status" id="teamStatus"></p>
    <p class="small">מוצג החודש שנבחר למעלה.</p>
    <div class="tiles">
@@ -495,7 +497,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.9';
+const VERSION = '18.0';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1104,18 +1106,12 @@ function exportVehicles() {
 }
 
 /* ---------- send vehicle summary (to me / to the team manager) ---------- */
-const VEH_SEND_HEADERS = ['עובד','תאריך','יום','רכב','יציאה מ','יעד','שעת יציאה','שעת חזרה','משך','ק״מ ביציאה','ק״מ בחזרה','ק״מ','תפקיד'];
 const monthLabel = () => { const [y, m] = state.month.split('-'); return `${m}.${y}`; };
 function waPhone(v) {
   let d = String(v || '').replace(/\D/g, '');
   if (d.startsWith('00')) d = d.slice(2);
   if (d.startsWith('0')) d = '972' + d.slice(1);
   return d.length >= 9 ? d : '';
-}
-function vehicleSendCsv(trips) {
-  const name = settings.reporterName || '';
-  return toCsv([VEH_SEND_HEADERS, ...trips.map(t => [name, t.k, WEEKDAYS[dateOf(keyToIso(t.k)).getDay()], t.vehicle, TRIP_FROM[t.from] || TRIP_FROM.home, t.to, t.depart, t.ret,
-    tripMinutes(t) === null ? '' : fmt(tripMinutes(t)), t.kmStart, t.kmEnd, tripKm(t) ?? '', TRIP_ROLE[t.role] || TRIP_ROLE.driver])]);
 }
 function vehicleSummaryText(trips) {
   const km = trips.reduce((n, t) => n + (tripKm(t) ?? 0), 0), minutes = trips.reduce((n, t) => n + (tripMinutes(t) ?? 0), 0);
@@ -1128,7 +1124,7 @@ function vehicleSummaryText(trips) {
   trips.slice(0, MAX).forEach(t => { const k = tripKm(t);
     lines.push(`${t.k} · ${t.vehicle || '—'} · מ${TRIP_FROM[t.from] || TRIP_FROM.home} ל${t.to || '—'} · ${t.depart || '—'}–${t.ret || '—'}${k !== null ? ` · ${k} ק״מ` : ''} · ${TRIP_ROLE[t.role] || TRIP_ROLE.driver}`); });
   if (trips.length > MAX) lines.push(`…ועוד ${trips.length - MAX} נסיעות (פירוט מלא בקובץ)`);
-  lines.push('', 'נשלח מאפליקציית שחרר');
+  lines.push('', 'נשלח מאפליקציית שחרר', '— נתונים לממונה, לא לערוך —', encodeTripsBlock(trips));
   return lines.join('\n');
 }
 function readySend() {
@@ -1239,21 +1235,6 @@ function sendWhatsapp() {
   const text = `אל: ${r.name}\n` + vehicleSummaryText(trips);
   window.open(`https://wa.me/${waPhone(r.phone)}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
 }
-async function sendFile() {
-  const trips = readySend(); if (!trips) return;
-  // ASCII-only file name (some phones drop non-Latin names); the worker's name is inside the file.
-  const name = `shacharer_vehicle_${state.month}_${Date.now().toString(36)}.csv`;
-  const content = vehicleSendCsv(trips);
-  try {
-    const file = new File([content], name, { type: 'text/csv' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: `סיכום רכב תפעולי ${monthLabel()}`, text: `סיכום רכב תפעולי ${monthLabel()} — ${settings.reporterName} — אל: ${currentRecipient().name}` });
-      return;
-    }
-  } catch (e) { if (e && e.name === 'AbortError') return; }
-  download(content, name, 'text/csv;charset=utf-8');
-  toast('הקובץ ירד למכשיר — צרף אותו בוואטסאפ ל' + currentRecipient().name);
-}
 function renderSendSettings() {
   $('reporterName').value = settings.reporterName || '';
   const list = recipients(), sel = $('recipientSelect'), cur = currentRecipient();
@@ -1278,8 +1259,62 @@ function saveSend() {
 /* ---------- team summary (for whoever receives the files) ---------- */
 const TEAM_KEY = 'shacharerTeamTrips';
 const getTeam = () => { const v = readJSON(TEAM_KEY, []); return Array.isArray(v) ? v : []; };
+/* Trip data travels inside the WhatsApp text, so it can go only to the approved number (no share sheet). */
+const BLOCK_RE = /SHR1:([A-Za-z0-9+/=]+)\.([0-9a-z]+)/g;
+const djb2 = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = (h * 33 + str.charCodeAt(i)) >>> 0; return h.toString(36); };
+const b64enc = str => btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+function encodeTripsBlock(trips) {
+  const json = JSON.stringify({ w: settings.reporterName || '', m: state.month,
+    t: trips.map(t => [t.k, t.vehicle || '', t.from || 'home', t.to || '', t.depart || '', t.ret || '', tripKm(t) ?? '', t.role || 'driver']) });
+  const b64 = b64enc(json);
+  return `SHR1:${b64}.${djb2(b64)}`;
+}
+function decodeTripsBlocks(text) {
+  const out = []; let bad = 0;
+  for (const m of String(text).matchAll(BLOCK_RE)) {
+    try {
+      if (djb2(m[1]) !== m[2]) throw Error('checksum');
+      const o = JSON.parse(b64dec(m[1]));
+      const worker = String(o.w || 'לא צוין');
+      const trips = (o.t || []).map(a => {
+        const iso = keyToIso(a[0]); if (!iso) return null;
+        return { worker, k: isoToKey(iso), month: iso.slice(0, 7), vehicle: String(a[1] || ''), from: TRIP_FROM[a[2]] || TRIP_FROM.home, to: String(a[3] || ''),
+          depart: cleanTime(a[4]), ret: cleanTime(a[5]), km: a[6] === '' || a[6] == null ? '' : String(a[6]), role: TRIP_ROLE[a[7]] || TRIP_ROLE.driver };
+      }).filter(Boolean);
+      // An empty month still replaces an earlier summary of the same worker+month.
+      out.push({ worker, month: String(o.m || ''), trips });
+    } catch { bad++; }
+  }
+  return { blocks: out, bad };
+}
+function mergeTeam(groups) {
+  let team = getTeam(), added = 0;
+  for (const g of groups) {
+    const pairs = new Set([...(g.month ? [g.worker + '|' + g.month] : []), ...g.trips.map(t => t.worker + '|' + t.month)]);
+    team = team.filter(t => !pairs.has(t.worker + '|' + t.month)).concat(g.trips);
+    added += g.trips.length;
+  }
+  writeJSON(TEAM_KEY, team);
+  const months = [...new Set(team.map(t => t.month))].sort();
+  if (added && !team.some(t => t.month === state.month) && months.length) setMonth(months[months.length - 1]); else renderTeam();
+  return added;
+}
+function importTeamText(text) {
+  const { blocks, bad } = decodeTripsBlocks(text);
+  if (!blocks.length) { setStatus('teamStatus', bad ? 'הסיכום פגום או נערך — בקש מהעובד לשלוח שוב' : 'לא נמצא סיכום בטקסט. ודא שהעתקת את כל ההודעה.', 'warn'); return; }
+  const added = mergeTeam(blocks);
+  const who = [...new Set(blocks.map(b => b.worker))].join(', ');
+  setStatus('teamStatus', `✓ נטענו ${added} נסיעות של ${who}` + (bad ? ` · ${bad} סיכומים פגומים דולגו` : ''), bad ? 'warn' : '');
+  $('teamPaste').value = '';
+}
+async function pasteTeamFromClipboard() {
+  try { const text = await navigator.clipboard.readText(); if (text) return importTeamText(text); } catch {}
+  setStatus('teamStatus', 'לא ניתן לקרוא מהלוח — הדבק ידנית בתיבה ולחץ ״טען מהטקסט״', 'warn'); $('teamPaste').focus();
+}
+
 async function importTeamFiles(files) {
-  let team = getTeam(), added = 0; const bad = [];
+  const groups = [], bad = [];
   for (const file of files) {
     try {
       const rows = parseCSV(await file.text());
@@ -1291,15 +1326,11 @@ async function importTeamFiles(files) {
         return { worker: get(r, 'עובד') || 'לא צוין', k: isoToKey(iso), month: iso.slice(0, 7), vehicle: get(r, 'רכב'), from: get(r, 'יציאה מ'), to: get(r, 'יעד'),
           depart: cleanTime(get(r, 'שעת יציאה')), ret: cleanTime(get(r, 'שעת חזרה')), km: get(r, 'ק״מ'), role: get(r, 'תפקיד') };
       }).filter(Boolean);
-      const pairs = new Set(trips.map(t => t.worker + '|' + t.month));
-      team = team.filter(t => !pairs.has(t.worker + '|' + t.month)).concat(trips);
-      added += trips.length;
+      groups.push({ worker: trips[0]?.worker || '', month: '', trips });
     } catch { bad.push(file.name); }
   }
-  writeJSON(TEAM_KEY, team);
+  const added = mergeTeam(groups);
   setStatus('teamStatus', `✓ נטענו ${added} נסיעות` + (bad.length ? ` · לא זוהו: ${bad.join(', ')}` : ''), bad.length ? 'warn' : '');
-  const months = [...new Set(team.map(t => t.month))].sort();
-  if (added && !team.some(t => t.month === state.month) && months.length) setMonth(months[months.length - 1]); else renderTeam();
 }
 function renderTeam() {
   const trips = getTeam().filter(t => t.month === state.month);
@@ -1726,7 +1757,8 @@ function init() {
   $('addTrip').onclick = addTrip;
   $('addVehicle').onclick = addVehicle;
   $('sendWhatsapp').onclick = sendWhatsapp;
-  $('sendFile').onclick = sendFile;
+  $('teamPasteBtn').onclick = pasteTeamFromClipboard;
+  $('teamPasteLoad').onclick = () => importTeamText($('teamPaste').value);
   $('saveSend').onclick = saveSend;
   $('managerLogin').onclick = managerLogin;
   $('loginCancel').onclick = closeLogin;
