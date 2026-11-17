@@ -325,12 +325,12 @@ details summary{cursor:pointer;list-style-position:inside}
    <textarea id="teamPaste" placeholder="או הדבק כאן ידנית את הודעות הסיכום ולחץ ״טען״" style="margin-top:8px;min-height:70px"></textarea>
    <div class="actions"><button type="button" id="teamPasteLoad">טען מהטקסט</button><label class="small" style="display:flex;align-items:center;justify-content:center;border:1px dashed #42617b;border-radius:11px;cursor:pointer">קובץ CSV ישן<input type="file" id="teamFiles" accept=".csv,text/csv" multiple style="display:none"></label></div>
    <p class="status" id="teamStatus"></p>
-   <p class="small">מוצג החודש שנבחר למעלה.</p>
+   <p class="small">מוצג החודש שנבחר למעלה. נתוני הרכב נספרים לפי דיווח הנהג בלבד, כדי שנסיעה משותפת לא תיספר פעמיים; הטבלה לפי עובד כוללת גם נסיעות כנוסע.</p>
    <div class="tiles">
     <div class="tile"><small>עובדים שדיווחו</small><strong id="tWorkers">0</strong></div>
-    <div class="tile"><small>נסיעות</small><strong id="tTrips">0</strong></div>
-    <div class="tile"><small>ק״מ</small><strong id="tKm">0</strong></div>
-    <div class="tile"><small>שעות בשימוש</small><strong id="tHours">—</strong></div>
+    <div class="tile"><small>נסיעות רכב (לפי נהג)</small><strong id="tTrips">0</strong></div>
+    <div class="tile"><small>ק״מ רכב</small><strong id="tKm">0</strong></div>
+    <div class="tile"><small>שעות שימוש ברכב</small><strong id="tHours">—</strong></div>
    </div>
    <h3>לפי עובד</h3>
    <div class="table-wrap"><table><thead><tr><th>עובד</th><th>נסיעות</th><th>ימים</th><th>ק״מ</th><th>שעות</th><th>כנהג</th></tr></thead><tbody id="tByWorker"></tbody></table></div>
@@ -497,7 +497,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '18.0';
+const VERSION = '18.1';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -1338,16 +1338,20 @@ function renderTeam() {
   const sum = (arr, f) => arr.reduce((n, t) => n + f(t), 0);
   const days = arr => new Set(arr.map(t => t.worker + t.k)).size;
   $('tWorkers').textContent = new Set(trips.map(t => t.worker)).size;
-  $('tTrips').textContent = trips.length;
-  $('tKm').textContent = sum(trips, kmOf).toLocaleString('he-IL');
-  $('tHours').textContent = fmt(sum(trips, t => tripMinutes(t) ?? 0));
+  // Vehicle usage counts the driver's report only, so a shared ride is not counted twice.
+  const isDriver = t => t.role !== TRIP_ROLE.passenger;
+  const driven = trips.filter(isDriver);
+  $('tTrips').textContent = driven.length;
+  $('tKm').textContent = sum(driven, kmOf).toLocaleString('he-IL');
+  $('tHours').textContent = fmt(sum(driven, t => tripMinutes(t) ?? 0));
   const group = key => { const m = new Map(); trips.forEach(t => { const g = t[key] || 'לא צוין'; m.set(g, [...(m.get(g) || []), t]); }); return [...m].sort((a, b) => b[1].length - a[1].length); };
   const cell = (tr, v, num) => { const td = document.createElement('td'); td.textContent = v; if (num) td.className = 'num'; tr.append(td); };
   const empty = n => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = n; td.textContent = 'אין נתוני צוות לחודש זה'; tr.append(td); return [tr]; };
   const byWorker = group('worker').map(([w, arr]) => { const tr = document.createElement('tr');
     cell(tr, w); cell(tr, arr.length, true); cell(tr, days(arr), true); cell(tr, sum(arr, kmOf), true); cell(tr, fmt(sum(arr, t => tripMinutes(t) ?? 0)), true); cell(tr, arr.filter(t => t.role !== TRIP_ROLE.passenger).length, true); return tr; });
   const byVehicle = group('vehicle').map(([v, arr]) => { const tr = document.createElement('tr');
-    cell(tr, v); cell(tr, arr.length, true); cell(tr, new Set(arr.map(t => t.k)).size, true); cell(tr, sum(arr, kmOf), true); cell(tr, fmt(sum(arr, t => tripMinutes(t) ?? 0)), true); cell(tr, [...new Set(arr.map(t => t.worker))].join(', ')); return tr; });
+    const d = arr.filter(isDriver);
+    cell(tr, v); cell(tr, d.length, true); cell(tr, new Set(arr.map(t => t.k)).size, true); cell(tr, sum(d, kmOf), true); cell(tr, fmt(sum(d, t => tripMinutes(t) ?? 0)), true); cell(tr, [...new Set(arr.map(t => t.worker))].join(', ')); return tr; });
   $('tByWorker').replaceChildren(...(byWorker.length ? byWorker : empty(6)));
   $('tByVehicle').replaceChildren(...(byVehicle.length ? byVehicle : empty(6)));
 }
