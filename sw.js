@@ -14,7 +14,10 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  // Harness QA Inspector is a separate tool that lives in the same site; leave its requests alone.
+  if (url.pathname.includes('/harness-qa/') || url.pathname.endsWith('/harness_qa_engineering_demo_v33.html')) return;
   e.respondWith(
     // Bypass the browser HTTP cache (GitHub Pages sets max-age=600) so a new version shows up at once.
     fetch(req, { cache: 'no-cache' }).then(res => {
