@@ -164,7 +164,7 @@ test('PDF table: columns, repeated headers, connector+pin join',()=>{
   assert.equal(JSON.stringify(map),JSON.stringify(['id','from','from_pin','to','to_pin','net']));
   const r=HQA.tableToCsv(tbl,map,'drawing',{});
   assert.equal(r.count,10);
-  assert.ok(r.csv.includes('WIRE,W7,J1-7,J2-7,,,SIG 7,'));
+  assert.ok(r.csv.includes('חוט,W7,J1-7,J2-7,,,SIG 7,'));
 });
 test('PDF rotated text is read along its baseline',()=>{
   const rot=(str,x,y)=>({str,t:[0,10,-10,0,x,y],w:str.length*5,page:1});
@@ -186,7 +186,7 @@ test('PDF table: second page with shifted column positions is aligned',()=>{
   put(2,[40,100,140,200,240],[['WIRE','FROM','PIN','TO','PIN'],...[5,6,7,8].map(n=>['W'+n,'J1',''+n,'J2',''+n])]);
   const tbl=HQA.tableFromLines(HQA.pdfLines(items));
   const r=HQA.tableToCsv(tbl,HQA.autoMap(tbl,'drawing').map,'drawing',{});
-  assert.equal(r.count,8);assert.ok(r.csv.includes('WIRE,W8,J1-8,J2-8'));
+  assert.equal(r.count,8);assert.ok(r.csv.includes('חוט,W8,J1-8,J2-8'));
 });
 
 /* ---- French-style tester log (fictional points, same line format as the real tester) ---- */
@@ -237,6 +237,27 @@ test('tester log: draft netlist is flagged as unverified and drives a revision c
   // once verified (marker removed), no unverified gap remains
   const b=HQA.analyze({drawing:n.csv.replace(/מהבודק[^\n]*/g,'אומת'),tests:r.csv});
   assert.ok(!codes(b).includes('unverified'));
+});
+
+/* ---- Hebrew is the working language; English files keep working ---- */
+test('Hebrew demo gives the expected findings',()=>{
+  const r=HQA.analyze({drawing:grab('drawing'),tests:grab('tests'),mech:grab('mech'),meta:{drawingRev:'B'}});
+  assert.equal(r.counts.critical,2);assert.equal(r.counts.gap,7);
+  assert.equal(metric(r,'wires').covered,11);assert.equal(metric(r,'iso').covered,30);
+});
+test('Hebrew and English inputs give identical analysis',()=>{
+  const he=HQA.analyze({drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה\nחוט,,J1-1,SPL1\nחוט,,SPL1,J2-1\nחוט,,SPL1,J3-1\nנגד,R1,J1-2,J2-2,1k,5\nלא מחובר,,J1-9',
+    tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה\n1,רציפות,J1-1,J2-1,,1,אוהם\n2,התנגדות,J1-2,J2-2,0.95,1.05,קילו-אוהם\n3,בידוד,J1-1,כולם,100,,מגה-אוהם,500,1.2 GΩ,עבר'});
+  const en=HQA.analyze({drawing:D('WIRE,,J1-1,SPL1\nWIRE,,SPL1,J2-1\nWIRE,,SPL1,J3-1\nR,R1,J1-2,J2-2,1k,5\nNC,,J1-9'),
+    tests:T('1,CONT,J1-1,J2-1,,1,ohm\n2,RES,J1-2,J2-2,0.95,1.05,kohm\n3,ISO,J1-1,ALL,100,,Mohm,500,1.2 GΩ,PASS')});
+  assert.equal(JSON.stringify(he.counts),JSON.stringify(en.counts));
+  assert.equal(JSON.stringify(he.metrics),JSON.stringify(en.metrics));
+  assert.equal(JSON.stringify(he.findings.map(f=>f.key)),JSON.stringify(en.findings.map(f=>f.key)));
+});
+test('generated rows are in Hebrew (suggestions vocabulary, tester log)',()=>{
+  const r=HQA.parseTesterLog(LOG);
+  assert.ok(r.csv.startsWith('צעד,סוג,מוצא,יעד'));assert.ok(r.csv.includes(',בידוד,J1-1,כולם,'));assert.ok(r.csv.includes(',רציפות,J1-1,J3-1,'));
+  assert.ok(HQA.testsToNetlist(r.csv).csv.split('\n')[1].startsWith('רשת,'));
 });
 
 console.log(`\n${pass} passed`);
