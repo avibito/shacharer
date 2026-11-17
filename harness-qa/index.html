@@ -5,34 +5,40 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Harness QA Inspector</title>
 <style>
-:root{--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--brand:#194775;--brand2:#617186;
---crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec}
+:root{direction:rtl;--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--field:#fff;--fieldline:#bdc8d5;--th:#eaf0f6;--tab:#e9eef5;--track:#e5ebf2;--shadow:#172b4312;--brand:#194775;--brand2:#617186;--danger:#9c3941;--link:#194775;
+--crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec;--warntext:#874700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#dbe5f0;--muted:#9aa9ba;--bg:#0f1720;--card:#17212d;--line:#2b3949;--field:#111a24;--fieldline:#3a4b5e;--th:#1e2b3a;--tab:#223040;--track:#2a3746;--shadow:#00000040;--brand:#2f6aa8;--brand2:#4d5d71;--danger:#a2464e;--link:#8fbcef;
+--crit:#ff9aa5;--critbg:#3d1a20;--gap:#f3b766;--gapbg:#3a2a12;--warn:#e7d36b;--warnbg:#333015;--info:#9cc3ea;--infobg:#1b2c3e;--ok:#7bd8a6;--okbg:#14301f;--warntext:#f0b56b;color-scheme:dark}}
+:root[data-theme="dark"]{--ink:#dbe5f0;--muted:#9aa9ba;--bg:#0f1720;--card:#17212d;--line:#2b3949;--field:#111a24;--fieldline:#3a4b5e;--th:#1e2b3a;--tab:#223040;--track:#2a3746;--shadow:#00000040;--brand:#2f6aa8;--brand2:#4d5d71;--danger:#a2464e;--link:#8fbcef;
+--crit:#ff9aa5;--critbg:#3d1a20;--gap:#f3b766;--gapbg:#3a2a12;--warn:#e7d36b;--warnbg:#333015;--info:#9cc3ea;--infobg:#1b2c3e;--ok:#7bd8a6;--okbg:#14301f;--warntext:#f0b56b;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{font-family:Arial,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
-body{max-width:1100px;margin:auto;padding:12px;background:var(--bg)}
-header,section{background:var(--card);border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px #172b4312}
+body{max-width:1100px;margin:auto;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg);color:var(--ink)}
+a{color:var(--link)}
+header,section{background:var(--card);border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px var(--shadow)}
 h1{margin:0 0 6px;font-size:25px}h2{font-size:20px;margin:4px 0 10px}h3{font-size:16px;margin:6px 0}
 p{line-height:1.6;margin:8px 0}
 label{font-weight:bold;display:block;margin:10px 0 4px;font-size:14px}
-input,select,textarea{width:100%;padding:10px;border:1px solid #bdc8d5;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--fieldline);border-radius:8px;font:inherit;background:var(--field);color:var(--ink)}
 input[type=checkbox]{width:auto;margin-left:6px}
 textarea{min-height:90px}
 textarea.code{font-family:Consolas,"Courier New",monospace;font-size:13px;min-height:190px;white-space:pre;direction:ltr;text-align:left}
 button,.btn{display:inline-block;background:var(--brand);color:#fff;border:0;border-radius:8px;padding:10px 13px;margin:4px 2px;font:inherit;font-size:14px;cursor:pointer}
-button.secondary{background:var(--brand2)}button.danger{background:#9c3941}button.big{font-size:17px;padding:13px 22px}
+button.secondary{background:var(--brand2)}button.danger{background:var(--danger)}button.big{font-size:17px;padding:13px 22px}
 button:disabled{opacity:.5;cursor:default}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.muted{color:var(--muted)}.warn{color:#874700}.small{font-size:13px}
+.muted{color:var(--muted)}.warn{color:var(--warntext)}.small{font-size:13px}
 .pill{background:var(--infobg);border-radius:7px;padding:6px 9px;display:inline-block;font-size:14px}
 .scroll{overflow:auto;max-width:100%}
 table{border-collapse:collapse;width:100%;font-size:13px}
-td,th{border:1px solid #d9e0e7;padding:6px 7px;text-align:right;vertical-align:top}
-th{background:#eaf0f6;position:sticky;top:0}
+td,th{border:1px solid var(--line);padding:6px 7px;text-align:right;vertical-align:top}
+th{background:var(--th);position:sticky;top:0}
 td.ltr{direction:ltr;text-align:left;font-family:Consolas,monospace;font-size:12px}
 details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--line);margin-bottom:10px}
-.tabs button{background:#e9eef5;color:var(--ink);border-radius:8px 8px 0 0;margin:0}
+.tabs button{background:var(--tab);color:var(--ink);border-radius:8px 8px 0 0;margin:0}
 .tabs button.on{background:var(--brand);color:#fff}
 .tab{display:none}.tab.on{display:block}
 .badge{display:inline-block;border-radius:6px;padding:2px 7px;font-size:12px;font-weight:bold;white-space:nowrap}
@@ -42,7 +48,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
 .metric{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .metric b{font-size:22px}.metric .lbl{font-size:13px;color:var(--muted)}
-.bar{height:8px;background:#e5ebf2;border-radius:5px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
+.bar{height:8px;background:var(--track);border-radius:5px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
 .bar i.part{background:#c98a00}.bar i.low{background:var(--crit)}
 .counts span{margin-left:6px}
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
@@ -50,7 +56,12 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .msg{font-weight:bold;color:var(--ok)}
 #pdfTable th select{min-width:120px;padding:5px;font-size:12px}
 .printonly{display:none}
-@media (max-width:600px){body{padding:8px}header,section{padding:12px}h1{font-size:21px}}
+@media (max-width:600px){header,section{padding:12px}h1{font-size:21px}}
+#dlg{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+#dlg[hidden]{display:none!important}
+#dlg>div{background:var(--card);color:var(--ink);border-radius:12px;padding:16px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
+#dlgText{min-height:220px;font-family:Consolas,monospace;font-size:12px;direction:ltr;text-align:left}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--link);outline-offset:2px}
 @media print{
  body{max-width:none;background:#fff;padding:0}header,section{box-shadow:none;border:1px solid #ccc;break-inside:auto}
  .noprint,button,.toolbar,.tabs{display:none!important}.printonly{display:block}
@@ -62,7 +73,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 
 <header>
 <h1>Harness QA Inspector</h1>
-<b>v4.3: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>v4.4: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -281,8 +292,14 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 </details>
 </section>
 
+<div id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgMsg"><div>
+<p id="dlgMsg"></p>
+<textarea id="dlgText" readonly hidden></textarea>
+<div class="toolbar"><button id="dlgOk">אישור</button><button id="dlgCopy" class="secondary" hidden>העתק</button><button id="dlgCancel" class="secondary" hidden>ביטול</button></div>
+</div></div>
+
 <script id="hqa-engine">
-/* Harness QA engine v4.3: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.4: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -1143,6 +1160,19 @@ root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,pa
 (function(){
 'use strict';
 const H=globalThis.HQA,$=id=>document.getElementById(id);
+/* Embedded (e.g. opened inside the chat): no native dialogs, downloads or print, so the page uses its own. */
+const EMBEDDED=(()=>{try{return window.self!==window.top;}catch(e){return true;}})();
+function dialog({msg,text=null,ok='אישור',cancel=null}){return new Promise(res=>{
+  const d=$('dlg'),ta=$('dlgText');$('dlgMsg').textContent=msg;ta.hidden=$('dlgCopy').hidden=text===null;if(text!==null)ta.value=text;
+  $('dlgOk').textContent=ok;$('dlgCancel').hidden=!cancel;if(cancel)$('dlgCancel').textContent=cancel;d.hidden=false;
+  const done=v=>{d.hidden=true;document.removeEventListener('keydown',esc);res(v);};
+  const esc=e=>{if(e.key==='Escape')done(false);};document.addEventListener('keydown',esc);
+  $('dlgOk').onclick=()=>done(true);$('dlgCancel').onclick=()=>done(false);
+  $('dlgCopy').textContent='העתק';
+  $('dlgCopy').onclick=()=>{try{navigator.clipboard.writeText(ta.value).then(()=>{$('dlgCopy').textContent='הועתק ✓';},()=>ta.select());}catch(e){ta.select();}};
+  $('dlgOk').focus();});}
+const ask=msg=>dialog({msg,ok:'כן, להמשיך',cancel:'ביטול'});
+const say=msg=>dialog({msg});
 const KEY='harness-qa-v4',OLD_KEY='harness-qa-engineering-private-v2';
 const REVIEW=['פתוח','מאושר – להעביר לטיפול','לא רלוונטי – מנומק','תוקן – לאמת','סגור'];
 const TPL={drawing:'type,id,from,to,value,tol,net,note',mech:'ref,part_number,description,pins',tests:'step,type,from,to,low,high,unit,voltage,measured,result,note'};
@@ -1224,22 +1254,22 @@ tabs('data-tab');tabs('data-rtab');
 /* ---- inputs ---- */
 for(const [fileId,target] of [['drawFile','drawing'],['mechFile','mech'],['testsFile','tests']])
   $(fileId).addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const txt=await f.text();
-    if($(target).value.trim()&&!confirm('להחליף את התוכן הנוכחי בקובץ '+f.name+'?')){e.target.value='';return;}
+    if($(target).value.trim()&&!await ask('להחליף את התוכן הנוכחי בקובץ '+f.name+'?')){e.target.value='';return;}
     $(target).value=txt.replace(/^﻿/,'');data[target]=$(target).value;save();e.target.value='';});
-for(const b of document.querySelectorAll('[data-tpl]'))b.addEventListener('click',()=>{const t=$(b.dataset.tpl);if(t.value.trim()&&!confirm('להוסיף שורת כותרת בתחילת הטקסט?'))return;t.value=TPL[b.dataset.tpl]+'\n'+t.value;data[b.dataset.tpl]=t.value;save();});
-$('genRun').onclick=()=>{
+for(const b of document.querySelectorAll('[data-tpl]'))b.addEventListener('click',async()=>{const t=$(b.dataset.tpl);if(t.value.trim()&&!await ask('להוסיף שורת כותרת בתחילת הטקסט?'))return;t.value=TPL[b.dataset.tpl]+'\n'+t.value;data[b.dataset.tpl]=t.value;save();});
+$('genRun').onclick=async()=>{
   const A=$('genA').value.trim(),B=$('genB').value.trim(),pins=$('genPins').value.split(/[\s,]+/).filter(Boolean);
-  if(!A||!B||!pins.length)return alert('יש למלא שמות מחברים ורשימת פינים');
+  if(!A||!B||!pins.length)return say('יש למלא שמות מחברים ורשימת פינים');
   let t=$('drawing').value.trim();if(!t)t=TPL.drawing;
   const rows=pins.map(p=>`WIRE,,${A}-${p},${B}-${p},,,,`);
   if($('genShell').checked)rows.push(`SHIELD,,${A}-SHELL,${B}-SHELL,,,SHELL,`);
   $('drawing').value=t+'\n'+rows.join('\n');data.drawing=$('drawing').value;save();notify('נוספו '+rows.length+' חיבורים');
 };
-$('demoLoad').onclick=()=>{
-  if((data.drawing||data.tests||data.mech)&&!confirm('להחליף את כל המקורות בנתוני הדוגמה?'))return;
+$('demoLoad').onclick=async()=>{
+  if((data.drawing||data.tests||data.mech)&&!await ask('להחליף את כל המקורות בנתוני הדוגמה?'))return;
   data.drawing=DEMO.drawing;data.mech=DEMO.mech;data.tests=DEMO.tests;data.meta={...data.meta,...DEMO.meta};data.reportMeta=null;fill();save();run();
 };
-$('clearAll').onclick=()=>{if(!confirm('לנקות את השרטוט החשמלי, המכני ותוכנית הבדיקה? (פרטי הפרויקט וסטטוסי הסקירה יישמרו)'))return;
+$('clearAll').onclick=async()=>{if(!await ask('לנקות את השרטוט החשמלי, המכני ותוכנית הבדיקה? (פרטי הפרויקט וסטטוסי הסקירה יישמרו)'))return;
   data.drawing=data.mech=data.tests='';data.reportMeta=null;fill();save();$('results').hidden=true;};
 
 /* ---- tester HTML report ---- */
@@ -1259,7 +1289,7 @@ $('repParse').onclick=async()=>{
     const rep=H.parseReportText(htmlToText(await f.text()));
     if(!rep.rows.length)return msg.textContent='לא זוהו שורות Net בפורמט הנתמך. שום נתון לא הועבר.';
     const csv=H.reportToTestsCsv(rep,$('repA').value.trim(),$('repB').value.trim());
-    if($('tests').value.trim()&&!confirm('להחליף את תוכנית הבדיקה הנוכחית בנתוני הדוח? (ביטול = לא לייבא)'))return;
+    if($('tests').value.trim()&&!await ask('להחליף את תוכנית הבדיקה הנוכחית בנתוני הדוח? (ביטול = לא לייבא)'))return;
     $('tests').value=csv;data.tests=csv;
     data.reportMeta={...rep.meta,file:f.name};
     for(const [k,v] of [['pn',rep.meta.pn],['drawingNo',rep.meta.drawingNo]])if(!data.meta[k]&&v)data.meta[k]=v;
@@ -1392,9 +1422,9 @@ function renderPdfTable(){
   $('pdfAppend').disabled=$('pdfReplace').disabled=!res.count;
   pdfState.preview=preview;
 }
-function pdfApply(replace){
+async function pdfApply(replace){
   const t=$('pdfTarget').value,res=pdfResult();if(!res.count)return;
-  if(replace&&$(t).value.trim()&&!confirm('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
+  if(replace&&$(t).value.trim()&&!await ask('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
   const cur=$(t).value.trim();
   $(t).value=replace||!cur?res.csv:cur+'\n'+res.csv.split('\n').slice(1).join('\n');
   data[t]=$(t).value;
@@ -1403,9 +1433,9 @@ function pdfApply(replace){
   notify('הועברו '+res.count+' שורות אל '+TARGET_LABEL[t]+' – לבדוק מול המסמך');
   document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech'})[t]+']').click();
 }
-$('pdfNetlist').onclick=()=>{
+$('pdfNetlist').onclick=async()=>{
   if(!pdfState?.log)return;const n=H.testsToNetlist(pdfState.log.csv);
-  if($('drawing').value.trim()&&!confirm('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
+  if($('drawing').value.trim()&&!await ask('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
   $('drawing').value=n.csv;data.drawing=n.csv;save();
   notify('נוצרה טיוטה: '+n.nets+' רשתות. יש לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" בשורות שאומתו');
   document.querySelector('[data-tab=tDraw]').click();
@@ -1495,6 +1525,7 @@ function renderNets(){
 const cell=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
 function download(name,rows,type='text/csv;charset=utf-8'){
   const content=typeof rows==='string'?rows:'﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
+  if(EMBEDDED)return dialog({msg:'כאן אי אפשר להוריד קבצים. העתק את התוכן ושמור אותו כקובץ בשם '+name+', או פתח את הכלי באתר כדי להוריד ישירות.',text:content.replace(/^﻿/,''),ok:'סגור'});
   const u=URL.createObjectURL(new Blob([content],{type}));const a=Object.assign(document.createElement('a'),{href:u,download:name});
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
@@ -1504,9 +1535,9 @@ $('expFind').onclick=()=>{if(!last)return;download(base()+'_findings.csv',[['n',
 $('expTrace').onclick=()=>{if(!last)return;download(base()+'_traceability.csv',[['element_type','id','location','requirement','test_steps','status','part_number','drawing','drawing_rev','atp','atp_rev'],...last.trace.map(r=>[r.type,r.id,r.where,r.req,r.steps.join(' '),r.status,...metaCols()])]);};
 const suggRows=()=>last.suggestions.map((s,i)=>['S'+(i+1),s.type,s.from,s.to,s.low,s.high,s.unit,s.voltage,'','',s.why]);
 $('expSugg').onclick=()=>{if(!last)return;download(base()+'_suggested_tests.csv',[['step','type','from','to','low','high','unit','voltage','measured','result','note'],...suggRows()]);};
-$('simSugg').onclick=()=>{
+$('simSugg').onclick=async()=>{
   if(!last?.suggestions.length)return;
-  if(!confirm('להוסיף '+last.suggestions.length+' בדיקות מוצעות לתוכנית הבדיקה ולנתח מחדש? זו סימולציה, ואפשר להסיר את השורות שמתחילות ב־S אחר כך.'))return;
+  if(!await ask('להוסיף '+last.suggestions.length+' בדיקות מוצעות לתוכנית הבדיקה ולנתח מחדש? זו סימולציה, ואפשר להסיר את השורות שמתחילות ב־S אחר כך.'))return;
   const lines=suggRows().map(r=>r.map(v=>{v=String(v??'');return /[",\n]/.test(v)?cell(v):v;}).join(','));
   data.tests=($('tests').value.trim()||TPL.tests)+'\n'+lines.join('\n');$('tests').value=data.tests;save();run();
 };
@@ -1515,11 +1546,12 @@ $('restore').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{const o=JSON.parse(await e.target.files[0].text());
     if(o.format!=='harness-qa-inspector'||o.v!==4)throw Error('format');
-    if(!confirm('השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?'))return;
+    if(!await ask('השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?'))return;
     data={...fresh(),...o,settings:{...H.DEFAULT_SETTINGS,...(o.settings||{})}};delete data.format;fill();save();$('results').hidden=true;notify('שוחזר ✓');
-  }catch(err){alert('קובץ JSON לא תקין או לא מגרסה 4. גיבוי מגרסה 3.3 אפשר לשחזר בגרסת הארכיון.');}finally{e.target.value='';}
+  }catch(err){say('קובץ JSON לא תקין או לא מגרסה 4. גיבוי מגרסה 3.3 אפשר לשחזר בגרסת הארכיון.');}finally{e.target.value='';}
 };
 $('print').onclick=()=>{if(!last)run();window.print();};
+if(EMBEDDED){$('print').hidden=true;$('pdfOpen').hidden=true;}
 
 load();
 if(data.drawing||data.tests)run(false);
