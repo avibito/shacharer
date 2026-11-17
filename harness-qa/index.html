@@ -125,6 +125,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <tr><td>D</td><td>דיודה: from=אנודה, to=קתודה, value=מפל מתח (V)</td><td class="ltr">D,D1,D1-A,D1-K,0.7</td></tr>
 <tr><td>C</td><td>קבל. value בפאראד (אפשר 100n)</td><td class="ltr">C,C1,C1-1,C1-2,100n</td></tr>
 <tr><td>NC</td><td>פין לא מחובר (חייב להיות מבודד)</td><td class="ltr">NC,,J1-9</td></tr>
+<tr><td>NET</td><td>נקודה ששייכת לרשת (רשימת נקודות בלי טופולוגיה). id=שם הרשת. הכיסוי נבדק כקשירות בין כל נקודות הרשת.</td><td class="ltr">NET,PWR,J1-1</td></tr>
 <tr><td>CONN</td><td>מחבר ומק״ט לפי הסכמה (להצלבה מול המכני). value=מק״ט</td><td class="ltr">CONN,J1,,,M83723/75R1415N</td></tr>
 </table>
 <p class="small">נקודה ששמה מתחיל בשם של רכיב (למשל <code>R1-1</code>) נחשבת פנימית ולא נגישה לבודק. אפשר גם להדביק פורמט פשוט של <code>net,pin</code>, שורה לכל פין ברשת.</p>
@@ -184,12 +185,12 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <div><label for="pdfFile">קובץ PDF</label><input type="file" id="pdfFile" accept=".pdf,application/pdf"></div>
 <div><label for="pdfTarget">מה יש בקובץ?</label><select id="pdfTarget"><option value="drawing">שרטוט חשמלי / רשימת חוטים</option><option value="tests">תוכנית בדיקה / ATP / דוח תוצאות</option><option value="mech">שרטוט מכני / BOM</option></select></div>
 <div><label for="pdfPages">עמודים (ריק = הכל, למשל 2-4,7)</label><input id="pdfPages" dir="ltr" placeholder="1-3"></div>
-<div><label for="pdfMode">שיטת קריאה</label><select id="pdfMode"><option value="table">טבלה (עמודות)</option><option value="pairs">טקסט חופשי: חיפוש זוגות נקודות</option></select></div>
+<div><label for="pdfMode">שיטת קריאה</label><select id="pdfMode"><option value="table">טבלה (עמודות)</option><option value="pairs">טקסט חופשי: חיפוש זוגות נקודות</option><option value="tester">דוח בודק (Continuité / Isolement)</option></select></div>
 </div>
 <div class="toolbar"><button id="pdfRead">קרא את הקובץ</button><button id="pdfOpen" class="secondary" disabled>פתח לצפייה</button></div>
 <p id="pdfMsg" class="small" role="status"></p>
 <div id="pdfOut" hidden>
-<div class="toolbar">
+<div class="toolbar" id="pdfOpts">
 <label class="small" for="pdfDefType" style="margin:0">סוג ברירת מחדל:</label><select id="pdfDefType"></select>
 <label class="small" for="pdfJoin" style="margin:0">חיבור מחבר+פין:</label><select id="pdfJoin"><option value="-">J1-12</option><option value="">J112</option><option value=" ">J1 12</option></select>
 <label class="small" style="margin:0"><input type="checkbox" id="pdfOnlyFull" checked>הצג רק שורות שיתורגמו</label>
@@ -197,7 +198,8 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <p class="small muted" id="pdfHint"></p>
 <div class="scroll" style="max-height:420px"><table id="pdfTable"></table></div>
 <p class="small" id="pdfCount"></p>
-<div class="toolbar"><button id="pdfAppend">הוסף למקור</button><button id="pdfReplace" class="secondary">החלף את המקור</button><button id="pdfRaw" class="secondary">העתק טקסט גולמי</button></div>
+<div id="pdfTesterBox" class="metric" hidden></div>
+<div class="toolbar"><button id="pdfAppend">הוסף למקור</button><button id="pdfNetlist" class="secondary" hidden>צור טיוטת רשימת חיבורים מהבודק</button><button id="pdfReplace" class="secondary">החלף את המקור</button><button id="pdfRaw" class="secondary">העתק טקסט גולמי</button></div>
 </div>
 <details><summary>מה אפשר לקרוא מ־PDF ומה לא</summary>
 <ul class="small">
@@ -368,17 +370,18 @@ function buildModel(drawText){
   const t=readTable(drawText,DRAW_SPEC);
   const nodes=new Map(),edges=[],comps=[],conns=new Map(),ncPins=new Map(),spliceDecl=new Set();
   const node=p=>{if(!nodes.has(p))nodes.set(p,{id:p,splice:false,internal:false,nc:false});return nodes.get(p);};
-  let virtual=false;
+  let virtual=false;const netFirst=new Map();let unverified=0;
   if(t.empty)return{empty:true,findings:F,nodes,edges,comps,nets:[],netOf:new Map(),conns,ncPins,virtual};
   if(t.idx.type===undefined&&t.idx.net!==undefined&&(t.idx.pin!==undefined||t.idx.from!==undefined)){
     virtual=true;const first=new Map();
-    for(const it of t.items){const net=it.net,pin=it.pin??it.from;if(!net||!pin){add('warn','שרטוט חשמלי','שורה '+it.line,'שורה חסרה net או pin','','rowmiss');continue;}
+    for(const it of t.items){if(/מהבודק|from tester/i.test(it.note||''))unverified++;const net=it.net,pin=it.pin??it.from;if(!net||!pin){add('warn','שרטוט חשמלי','שורה '+it.line,'שורה חסרה net או pin','','rowmiss');continue;}
       node(pin);if(!first.has(net)){first.set(net,pin);continue;}
       edges.push({kind:'VIRTUAL',id:'',a:first.get(net),b:pin,net,line:it.line});}
     for(const [net,p] of first)if(!edges.some(e=>e.net===net))edges.push({kind:'VIRTUAL',id:'',a:p,b:p,net,line:0,self:true});
   }else{
     if(t.idx.type===undefined){add('critical','שרטוט חשמלי','כותרת','חסרה עמודת type (או net,pin)','השתמש בכפתור "הכנס כותרת"','nohdr');return{empty:true,findings:F,nodes,edges,comps,nets:[],netOf:new Map(),conns,ncPins,virtual};}
     for(const it of t.items){
+      if(/מהבודק|from tester/i.test(it.note||''))unverified++;
       const type=(it.type||'').toUpperCase(),a=it.from||'',b=it.to||'',where='שורה '+it.line;
       if(['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN'].includes(type)){
         const kind=type.startsWith('J')?'JUMPER':(type.startsWith('S')||type==='DRAIN')?'SHIELD':'WIRE';
@@ -395,6 +398,9 @@ function buildModel(drawText){
         node(a);node(b);comps.push({kind:type,id,a,b,value,tol,line:it.line});
       }else if(type==='NC'){const p=a||it.id;if(p){node(p).nc=true;ncPins.set(p,it.line);}}
       else if(type==='CONN'||type==='CONNECTOR'){if(it.id)conns.set(it.id,it.value||'');}
+      else if(type==='NET'){const net=it.id||it.net,pin=a;if(!net||!pin){add('warn','שרטוט חשמלי',where,'שורת NET חסרה שם רשת או נקודה','','rowmiss');continue;}
+        node(pin);if(!netFirst.has(net)){netFirst.set(net,pin);edges.push({kind:'VIRTUAL',id:'',a:pin,b:pin,net,line:it.line,self:true});}
+        else edges.push({kind:'VIRTUAL',id:'',a:netFirst.get(net),b:pin,net,line:it.line});}
       else if(type)add('warn','שרטוט חשמלי',where,'סוג שורה לא מוכר: '+type,'סוגים נתמכים: WIRE, SPLICE, JUMPER, SHIELD, R, D, C, NC, CONN','badtype');
     }
   }
@@ -412,11 +418,11 @@ function buildModel(drawText){
   const nets=[],netOf=new Map();
   for(const members of byRoot.values()){
     members.sort(natural);
-    const net={idx:nets.length,nodes:members,testable:members.filter(p=>!nodes.get(p).internal),internal:members.filter(p=>nodes.get(p).internal),edges:[],names:new Set(),shield:false,nc:members.some(p=>nodes.get(p).nc),virtual,cycles:[]};
+    const net={idx:nets.length,nodes:members,testable:members.filter(p=>!nodes.get(p).internal),internal:members.filter(p=>nodes.get(p).internal),edges:[],names:new Set(),shield:false,nc:members.some(p=>nodes.get(p).nc),virtual:false,cycles:[]};
     for(const p of members)netOf.set(p,net.idx);
     nets.push(net);
   }
-  edges.forEach((e,i)=>{e.idx=i;const n=nets[netOf.get(e.a)];if(!e.self)n.edges.push(e);if(e.net)n.names.add(e.net);if(e.kind==='SHIELD')n.shield=true;});
+  edges.forEach((e,i)=>{e.idx=i;const n=nets[netOf.get(e.a)];if(e.kind==='VIRTUAL')n.virtual=true;if(!e.self&&e.kind!=='VIRTUAL')n.edges.push(e);if(e.net)n.names.add(e.net);if(e.kind==='SHIELD')n.shield=true;});
   for(const e of cycleEdges)nets[netOf.get(e.a)].cycles.push(e);
   const nameUse=new Map();
   for(const n of nets){
@@ -431,7 +437,8 @@ function buildModel(drawText){
   }
   for(const n of nets){
     if(n.nc&&n.nodes.length>1)add('critical','פינים לא מחוברים',n.nodes.filter(p=>nodes.get(p).nc).join(', '),'פין שמוגדר NC מחובר בשרטוט ('+list(n.nodes,6)+')','לברר מול הסכמה: NC או מחובר','ncwired');
-    if(n.cycles.length&&!virtual)add('gap','רציפות',n.name,'חוטים מקבילים / לולאה ברשת ('+n.cycles.map(e=>e.id||e.a+'↔'+e.b).join(', ')+'): בדיקת רציפות לא מזהה נתק בחוט אחד מהמסלולים','לשקול בדיקה ייעודית לכל חוט (למשל מדידת התנגדות מדויקת, או בדיקה לפני הסגירה)','parallel');
+    n.cycles=n.cycles.filter(e=>e.kind!=='VIRTUAL');
+    if(n.cycles.length&&!n.virtual)add('gap','רציפות',n.name,'חוטים מקבילים / לולאה ברשת ('+n.cycles.map(e=>e.id||e.a+'↔'+e.b).join(', ')+'): בדיקת רציפות לא מזהה נתק בחוט אחד מהמסלולים','לשקול בדיקה ייעודית לכל חוט (למשל מדידת התנגדות מדויקת, או בדיקה לפני הסגירה)','parallel');
   }
   for(const c of comps){
     if(netOf.get(c.a)===netOf.get(c.b))add('warn',c.kind==='R'?'נגדים':c.kind==='D'?'דיודות':'קבלים',c.id,'שני קצות הרכיב באותה רשת – הרכיב מקוצר בשרטוט שהוזן','לבדוק את החיווט סביב הרכיב בסכמה','compshort');
@@ -446,8 +453,10 @@ function buildModel(drawText){
   for(const gr of groups){const ns=gr.nets.map(i=>nets[i]);gr.testable=ns.some(n=>n.testable.length>0);gr.shield=ns.some(n=>n.shield);gr.nc=ns.every(n=>n.nc);gr.name=ns.map(n=>n.name).join(' + ');}
   /* adjacency per net for path finding */
   const adj=new Map();for(const p of nodes.keys())adj.set(p,[]);
-  for(const e of edges){if(e.self)continue;adj.get(e.a).push([e.b,e]);adj.get(e.b).push([e.a,e]);}
-  return{empty:false,findings:F,nodes,edges,comps,nets,netOf,groups,conns,ncPins,virtual,adj};
+  for(const e of edges){if(e.self||e.kind==='VIRTUAL')continue;adj.get(e.a).push([e.b,e]);adj.get(e.b).push([e.a,e]);}
+  if(unverified)add('gap','שרטוט חשמלי',unverified+' שורות','רשימת החיבורים כוללת שורות שנגזרו מתוכנית הבודק ועדיין לא אומתו מול השרטוט – הכיסוי שמחושב מהן אינו בלתי תלוי','לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" מעמודת note בשורות שאומתו','unverified');
+  virtual=nets.some(n=>n.virtual);
+  return{empty:false,findings:F,nodes,edges,comps,nets,netOf,groups,conns,ncPins,virtual,adj,unverified};
 }
 function pathEdges(M,a,b){
   if(a===b)return[];
@@ -508,7 +517,16 @@ function analyze(input){
   const M=buildModel(input.drawing||'');
   const P=parseTests(input.tests||'');
   const F=[...M.findings,...P.findings];
-  const add=(sev,cat,el,msg,rec,code)=>F.push({sev,cat,el:String(el),msg,rec:rec||'',key:(code||msg)+'|'+el});
+  const add0=(sev,cat,el,msg,rec,code)=>F.push({sev,cat,el:String(el),msg,rec:rec||'',key:(code||msg)+'|'+el});
+  /* per-step warnings that repeat across a whole program are grouped into one finding per message */
+  const AGG=new Set(['nohigh','highlimit','isonolow','isolow','hvnov','hvlow','dup','internalpt','self','allbad','nopt']),aggMap=new Map();
+  const add=(sev,cat,el,msg,rec,code)=>{
+    if(!AGG.has(code))return add0(sev,cat,el,msg,rec,code);
+    const k=code+'|'+msg.replace(/\(צעד [^)]*\)|צעד \S+/g,'').replace(/\([^)]*\)/g,'');
+    if(!aggMap.has(k))aggMap.set(k,{sev,cat,msg,rec,code,els:[]});aggMap.get(k).els.push(String(el));
+  };
+  const flushAgg=()=>{for(const a of aggMap.values()){const n=a.els.length;
+    add0(a.sev,a.cat,n===1?a.els[0]:n+' צעדים',n===1?a.msg:a.msg+' | '+list(a.els,15),a.rec,a.code);}};
   const suggestions=[],trace=[],metrics=[];
   const res={findings:F,suggestions,trace,metrics,model:M,tests:P.tests,settings:S};
   if(M.empty){add('critical','שרטוט חשמלי','—','לא הוזנה רשימת חיבורים מהשרטוט החשמלי','הזן בלשונית "שרטוט חשמלי" או טען דוגמה','nodraw');return finish(res);}
@@ -523,7 +541,7 @@ function analyze(input){
   const nG=groups.length,isoCov=new Uint8Array(nG*nG),hipCov=new Uint8Array(nG*nG),isoSteps=new Map(),hipSteps=new Map();
   const markPair=(cov,stepsMap,a,b,step)=>{if(a===b)return;cov[a*nG+b]=1;cov[b*nG+a]=1;for(const x of [a,b]){if(!stepsMap.has(x))stepsMap.set(x,new Set());stepsMap.get(x).add(step);}};
   const seenTests=new Map();
-  const capWarned=new Set();
+  const capWarned=new Set(),weakIso=[],fullIsoFrom=new Set();let fullIsoAll=false;
   const groupHasDiode=new Set(comps.filter(c=>c.kind==='D').map(c=>nets[netOf.get(c.a)].group));
   const resValues=(mode)=>new Map(comps.filter(c=>c.kind==='R'&&c.value>0).map(c=>{const t=Number.isFinite(c.tol)?c.tol/100:0;return[c.id,mode==='min'?c.value*(1-t):mode==='max'?c.value*(1+t):c.value];}));
   const nomValues=resValues('nom');
@@ -531,8 +549,8 @@ function analyze(input){
   for(const t of P.tests){
     const S_='צעד '+t.step,cat={CONT:'רציפות',RES:'נגדים',DIODE:'דיודות',CAP:'קבלים',ISO:'בידוד',HIPOT:'מתח גבוה'}[t.type];
     const allFrom=isAll(t.from),allTo=isAll(t.to);
-    const dk=t.type+'|'+pairKey(t.from,t.to);
-    if(seenTests.has(dk))add('info','תוכנית בדיקה',S_,'כפילות של צעד '+seenTests.get(dk)+' ('+t.from+' ↔ '+t.to+')','','dup');else seenTests.set(dk,t.step);
+    const dk=t.type+'|'+pairKey(t.from,t.to)+'|'+t.low+'|'+t.high;
+    if(seenTests.has(dk))add('info','תוכנית בדיקה',S_+' = '+seenTests.get(dk),'בדיקות כפולות (אותו סוג ואותן נקודות)','','dup');else seenTests.set(dk,t.step);
     /* recorded results */
     if(Number.isFinite(t.measured)||t.measured===Infinity){
       const okLow=!Number.isFinite(t.low)||t.measured>=t.low,okHigh=!Number.isFinite(t.high)||t.measured<=t.high;
@@ -549,7 +567,7 @@ function analyze(input){
       if(!p){add('warn','תוכנית בדיקה',S_,'חסרה נקודת בדיקה','','nopt');bad=true;continue;}
       if(!nodes.has(p)){add('critical','הצלבה שרטוט–בדיקה',p,'נקודת בדיקה ('+S_+') לא קיימת בשרטוט החשמלי','לבדוק אם זה שם פין שגוי בתוכנית או חוסר בשרטוט','unknownpt');bad=true;continue;}
       const nd=nodes.get(p);
-      if(nd.internal)add('info','תוכנית בדיקה',S_,'בדיקה על נקודה פנימית ('+p+') – לוודא שהנקודה נגישה בפועל','','internalpt');
+      if(nd.internal)add('info','תוכנית בדיקה',S_+' '+p,'בדיקה על נקודה פנימית (פיצול / רכיב) – לוודא שהנקודה נגישה בפועל','','internalpt');
       if(nd.nc&&!['ISO','HIPOT'].includes(t.type)){add('critical','פינים לא מחוברים',p,S_+': בדיקת '+cat+' על פין שמוגדר NC בשרטוט','לבדוק אם התוכנית או השרטוט שגויים','testnc');}
       pts.push(p);
     }
@@ -565,7 +583,7 @@ function analyze(input){
         markPin(a,t.step);markPin(b,t.step);
         if(t.type==='CONT'){
           if(!Number.isFinite(t.high))add('warn','רציפות',S_,'לא הוגדר גבול עליון להתנגדות הרציפות','להגדיר high (למשל '+S.conductorMax+' Ω)','nohigh');
-          else if(t.high>S.conductorMax*1.0000001)add('warn','רציפות',S_,'גבול הרציפות ('+fmtQty(t.high,'Ω')+') גבוה מהגבול שהוגדר למוליך ('+S.conductorMax+' Ω)','לבדוק מול המפרט','highlimit');
+          else if(t.high>S.conductorMax*1.0000001)add('warn','רציפות',S_,'גבול הרציפות בתוכנית '+fmtQty(t.high,'Ω')+' גבוה מהגבול שהוגדר למוליך ('+S.conductorMax+' Ω)','לבדוק מול המפרט / לעדכן את הסף בהגדרות','highlimit');
         }else add('info','נגדים',S_,'מדידת RES בין שתי נקודות באותה רשת – נספרה כבדיקת רציפות','','resinnet');
       }else{
         const ga=nets[na].group,gb=nets[nb].group;
@@ -642,10 +660,11 @@ function analyze(input){
     if(t.type==='ISO'||t.type==='HIPOT'){
       const cov=t.type==='ISO'?isoCov:hipCov,sm=t.type==='ISO'?isoSteps:hipSteps;
       if(t.type==='ISO'){if(!Number.isFinite(t.low))add('warn','בידוד',S_,'לא הוגדר גבול תחתון להתנגדות הבידוד','להגדיר low (למשל '+S.isoMinM+'M)','isonolow');
-        else if(t.low<isoMin*(1-1e-9))add('warn','בידוד',S_,'גבול הבידוד ('+fmtQty(t.low,'Ω')+') נמוך מהנדרש ('+S.isoMinM+' MΩ)','לבדוק מול המפרט','isolow');}
+        else if(t.low<isoMin*(1-1e-9))weakIso.push(t);}
       else if(!Number.isFinite(t.voltage))add('warn','מתח גבוה',S_,'לא הוגדר מתח לבדיקת HIPOT','להגדיר voltage','hvnov');
       else if(t.voltage<S.hipotV)add('warn','מתח גבוה',S_,'מתח הבדיקה ('+t.voltage+'V) נמוך מהנדרש ('+S.hipotV+'V)','','hvlow');
       const gA=a!==undefined?nets[na].group:null,gB=b!==undefined?nets[nb].group:null;
+      if(t.type==='ISO'&&Number.isFinite(t.low)&&t.low>=isoMin*(1-1e-9)){if(allFrom&&allTo)fullIsoAll=true;else{if(gA!==null)fullIsoFrom.add(gA);if(gB!==null)fullIsoFrom.add(gB);}}
       if(allFrom&&allTo){for(let i=0;i<nG;i++)for(let j=i+1;j<nG;j++)markPair(cov,sm,i,j,t.step);}
       else if(allTo||allFrom){const x=allTo?gA:gB;for(let j=0;j<nG;j++)markPair(cov,sm,x,j,t.step);}
       else if(gA===gB){
@@ -657,18 +676,24 @@ function analyze(input){
     }
   }
 
+  /* weak isolation (e.g. Non-continuité 2 kΩ): only a finding where the group has no full-threshold test of its own */
+  if(!fullIsoAll){const byG=new Map();
+    for(const t of weakIso){const p=isAll(t.from)?t.to:t.from;if(isAll(p)||!netOf.has(p))continue;const g=nets[netOf.get(p)].group;if(fullIsoFrom.has(g))continue;
+      if(!byG.has(g))byG.set(g,{low:t.low,steps:[]});byG.get(g).steps.push(t.step);}
+    for(const [g,v] of byG)add0('warn','בידוד',groups[g].name,'נבדק רק בסף '+fmtQty(v.low,'Ω')+' (צעדים '+list(v.steps,6)+') ולא בבדיקת בידוד מלאה ('+S.isoMinM+' MΩ) כנקודת מוצא. כיסוי הזוגות שלו נשען על בדיקות של רשתות אחרות מול ALL','לוודא שזה מכוון (למשל רשת שמחוברת דרך נגד) ומתועד, או להוסיף בדיקת בידוד מלאה','isoweak');}
+
   /* ---- continuity coverage ---- */
-  let wTot=0,wCov=0,pTot=0,pCov=0,netsTot=0,netsCov=0;
+  let wTot=0,wCov=0,pTot=0,pCov=0,netsTot=0,netsCov=0,vTot=0,vCov=0;
   for(const n of nets){
     const isVirt=n.virtual;
     if(isVirt){
       if(n.testable.length<2){continue;}
-      netsTot++;pTot+=n.testable.length;
+      netsTot++;vTot++;pTot+=n.testable.length;
       const u=virtTest.get(n.idx);
       const comps_=new Map();for(const p of n.testable){const r=u?u.find(p):p;if(!comps_.has(r))comps_.set(r,[]);comps_.get(r).push(p);}
       const tested=n.testable.filter(p=>pinTest.has(p));pCov+=tested.length;
       const groupsArr=[...comps_.values()].sort((x,y)=>y.length-x.length);
-      const ok=groupsArr.length===1;if(ok)netsCov++;
+      const ok=groupsArr.length===1;if(ok){netsCov++;vCov++;}
       const steps=[...new Set(n.testable.flatMap(p=>pinTest.get(p)||[]))];
       trace.push({type:n.shield?'רשת סיכוך':'רשת',id:n.name,where:list(n.testable,8),req:'רציפות בין כל '+n.testable.length+' הנקודות',steps,status:ok?'מכוסה':'לא מכוסה',ok});
       if(!ok){
@@ -694,7 +719,8 @@ function analyze(input){
       suggestions.push(...suggestCont(M,n,uncovered,wireCov,S));
     }
   }
-  metrics.push({key:'wires',label:M.virtual?'רשתות שכוסו ברציפות':'חוטים שכוסו ברציפות',covered:M.virtual?netsCov:wCov,total:M.virtual?netsTot:wTot});
+  if(wTot)metrics.push({key:'wires',label:'חוטים שכוסו ברציפות',covered:wCov,total:wTot});
+  if(vTot)metrics.push({key:'vnets',label:'רשתות (רשימת נקודות) שכוסו ברציפות',covered:vCov,total:vTot});
   metrics.push({key:'pins',label:'נקודות נגישות שנבדקו',covered:pCov,total:pTot});
 
   /* ---- components ---- */
@@ -804,6 +830,7 @@ function analyze(input){
   }
   if(!meta.drawingRev)add('info','תצורה ומהדורות','—','לא הוזנה מהדורת שרטוט – לא ניתן לתעד מול איזו מהדורה בוצעה ההצלבה','להשלים בפרטי הפרויקט','norev');
 
+  flushAgg();
   return finish(res);
 }
 function pickPin(M,netIdx){const n=M.nets[netIdx];return n.testable.find(p=>!M.nodes.get(p).nc)||n.testable[0]||null;}
@@ -1043,7 +1070,72 @@ function pairsToCsv(recs,target){
   return lines.join('\n');
 }
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS};
+/* ---------- tester log: Continuité / Isolement / Non-continuité (text from PDF) ---------- */
+const deacc=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function isTesterLog(text){const t=deacc(text);return /Continuite\s+A\s*\(/i.test(t)&&/(Isolement|Non-continuite)\s+A\s*\(/i.test(t);}
+function parseTesterLog(text){
+  const P={iso:{min:NaN,max:NaN,v:''},cont:{min:NaN,max:NaN,v:''},res:{min:NaN,max:NaN,v:''}};
+  const meta={},rows=[],stats={CONT:0,ISO:0,NONCONT:0,RES:0,fail:0,groups:0,single:0};
+  let mode='',label='',group=null,n=0;
+  const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const res=r=>/MAUVAIS|FAIL|NOK/i.test(r)?'FAIL':/BON|PASS|OK/i.test(r)?'PASS':'';
+  const num=v=>{const x=typeof v==='number'?v:parseQty(v);return Number.isFinite(x)?fmtQty(x,'Ω').replace(/\s+/g,''):'';};
+  for(const raw of String(text).split(/\r?\n/)){
+    const line=raw.replace(/\s+/g,' ').replace(/^[^\p{L}\p{N}]+/u,'').trim(),L=deacc(line);if(!line)continue;
+    let m;
+    if((m=L.match(/Programme de tests porte le\s*:\s*(\S+)/i)))meta.date=m[1];
+    if((m=L.match(/Reference programme\s*:\s*([^*]+)/i))){meta.program=m[1].trim();meta.pn=meta.pn||meta.program.replace(/\.\w+$/,'');}
+    if((m=L.match(/Indice schema electrique\s*:\s*([^*]+)/i)))meta.drawingRev=m[1].trim();
+    if((m=L.match(/Indice dossier toron\s*:\s*([^*]+)/i)))meta.harnessRev=m[1].trim();
+    if(/^TEST (BON|MAUVAIS)\b/i.test(L))meta.result=res(L);
+    if(/^Parametres d.Isolement/i.test(L)){mode='iso';group=null;continue;}
+    if(/^Parametres de Continuite/i.test(L)){mode='cont';group=null;continue;}
+    if(/^Parametres de Resistance/i.test(L)){mode='res';group=null;continue;}
+    if(mode&&(m=L.match(/^Resistance minimum\s*=\s*(.+)$/i))){P[mode].min=parseQty(m[1]);continue;}
+    if(mode&&(m=L.match(/^Resistance maximum\s*=\s*(.+)$/i))){P[mode].max=parseQty(m[1]);continue;}
+    if(mode&&(m=L.match(/^Tension (?:d.isolement|maximum)\s*=\s*([\d.]+)\s*V/i))){P[mode].v=m[1];continue;}
+    if((m=L.match(/^test\s+(E\d+(?:\s*(?:,|et)\s*E\d+)*)\s*$/i))){label=m[1].replace(/\s*et\s*/gi,', ');continue;}
+    if((m=L.match(/^(Continuite \+ Test d.Isolement|Continuite \+ Test de Non-Continuite|Non-continuite entre groupes)\b.*?[AB]\s*\(([^)]+)\)(?:\s*\.\.\.\s*\(([^)]+)\))?\s*-\s*(\w+)/i))){
+      group={first:m[2].trim(),last:(m[3]||'').trim(),result:res(m[4]),label};label='';stats.groups++;if(!m[3])stats.single++;continue;}
+    const note=x=>[x,group&&group.label?'test '+group.label:''].filter(Boolean).join(' | ');
+    const gres=()=>group?group.result:'';
+    if((m=L.match(/^Isolement A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
+      rows.push([++n,'ISO',m[1].trim(),'ALL',num(P.iso.min),'','ohm',P.iso.v,m[2]==='='?m[3]:m[2]+m[3],gres(),note('Isolement / inférieurs')]);stats.ISO++;continue;}
+    if((m=L.match(/^Non-continuite A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
+      const thr=m[2].startsWith('>')?num(m[3]):'';
+      rows.push([++n,'ISO',m[1].trim(),'ALL',thr,'','ohm','',m[2].startsWith('>')?'':m[3],gres(),note('Non-continuité (R'+m[2]+m[3]+')')]);stats.NONCONT++;continue;}
+    if((m=L.match(/^Continuite A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*R\s*=\s*(.+)$/i))){
+      rows.push([++n,'CONT',m[1].trim(),m[2].trim(),num(P.cont.min),num(P.cont.max),'ohm','',m[3],gres(),note('')]);stats.CONT++;continue;}
+    if((m=L.match(/^Mesure de Resistance.*?A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*-?\s*R\s*=\s*(.+)$/i))){
+      rows.push([++n,'RES',m[1].trim(),m[2].trim(),num(P.res.min),num(P.res.max),'ohm','',m[3],'',note('Résistance 4 fils')]);stats.RES++;continue;}
+  }
+  stats.fail=rows.filter(r=>r[9]==='FAIL').length;
+  meta.contMax=P.cont.max;meta.isoMin=P.iso.min;meta.isoV=P.iso.v;
+  const csv=['step,type,from,to,low,high,unit,voltage,measured,result,note',...rows.map(r=>r.map(q).join(','))].join('\n');
+  return{meta,csv,count:rows.length,stats};
+}
+
+/* Draft netlist reconstructed from a test program (for verification against a drawing that is
+   only available as a scan). Rows are marked "מהבודק" so the engine reports them as unverified. */
+function testsToNetlist(testsCsv){
+  const T=parseTests(testsCsv).tests,uf=UF(),labels=new Map(),pts=new Set();
+  for(const t of T){for(const p of [t.from,t.to])if(p&&!isAll(p)){pts.add(p);uf.find(p);}
+    if(t.type==='CONT'&&t.from&&t.to)uf.union(t.from,t.to);}
+  const nets=new Map();for(const p of pts){const r=uf.find(p);if(!nets.has(r))nets.set(r,[]);nets.get(r).push(p);}
+  for(const t of T){const m=t.note.match(/test (E\d+(?:, E\d+)*)/);if(m&&t.from&&!isAll(t.from)&&!labels.has(uf.find(t.from)))labels.set(uf.find(t.from),m[1].replace(/\s+/g,''));}
+  const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const out=['type,id,from,to,value,tol,net,note'];let i=0;
+  const sorted=[...nets.entries()].sort((a,b)=>natural(a[1][0],b[1][0]));
+  for(const [r,ps] of sorted){i++;const name=labels.has(r)?'N'+i+' ('+labels.get(r)+')':'N'+i;
+    ps.sort(natural);for(const p of ps)out.push(['NET',name,p,'','','','','מהבודק – לא אומת'].map(q).join(','));}
+  let k=0;
+  for(const t of T)if(t.type==='RES'&&Number.isFinite(t.low)&&Number.isFinite(t.high)&&t.high>t.low){
+    const v=(t.low+t.high)/2,tol=(t.high-t.low)/(t.high+t.low)*100;
+    out.push(['R','R?'+(++k),t.from,t.to,+v.toPrecision(4),+tol.toPrecision(3),'','מהבודק – לא אומת (נגזר מחלון הבדיקה)'].map(q).join(','));}
+  return{csv:out.join('\n'),nets:nets.size,points:pts.size};
+}
+
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -1170,8 +1262,7 @@ $('repParse').onclick=async()=>{
     if($('tests').value.trim()&&!confirm('להחליף את תוכנית הבדיקה הנוכחית בנתוני הדוח? (ביטול = לא לייבא)'))return;
     $('tests').value=csv;data.tests=csv;
     data.reportMeta={...rep.meta,file:f.name};
-    for(const [k,v] of [['pn',rep.meta.pn],['drawingNo',rep.meta.drawingNo],['drawingRev',rep.meta.drawingRev]])if(!data.meta[k]&&v)data.meta[k]=v;
-    if(rep.meta.limit)data.settings.conductorMax=rep.meta.limit;
+    for(const [k,v] of [['pn',rep.meta.pn],['drawingNo',rep.meta.drawingNo]])if(!data.meta[k]&&v)data.meta[k]=v;
     fill();save();
     msg.textContent='חולצו '+rep.rows.length+' רשתות. '+rep.rows.filter(r=>r.isolation).length+' תוצאות בידוד, '+rep.rows.filter(r=>r.hipot).length+' תוצאות HIPOT. הנתונים הועברו ללשונית תוכנית הבדיקה.';
   }catch(e){msg.textContent='שגיאה בקריאת הקובץ: '+e.message;}
@@ -1223,7 +1314,8 @@ $('pdfRead').onclick=async()=>{
       msg.textContent='קורא… עמוד '+n+' מתוך '+doc.numPages;}
     if(!items.length){msg.textContent='לא נמצא טקסט בעמודים שנבחרו ('+pages.length+'). כנראה שזה PDF סרוק (תמונה). צריך לבקש את הקובץ המקורי שהופק מהתוכנה.';return;}
     const lines=H.pdfLines(items);
-    pdfState={file:f.name,pages,numPages:doc.numPages,lines};
+    pdfState={file:f.name,pages,numPages:doc.numPages,lines,text:lines.map(l=>l.cells.map(c=>c.text).join(' ')).join('\n')};
+    if(H.isTesterLog(pdfState.text)){$('pdfMode').value='tester';$('pdfTarget').value='tests';setDefTypes();}
     data.docs={...(data.docs||{}),[$('pdfTarget').value]:f.name};save();
     buildPdfView(false);
     msg.textContent=f.name+': נקראו '+pages.length+' עמודים, '+lines.length+' שורות טקסט.';
@@ -1237,14 +1329,25 @@ function buildPdfView(keepMsg){
     const am=H.autoMap(pdfState.table,t);
     pdfState.map=saved&&saved.length===pdfState.table.cols?[...saved]:am.map;
     $('pdfHint').textContent=(saved?'הוחל מיפוי העמודות ששמרת בפעם הקודמת לטבלה עם '+pdfState.table.cols+' עמודות. ':am.header?'כותרת הטבלה זוהתה אוטומטית. ':'כותרת הטבלה לא זוהתה. ')+'בשורה העליונה בוחרים לכל עמודה מה היא מכילה. שורות כותרת חוזרות מדולגות.';
+  }else if(mode==='tester'){
+    if(t!=='tests'){$('pdfTarget').value='tests';setDefTypes();}
+    pdfState.log=H.parseTesterLog(pdfState.text);
+    const st=pdfState.log.stats,m=pdfState.log.meta,box=$('pdfTesterBox');box.replaceChildren();
+    const add=(txt,cls)=>{const d=document.createElement('div');d.textContent=txt;if(cls)d.className=cls;box.append(d);};
+    add('זוהה דוח בודק: '+(m.program||'')+(m.date?' | '+m.date:'')+(m.result?' | תוצאה כוללת: '+m.result:''));
+    add('מהדורת סכמה חשמלית לפי הבודק: '+(m.drawingRev||'לא צוינה')+(m.harnessRev?' | מהדורת תיק רתמה: '+m.harnessRev:'')+(data.meta.drawingRev?' | בפרויקט: '+data.meta.drawingRev:' | יש להזין בפרטי הפרויקט את מהדורת השרטוט שבידך'),m.drawingRev&&data.meta.drawingRev&&m.drawingRev!==data.meta.drawingRev?'warn':'');
+    add(st.CONT+' בדיקות רציפות, '+st.ISO+' בדיקות בידוד'+(Number.isFinite(m.isoMin)?' ('+H.fmtQty(m.isoMin,'Ω')+(m.isoV?' / '+m.isoV+'V':'')+')':'')+', '+st.NONCONT+' בדיקות Non-continuité, '+st.RES+' מדידות התנגדות, '+st.groups+' קבוצות'+(st.fail?' | כשלים: '+st.fail:''),st.fail?'warn':'');
+    $('pdfHint').textContent='בדוח בודק כל שורת Continuité הופכת ל־CONT, Isolement ל־ISO מול כל השאר, Non-continuité ל־ISO בסף הנמוך, ו־Mesure 4 fils ל־RES. הגבולות נלקחים מבלוקי ה־Paramètres.';
   }else{
     pdfState.pairs=H.pairsFromLines(pdfState.lines,t,{defaultType:$('pdfDefType').value});
     $('pdfHint').textContent='מצב טקסט חופשי: בכל שורה נלקחות שתי הנקודות הראשונות שנראות כמו מחבר-פין (J1-12, P2-A). סוג הבדיקה מנוחש לפי מילים בשורה (continuity, insulation, hipot…).';
   }
+  $('pdfTesterBox').hidden=$('pdfNetlist').hidden=mode!=='tester';$('pdfOpts').hidden=mode==='tester';
   $('pdfOut').hidden=false;renderPdfTable();
 }
 function pdfResult(){
   const t=$('pdfTarget').value,opts={defaultType:$('pdfDefType').value,joiner:$('pdfJoin').value};
+  if($('pdfMode').value==='tester')return{csv:pdfState.log.csv,count:pdfState.log.count,skipped:0};
   if($('pdfMode').value==='pairs'){pdfState.pairs=H.pairsFromLines(pdfState.lines,t,opts);return{csv:H.pairsToCsv(pdfState.pairs,t),count:pdfState.pairs.length,skipped:pdfState.lines.length-pdfState.pairs.length};}
   return H.tableToCsv(pdfState.table,pdfState.map,t,opts);
 }
@@ -1266,6 +1369,12 @@ function renderPdfTable(){
       if(++n>300)break;
       const tr=document.createElement('tr');tr.append(td(r.page));for(const c of r.cells)tr.append(td(c,'ltr'));body.append(tr);}
     tbl.append(body);
+  }else if($('pdfMode').value==='tester'){
+    const rows=H.parseCsv(res.csv),thead=document.createElement('thead'),hr=document.createElement('tr');
+    for(const h of rows[0].cells)hr.append(Object.assign(document.createElement('th'),{textContent:h}));thead.append(hr);tbl.append(thead);
+    const body=document.createElement('tbody');
+    for(const r of rows.slice(1,301)){const tr=document.createElement('tr');for(const c of r.cells)tr.append(td(c,'ltr'));body.append(tr);}
+    tbl.append(body);
   }else{
     const thead=document.createElement('thead'),hr=document.createElement('tr');
     for(const h of ['עמ׳','צעד','סוג','מוצא','יעד','מינ׳','מקס׳','מתח','השורה במסמך'])hr.append(Object.assign(document.createElement('th'),{textContent:h}));thead.append(hr);tbl.append(thead);
@@ -1282,10 +1391,19 @@ function pdfApply(replace){
   if(replace&&$(t).value.trim()&&!confirm('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
   const cur=$(t).value.trim();
   $(t).value=replace||!cur?res.csv:cur+'\n'+res.csv.split('\n').slice(1).join('\n');
-  data[t]=$(t).value;save();
+  data[t]=$(t).value;
+  if($('pdfMode').value==='tester'){data.reportMeta={...pdfState.log.meta,file:pdfState.file};if(!data.meta.pn&&pdfState.log.meta.pn)data.meta.pn=pdfState.log.meta.pn;if(!data.meta.atpNo&&pdfState.log.meta.program)data.meta.atpNo=pdfState.log.meta.program;fill();}
+  save();
   notify('הועברו '+res.count+' שורות אל '+TARGET_LABEL[t]+' – לבדוק מול המסמך');
   document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech'})[t]+']').click();
 }
+$('pdfNetlist').onclick=()=>{
+  if(!pdfState?.log)return;const n=H.testsToNetlist(pdfState.log.csv);
+  if($('drawing').value.trim()&&!confirm('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
+  $('drawing').value=n.csv;data.drawing=n.csv;save();
+  notify('נוצרה טיוטה: '+n.nets+' רשתות. יש לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" בשורות שאומתו');
+  document.querySelector('[data-tab=tDraw]').click();
+};
 $('pdfAppend').onclick=()=>pdfApply(false);$('pdfReplace').onclick=()=>pdfApply(true);
 $('pdfRaw').onclick=async()=>{const txt=pdfState.lines.map(l=>'['+l.page+'] '+l.cells.map(c=>c.text).join(' | ')).join('\n');
   try{await navigator.clipboard.writeText(txt);notify('הטקסט הועתק');}catch(e){download((pdfState.file||'pdf')+'.txt',txt,'text/plain;charset=utf-8');}};

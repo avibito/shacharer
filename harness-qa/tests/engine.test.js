@@ -103,7 +103,7 @@ test('measured results evaluated against limits',()=>{
 
 test('net,pin format uses spanning coverage',()=>{
   const r=HQA.analyze({drawing:'net,pin\nN1,J1-1\nN1,J2-1\nN1,J3-1\nN2,J1-2',tests:T('1,CONT,J1-1,J2-1,,1')});
-  assert.equal(metric(r,'wires').covered,0);
+  assert.equal(metric(r,'vnets').covered,0);assert.equal(metric(r,'vnets').total,1);
   assert.ok(r.findings.some(f=>f.key.startsWith('contgap')&&f.msg.includes('J3-1')));
 });
 
@@ -187,6 +187,56 @@ test('PDF table: second page with shifted column positions is aligned',()=>{
   const tbl=HQA.tableFromLines(HQA.pdfLines(items));
   const r=HQA.tableToCsv(tbl,HQA.autoMap(tbl,'drawing').map,'drawing',{});
   assert.equal(r.count,8);assert.ok(r.csv.includes('WIRE,W8,J1-8,J2-8'));
+});
+
+/* ---- French-style tester log (fictional points, same line format as the real tester) ---- */
+const LOG=`Programme de tests porté le : 01/01/2026
+* Référence programme : DEMO1.tes *
+* Indice schéma éléctrique : B *
+Paramètres d'Isolement
+Résistance minimum = 100 MΩ
+Tension d'isolement = 500 V
+Paramètres de Continuité
+Résistance minimum = 0 Ω
+Résistance maximum = 3 Ω
+ Continuité + Test d'Isolement / inférieurs B(J1-9) - BON
+ Isolement A(J1-9) B[...] R = 1.868 GΩ
+test E1 et E2
+ Continuité + Test d'Isolement / inférieurs B(J1-1) ... (J3-1) - BON
+ Isolement A(J1-1) B[...] R > 5 GΩ
+ Continuité A(J1-1) B(J2-1) R = 1.398 Ω
+ Continuité A(J1-1) B(J3-1) R = 1.41 Ω
+test E3
+ Continuité + Test de Non-Continuité / inférieurs B(J1-4) ... (J2-4) - BON
+ Non-continuité A(J1-4) B[...] R > 2 kΩ
+ Continuité A(J1-4) B(J2-4) R = 1.2 Ω
+Paramètres de Résistance 4 fils
+Résistance minimum = 3.132 Ω
+Résistance maximum = 3.828 Ω
+ Mesure de Résistance 4 fils A(J2-4) B(J2-5) - R = 3.485 Ω
+TEST BON`;
+test('tester log: parse continuity / insulation / non-continuity / 4-wire',()=>{
+  assert.ok(HQA.isTesterLog(LOG));
+  const r=HQA.parseTesterLog(LOG);
+  assert.equal(r.stats.CONT,3);assert.equal(r.stats.ISO,2);assert.equal(r.stats.NONCONT,1);assert.equal(r.stats.RES,1);
+  assert.equal(r.meta.drawingRev,'B');assert.equal(r.meta.pn,'DEMO1');assert.equal(r.meta.result,'PASS');
+  const t=HQA.parseTests(r.csv).tests;
+  const iso=t.find(x=>x.type==='ISO'&&x.from==='J1-1');assert.equal(iso.low,1e8);assert.equal(iso.voltage,500);assert.equal(iso.measured,5e9);
+  const nc=t.find(x=>x.type==='ISO'&&x.from==='J1-4');assert.equal(nc.low,2000);
+  const c=t.find(x=>x.type==='CONT'&&x.to==='J3-1');assert.equal(c.high,3);assert.equal(c.measured,1.41);assert.ok(c.note.includes('E1, E2'));
+  const res=t.find(x=>x.type==='RES');assert.equal(res.low,3.132);assert.equal(res.measured,3.485);
+});
+test('tester log: draft netlist is flagged as unverified and drives a revision check',()=>{
+  const r=HQA.parseTesterLog(LOG);const n=HQA.testsToNetlist(r.csv);
+  assert.equal(n.nets,4);
+  const a=HQA.analyze({drawing:n.csv,tests:r.csv,meta:{drawingRev:'C'},reportMeta:r.meta});
+  const c=codes(a);
+  assert.ok(c.includes('unverified'));assert.ok(c.includes('idrev'));assert.equal(a.full,false);
+  assert.equal(metric(a,'vnets').covered,metric(a,'vnets').total);
+  assert.ok(a.findings.some(f=>f.key.startsWith('isoweak')&&f.el.includes('(E3)')),'net tested only by 2kΩ non-continuity');
+  // once verified (marker removed), no unverified gap remains
+  const b=HQA.analyze({drawing:n.csv.replace(/מהבודק[^\n]*/g,'אומת'),tests:r.csv});
+  assert.ok(!codes(b).includes('unverified'));
 });
 
 console.log(`\n${pass} passed`);
