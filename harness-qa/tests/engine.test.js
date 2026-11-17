@@ -260,4 +260,25 @@ test('generated rows are in Hebrew (suggestions vocabulary, tester log)',()=>{
   assert.ok(HQA.testsToNetlist(r.csv).csv.split('\n')[1].startsWith('רשת,'));
 });
 
+test('verification: list nets from the tester draft, mark ok / mismatch, effect on analysis',()=>{
+  const r=HQA.parseTesterLog(LOG);let d=HQA.testsToNetlist(r.csv).csv;
+  let items=HQA.verifyItems(d);
+  assert.equal(items.filter(x=>x.kind==='net').length,4);assert.ok(items.every(x=>x.status==='open'));
+  const net=items.find(x=>x.points.includes('J3-1'));assert.equal(net.labels,'E1,E2');
+  d=HQA.setVerify(d,net.key,{status:'ok',sheet:'2',zone:'C4'});
+  const other=items.find(x=>x.points.includes('J1-9'));
+  d=HQA.setVerify(d,other.key,{status:'bad',note:'J1-9 מחובר בשרטוט ל־J5-3'});
+  items=HQA.verifyItems(d);
+  const ok=items.find(x=>x.key===net.key);assert.equal(ok.status,'ok');assert.equal(ok.sheet,'2');assert.equal(ok.zone,'C4');
+  assert.equal(items.find(x=>x.key===other.key).status,'bad');
+  const a=HQA.analyze({drawing:d,tests:r.csv});
+  const bad=a.findings.find(f=>f.key.startsWith('verifybad'));assert.ok(bad&&bad.sev==='critical'&&bad.msg.includes('J5-3'));
+  const unv=a.findings.find(f=>f.key.startsWith('unverified'));assert.ok(unv);
+  // the 3 rows of the verified net and the mismatched row are no longer counted as unverified
+  const before=HQA.analyze({drawing:HQA.testsToNetlist(r.csv).csv,tests:r.csv}).findings.find(f=>f.key.startsWith('unverified'));
+  assert.equal(parseInt(before.el)-parseInt(unv.el),4);
+  // undo returns the net to open
+  d=HQA.setVerify(d,net.key,{status:'open'});assert.equal(HQA.verifyItems(d).find(x=>x.key===net.key).status,'open');
+});
+
 console.log(`\n${pass} passed`);

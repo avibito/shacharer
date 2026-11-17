@@ -55,6 +55,17 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .toolbar select,.toolbar input{width:auto;min-width:140px;padding:7px}
 .msg{font-weight:bold;color:var(--ok)}
 #pdfTable th select{min-width:120px;padding:5px;font-size:12px}
+#vTable td input{padding:6px}
+@media (max-width:700px){
+ #vTable thead{display:none}
+ #vTable,#vTable tbody,#vTable tr,#vTable td{display:block;width:100%}
+ #vTable tr{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:0 0 10px}
+ #vTable td{border:0;padding:3px 0;display:grid;grid-template-columns:5.5em 1fr;gap:8px;align-items:center}
+ #vTable td::before{content:attr(data-label);font-weight:bold;color:var(--muted);font-size:12px}
+ #vTable td.ltr{direction:rtl;text-align:right;unicode-bidi:plaintext}
+ #vTable td input{min-width:0!important}
+ #vTable td:last-child{display:flex;gap:6px;flex-wrap:wrap}#vTable td:last-child::before{content:none}
+}
 .printonly{display:none}
 @media (max-width:600px){header,section{padding:12px}h1{font-size:21px}}
 #dlg{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -74,7 +85,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
 <h1>בודק כיסוי רתמות</h1>
 <p class="muted small" style="margin:0">Harness QA Inspector</p>
-<b>גרסה 4.5: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>גרסה 4.6: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -119,6 +130,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <button data-tab="tDraw">שרטוט חשמלי</button>
 <button data-tab="tMech">שרטוט מכני</button>
 <button data-tab="tTests">תוכנית בדיקה</button>
+<button data-tab="tVerify">אימות רשתות</button>
 <button data-tab="tReport">ייבוא דוח בודק (HTML)</button>
 </div>
 
@@ -177,6 +189,17 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </table>
 <p class="small">יחידה: <code>אוהם</code>, <code>מילי-אוהם</code>, <code>קילו-אוהם</code>, <code>מגה-אוהם</code>, <code>וולט</code>, <code>פאראד</code>. אפשר גם לכתוב ישירות 100M, 3.3k או 12m. בעמודות נמדד ותוצאה (עבר / נכשל) אפשר לרשום תוצאות, והמנוע יבדוק אותן מול הגבולות.</p>
 </details>
+</div>
+
+<div class="tab" id="tVerify">
+<p>מעבר רשת אחרי רשת על רשימת החיבורים שנגזרה מהבודק, מול השרטוט (גם סרוק). לכל רשת: בדוק בשרטוט שכל הנקודות והספלייסים שלה מחוברים כמו ברשימה, רשום גיליון ואזור, וסמן. הסימון נשמר בתוך רשימת החיבורים, בעמודת ההערה.</p>
+<div id="vSummary" class="small"></div>
+<div class="toolbar">
+<input id="vText" placeholder="חיפוש רשת, ספלייס או פין">
+<select id="vStatus"><option value="">כל הרשתות</option><option value="open">טרם אומתו</option><option value="ok">תואמות</option><option value="bad">לא תואמות</option></select>
+</div>
+<div class="scroll"><table id="vTable"><thead><tr><th>רשת</th><th>ספלייסים</th><th>נקודות</th><th>גיליון</th><th>אזור</th><th>הערה</th><th>סטטוס</th><th>סימון</th></tr></thead><tbody id="vRows"></tbody></table></div>
+<p class="small muted" id="vNote"></p>
 </div>
 
 <div class="tab" id="tReport">
@@ -300,7 +323,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div></div>
 
 <script id="hqa-engine">
-/* Harness QA engine v4.5: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.6: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -397,18 +420,19 @@ function buildModel(drawText){
   const t=readTable(drawText,DRAW_SPEC);
   const nodes=new Map(),edges=[],comps=[],conns=new Map(),ncPins=new Map(),spliceDecl=new Set();
   const node=p=>{if(!nodes.has(p))nodes.set(p,{id:p,splice:false,internal:false,nc:false});return nodes.get(p);};
-  let virtual=false;const netFirst=new Map();let unverified=0;
+  let virtual=false;const netFirst=new Map();let unverified=0;const mismatch=new Map();
+  const markRow=it=>{const n=it.note||'';if(/לא תואם לשרטוט/.test(n)){const k=it.id||it.net||it.from||('שורה '+it.line);if(!mismatch.has(k))mismatch.set(k,n.replace(/^לא תואם לשרטוט\s*\|?\s*/,''));}else if(/מהבודק|from tester/i.test(n))unverified++;};
   if(t.empty)return{empty:true,findings:F,nodes,edges,comps,nets:[],netOf:new Map(),conns,ncPins,virtual};
   if(t.idx.type===undefined&&t.idx.net!==undefined&&(t.idx.pin!==undefined||t.idx.from!==undefined)){
     virtual=true;const first=new Map();
-    for(const it of t.items){if(/מהבודק|from tester/i.test(it.note||''))unverified++;const net=it.net,pin=it.pin??it.from;if(!net||!pin){add('warn','שרטוט חשמלי','שורה '+it.line,'שורה חסרה net או pin','','rowmiss');continue;}
+    for(const it of t.items){markRow(it);const net=it.net,pin=it.pin??it.from;if(!net||!pin){add('warn','שרטוט חשמלי','שורה '+it.line,'שורה חסרה net או pin','','rowmiss');continue;}
       node(pin);if(!first.has(net)){first.set(net,pin);continue;}
       edges.push({kind:'VIRTUAL',id:'',a:first.get(net),b:pin,net,line:it.line});}
     for(const [net,p] of first)if(!edges.some(e=>e.net===net))edges.push({kind:'VIRTUAL',id:'',a:p,b:p,net,line:0,self:true});
   }else{
     if(t.idx.type===undefined){add('critical','שרטוט חשמלי','כותרת','חסרה עמודת type (או net,pin)','השתמש בכפתור "הכנס כותרת"','nohdr');return{empty:true,findings:F,nodes,edges,comps,nets:[],netOf:new Map(),conns,ncPins,virtual};}
     for(const it of t.items){
-      if(/מהבודק|from tester/i.test(it.note||''))unverified++;
+      markRow(it);
       const type=DRAW_HE_IN[(it.type||'').trim()]||(it.type||'').toUpperCase(),a=it.from||'',b=it.to||'',where='שורה '+it.line;
       if(['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN'].includes(type)){
         const kind=type.startsWith('J')?'JUMPER':(type.startsWith('S')||type==='DRAIN')?'SHIELD':'WIRE';
@@ -481,6 +505,7 @@ function buildModel(drawText){
   /* adjacency per net for path finding */
   const adj=new Map();for(const p of nodes.keys())adj.set(p,[]);
   for(const e of edges){if(e.self||e.kind==='VIRTUAL')continue;adj.get(e.a).push([e.b,e]);adj.get(e.b).push([e.a,e]);}
+  for(const [k,n] of mismatch)add('critical','אימות מול שרטוט',k,'סומן כלא תואם לשרטוט'+(n?': '+n:''),'לתקן את רשימת החיבורים או לפתוח אי־התאמה מול ההנדסה / הבודק','verifybad');
   if(unverified)add('gap','שרטוט חשמלי',unverified+' שורות','רשימת החיבורים כוללת שורות שנגזרו מתוכנית הבודק ועדיין לא אומתו מול השרטוט – הכיסוי שמחושב מהן אינו בלתי תלוי','לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" מעמודת note בשורות שאומתו','unverified');
   virtual=nets.some(n=>n.virtual);
   return{empty:false,findings:F,nodes,edges,comps,nets,netOf,groups,conns,ncPins,virtual,adj,unverified};
@@ -1164,7 +1189,50 @@ function testsToNetlist(testsCsv){
   return{csv:out.join('\n'),nets:nets.size,points:pts.size};
 }
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS};
+/* ---------- net-by-net verification of rows derived from the tester ---------- */
+const VERIFY_RE=/מהבודק|from tester|אומת מול שרטוט|לא תואם לשרטוט/i;
+function parseVerifyNote(n){
+  n=String(n||'');const g=re=>{const m=n.match(re);return m?m[1].trim():'';};
+  return{status:/לא תואם לשרטוט/.test(n)?'bad':/אומת מול שרטוט/.test(n)?'ok':'open',sheet:g(/גיליון\s*([^|]+)/),zone:g(/אזור\s*([^|]+)/),note:g(/הערה:\s*([^|]+)/)};
+}
+function verifyNote(v){
+  const parts=[v.status==='ok'?'אומת מול שרטוט':v.status==='bad'?'לא תואם לשרטוט':'מהבודק – לא אומת'];
+  if(v.status!=='open'){if(v.sheet)parts.push('גיליון '+v.sheet);if(v.zone)parts.push('אזור '+v.zone);if(v.note)parts.push('הערה: '+String(v.note).replace(/\|/g,'/'));}
+  return parts.join(' | ');
+}
+function verifyItems(drawText){
+  const t=readTable(drawText,DRAW_SPEC);if(t.empty||t.idx.note===undefined)return[];
+  const items=new Map();
+  for(const it of t.items){
+    if(!VERIFY_RE.test(it.note||''))continue;
+    const type=DRAW_HE_IN[(it.type||'').trim()]||(it.type||'').toUpperCase();
+    const key=(type==='NET'?'net':'row')+'|'+(type==='NET'?(it.id||it.net):(it.id||it.line));
+    if(!items.has(key)){const lab=String(it.id||'').match(/\(([^)]*)\)/);
+      items.set(key,{key,kind:type==='NET'?'net':HE_DRAW[type]||type,name:it.id||it.net||'',labels:lab?lab[1]:'',points:[],...parseVerifyNote(it.note)});}
+    const x=items.get(key);
+    if(type==='NET')x.points.push(it.from);else x.points.push(it.from+(it.to?' ↔ '+it.to:'')+(it.value?' ('+it.value+(it.tol?' ±'+it.tol+'%':'')+')':''));
+  }
+  return[...items.values()];
+}
+function setVerify(drawText,key,v){
+  const rows=parseCsv(drawText);if(!rows.length)return drawText;
+  const head=rows[0].cells.map(normH),find=f=>{const names=DRAW_SPEC[f].map(normH);return head.findIndex(h=>names.includes(h));};
+  const iT=find('type'),iId=find('id'),iNet=find('net'),iLine=new Map(rows.map((r,i)=>[r.line,i]));
+  let iN=find('note');if(iN<0){iN=rows[0].cells.length;rows[0].cells.push('הערה');}
+  const [kind,id]=[key.slice(0,key.indexOf('|')),key.slice(key.indexOf('|')+1)];
+  const note=verifyNote(v);
+  for(const r of rows.slice(1)){
+    while(r.cells.length<=iN)r.cells.push('');
+    if(!VERIFY_RE.test(r.cells[iN]||''))continue;
+    const type=DRAW_HE_IN[(r.cells[iT]||'').trim()]||(r.cells[iT]||'').toUpperCase();
+    const match=kind==='net'?(type==='NET'&&((r.cells[iId]||r.cells[iNet]||'').trim()===id)):((r.cells[iId]||'').trim()===id||String(r.line)===id);
+    if(match)r.cells[iN]=note;
+  }
+  const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return rows.map(r=>r.cells.map(q).join(',')).join('\n');
+}
+
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS,verifyItems,setVerify,parseVerifyNote};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -1450,12 +1518,51 @@ $('pdfNetlist').onclick=async()=>{
   if(!pdfState?.log)return;const n=H.testsToNetlist(pdfState.log.csv);
   if($('drawing').value.trim()&&!await ask('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
   $('drawing').value=n.csv;data.drawing=n.csv;save();
+  renderVerify();
   notify('נוצרה טיוטה: '+n.nets+' רשתות. יש לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" בשורות שאומתו');
-  document.querySelector('[data-tab=tDraw]').click();
+  document.querySelector('[data-tab=tVerify]').click();
 };
 $('pdfAppend').onclick=()=>pdfApply(false);$('pdfReplace').onclick=()=>pdfApply(true);
 $('pdfRaw').onclick=async()=>{const txt=pdfState.lines.map(l=>'['+l.page+'] '+l.cells.map(c=>c.text).join(' | ')).join('\n');
   try{await navigator.clipboard.writeText(txt);notify('הטקסט הועתק');}catch(e){download((pdfState.file||'pdf')+'.txt',txt,'text/plain;charset=utf-8');}};
+
+
+/* ---- net-by-net verification against the drawing ---- */
+const VLABEL={open:['טרם אומת','gap'],ok:['תואם','ok'],bad:['לא תואם','critical']};
+let lastSheet='';
+for(const id of ['vText','vStatus'])$(id).addEventListener('input',renderVerify);
+document.querySelector('[data-tab=tVerify]').addEventListener('click',renderVerify);
+$('drawing').addEventListener('change',renderVerify);
+function renderVerify(){
+  const items=H.verifyItems(data.drawing||''),body=$('vRows');body.replaceChildren();
+  const n={open:0,ok:0,bad:0};for(const x of items)n[x.status]++;
+  const sum=$('vSummary');sum.replaceChildren();
+  if(!items.length){sum.textContent='אין ברשימת החיבורים שורות לאימות. הלשונית הזו עובדת על טיוטה שנוצרה מהבודק (בלשונית "ייבוא מ־PDF", אחרי קריאת דוח בודק: "צור טיוטת רשימת חיבורים מהבודק").';$('vNote').textContent='';return;}
+  const pct=Math.round(100*(n.ok+n.bad)/items.length);
+  const bar=document.createElement('div');bar.className='bar';const i=document.createElement('i');i.style.width=pct+'%';if(n.bad)i.className='low';else if(pct<100)i.className='part';bar.append(i);
+  sum.append(badge('ok','תואם: '+n.ok),' ',badge('critical','לא תואם: '+n.bad),' ',badge('gap','טרם אומת: '+n.open),' ',document.createTextNode(' נבדקו '+(n.ok+n.bad)+' מתוך '+items.length+' ('+pct+'%)'),bar);
+  const q=$('vText').value.trim().toLowerCase(),st=$('vStatus').value;let shown=0;
+  for(const x of items){
+    if(st&&x.status!==st)continue;
+    if(q&&!(x.name+' '+x.labels+' '+x.points.join(' ')).toLowerCase().includes(q))continue;
+    shown++;
+    const tr=document.createElement('tr');
+    const inp=(val,ph,w)=>{const e=Object.assign(document.createElement('input'),{value:val,placeholder:ph});e.style.minWidth=w;return e;};
+    const sheet=inp(x.sheet||(x.status==='open'?lastSheet:''),'למשל 2','60px'),zone=inp(x.zone,'למשל C4','60px'),note=inp(x.note,'','140px');
+    const cell=e=>{const t=td('');t.append(e);return t;};
+    const sb=td('');sb.append(badge(VLABEL[x.status][1],VLABEL[x.status][0]));
+    const mk=(txt,status,cls)=>{const b=Object.assign(document.createElement('button'),{textContent:txt,className:cls||''});
+      b.onclick=()=>{if(status==='bad'&&!note.value.trim()){note.focus();note.placeholder='מה לא תואם?';return notify('בסימון "לא תואם" יש לרשום בהערה מה לא תואם');}
+        if(sheet.value.trim())lastSheet=sheet.value.trim();
+        data.drawing=H.setVerify(data.drawing,x.key,{status,sheet:sheet.value.trim(),zone:zone.value.trim(),note:note.value.trim()});
+        $('drawing').value=data.drawing;save();renderVerify();};return b;};
+    const acts=td('');acts.append(mk('תואם','ok'),mk('לא תואם','bad','danger'));if(x.status!=='open')acts.append(mk('בטל','open','secondary'));
+    tr.append(td(x.kind==='net'?x.name.replace(/\s*\([^)]*\)/,''):x.kind+' '+x.name),td(x.labels,'ltr'),td(x.points.join(', '),'ltr'),cell(sheet),cell(zone),cell(note),sb,acts);
+    const L=['רשת','ספלייסים','נקודות','גיליון','אזור','הערה','סטטוס',''];[...tr.children].forEach((c,k)=>c.dataset.label=L[k]);
+    body.append(tr);
+  }
+  $('vNote').textContent=shown+' מוצגות. "תואם" מוחק את סימון "מהבודק" מכל שורות הרשת, ו"לא תואם" הופך לממצא קריטי בניתוח.';
+}
 
 /* ---- analysis & rendering ---- */
 const td=(v,cls)=>{const e=document.createElement('td');e.textContent=v??'';if(cls)e.className=cls;return e;};
