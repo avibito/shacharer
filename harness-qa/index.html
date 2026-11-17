@@ -3,36 +3,42 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Harness QA Inspector</title>
+<title>בודק כיסוי רתמות</title>
 <style>
-:root{--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--brand:#194775;--brand2:#617186;
---crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec}
+:root{direction:rtl;--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--field:#fff;--fieldline:#bdc8d5;--th:#eaf0f6;--tab:#e9eef5;--track:#e5ebf2;--shadow:#172b4312;--brand:#194775;--brand2:#617186;--danger:#9c3941;--link:#194775;
+--crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec;--warntext:#874700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#dbe5f0;--muted:#9aa9ba;--bg:#0f1720;--card:#17212d;--line:#2b3949;--field:#111a24;--fieldline:#3a4b5e;--th:#1e2b3a;--tab:#223040;--track:#2a3746;--shadow:#00000040;--brand:#2f6aa8;--brand2:#4d5d71;--danger:#a2464e;--link:#8fbcef;
+--crit:#ff9aa5;--critbg:#3d1a20;--gap:#f3b766;--gapbg:#3a2a12;--warn:#e7d36b;--warnbg:#333015;--info:#9cc3ea;--infobg:#1b2c3e;--ok:#7bd8a6;--okbg:#14301f;--warntext:#f0b56b;color-scheme:dark}}
+:root[data-theme="dark"]{--ink:#dbe5f0;--muted:#9aa9ba;--bg:#0f1720;--card:#17212d;--line:#2b3949;--field:#111a24;--fieldline:#3a4b5e;--th:#1e2b3a;--tab:#223040;--track:#2a3746;--shadow:#00000040;--brand:#2f6aa8;--brand2:#4d5d71;--danger:#a2464e;--link:#8fbcef;
+--crit:#ff9aa5;--critbg:#3d1a20;--gap:#f3b766;--gapbg:#3a2a12;--warn:#e7d36b;--warnbg:#333015;--info:#9cc3ea;--infobg:#1b2c3e;--ok:#7bd8a6;--okbg:#14301f;--warntext:#f0b56b;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{font-family:Arial,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
-body{max-width:1100px;margin:auto;padding:12px;background:var(--bg)}
-header,section{background:var(--card);border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px #172b4312}
+body{max-width:1100px;margin:auto;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg);color:var(--ink)}
+a{color:var(--link)}
+header,section{background:var(--card);border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 2px 8px var(--shadow)}
 h1{margin:0 0 6px;font-size:25px}h2{font-size:20px;margin:4px 0 10px}h3{font-size:16px;margin:6px 0}
 p{line-height:1.6;margin:8px 0}
 label{font-weight:bold;display:block;margin:10px 0 4px;font-size:14px}
-input,select,textarea{width:100%;padding:10px;border:1px solid #bdc8d5;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--fieldline);border-radius:8px;font:inherit;background:var(--field);color:var(--ink)}
 input[type=checkbox]{width:auto;margin-left:6px}
 textarea{min-height:90px}
 textarea.code{font-family:Consolas,"Courier New",monospace;font-size:13px;min-height:190px;white-space:pre;direction:ltr;text-align:left}
 button,.btn{display:inline-block;background:var(--brand);color:#fff;border:0;border-radius:8px;padding:10px 13px;margin:4px 2px;font:inherit;font-size:14px;cursor:pointer}
-button.secondary{background:var(--brand2)}button.danger{background:#9c3941}button.big{font-size:17px;padding:13px 22px}
+button.secondary{background:var(--brand2)}button.danger{background:var(--danger)}button.big{font-size:17px;padding:13px 22px}
 button:disabled{opacity:.5;cursor:default}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.muted{color:var(--muted)}.warn{color:#874700}.small{font-size:13px}
+.muted{color:var(--muted)}.warn{color:var(--warntext)}.small{font-size:13px}
 .pill{background:var(--infobg);border-radius:7px;padding:6px 9px;display:inline-block;font-size:14px}
 .scroll{overflow:auto;max-width:100%}
 table{border-collapse:collapse;width:100%;font-size:13px}
-td,th{border:1px solid #d9e0e7;padding:6px 7px;text-align:right;vertical-align:top}
-th{background:#eaf0f6;position:sticky;top:0}
+td,th{border:1px solid var(--line);padding:6px 7px;text-align:right;vertical-align:top}
+th{background:var(--th);position:sticky;top:0}
 td.ltr{direction:ltr;text-align:left;font-family:Consolas,monospace;font-size:12px}
 details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:2px solid var(--line);margin-bottom:10px}
-.tabs button{background:#e9eef5;color:var(--ink);border-radius:8px 8px 0 0;margin:0}
+.tabs button{background:var(--tab);color:var(--ink);border-radius:8px 8px 0 0;margin:0}
 .tabs button.on{background:var(--brand);color:#fff}
 .tab{display:none}.tab.on{display:block}
 .badge{display:inline-block;border-radius:6px;padding:2px 7px;font-size:12px;font-weight:bold;white-space:nowrap}
@@ -42,7 +48,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
 .metric{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .metric b{font-size:22px}.metric .lbl{font-size:13px;color:var(--muted)}
-.bar{height:8px;background:#e5ebf2;border-radius:5px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
+.bar{height:8px;background:var(--track);border-radius:5px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
 .bar i.part{background:#c98a00}.bar i.low{background:var(--crit)}
 .counts span{margin-left:6px}
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
@@ -50,7 +56,12 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .msg{font-weight:bold;color:var(--ok)}
 #pdfTable th select{min-width:120px;padding:5px;font-size:12px}
 .printonly{display:none}
-@media (max-width:600px){body{padding:8px}header,section{padding:12px}h1{font-size:21px}}
+@media (max-width:600px){header,section{padding:12px}h1{font-size:21px}}
+#dlg{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+#dlg[hidden]{display:none!important}
+#dlg>div{background:var(--card);color:var(--ink);border-radius:12px;padding:16px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
+#dlgText{min-height:220px;font-family:Consolas,monospace;font-size:12px;direction:ltr;text-align:left}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--link);outline-offset:2px}
 @media print{
  body{max-width:none;background:#fff;padding:0}header,section{box-shadow:none;border:1px solid #ccc;break-inside:auto}
  .noprint,button,.toolbar,.tabs{display:none!important}.printonly{display:block}
@@ -61,8 +72,9 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <body>
 
 <header>
-<h1>Harness QA Inspector</h1>
-<b>v4.2: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<h1>בודק כיסוי רתמות</h1>
+<p class="muted small" style="margin:0">Harness QA Inspector</p>
+<b>גרסה 4.5: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -113,22 +125,22 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <div class="tab" id="tDraw">
 <p>רשימת החיבורים מהסכמה החשמלית. שורה לכל חוט, רכיב, פיצול או פין לא מחובר.</p>
 <div class="toolbar"><input type="file" id="drawFile" accept=".csv,.txt,text/csv"><button class="secondary" data-tpl="drawing">הכנס כותרת</button></div>
-<textarea id="drawing" class="code" spellcheck="false" placeholder="type,id,from,to,value,tol,net,note"></textarea>
+<textarea id="drawing" class="code" spellcheck="false" placeholder="סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה"></textarea>
 <details><summary>פורמט השרטוט החשמלי</summary>
-<p class="small">עמודות: <code>type,id,from,to,value,tol,net,note</code>. נקודות נכתבות בצורה <code>מחבר-פין</code>, לדוגמה <code>J1-12</code>.</p>
-<table class="small"><tr><th>type</th><th>משמעות</th><th>דוגמה</th></tr>
-<tr><td>WIRE</td><td>חוט / מוליך ישיר בין שתי נקודות</td><td class="ltr">WIRE,W1,J1-1,SPL1,,,PWR</td></tr>
-<tr><td>SPLICE</td><td>הגדרת נקודת פיצול (סיכוך). שמות שמתחילים ב־SPL מזוהים אוטומטית. נקודת פיצול היא פנימית ולא נגישה לבודק.</td><td class="ltr">SPLICE,SPL1</td></tr>
-<tr><td>JUMPER</td><td>גשר בתוך מחבר (מאחד רשתות)</td><td class="ltr">JUMPER,,J2-5,J2-6</td></tr>
-<tr><td>SHIELD</td><td>מוליך סיכוך / Drain. הרשת מסומנת כרשת סיכוך.</td><td class="ltr">SHIELD,SH1,J1-8,J2-SHELL</td></tr>
-<tr><td>R</td><td>נגד בין שתי נקודות. value באוהם (אפשר 3.3k), tol באחוזים</td><td class="ltr">R,R1,R1-1,R1-2,3.3,5</td></tr>
-<tr><td>D</td><td>דיודה: from=אנודה, to=קתודה, value=מפל מתח (V)</td><td class="ltr">D,D1,D1-A,D1-K,0.7</td></tr>
-<tr><td>C</td><td>קבל. value בפאראד (אפשר 100n)</td><td class="ltr">C,C1,C1-1,C1-2,100n</td></tr>
-<tr><td>NC</td><td>פין לא מחובר (חייב להיות מבודד)</td><td class="ltr">NC,,J1-9</td></tr>
-<tr><td>NET</td><td>נקודה ששייכת לרשת (רשימת נקודות בלי טופולוגיה). id=שם הרשת. הכיסוי נבדק כקשירות בין כל נקודות הרשת.</td><td class="ltr">NET,PWR,J1-1</td></tr>
-<tr><td>CONN</td><td>מחבר ומק״ט לפי הסכמה (להצלבה מול המכני). value=מק״ט</td><td class="ltr">CONN,J1,,,M83723/75R1415N</td></tr>
+<p class="small">עמודות: <code>סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה</code>. נקודות נכתבות בצורה <code>מחבר-פין</code>, לדוגמה <code>J1-12</code>. קבצים ישנים עם כותרות וסוגים באנגלית (type, from, WIRE…) עדיין נקראים.</p>
+<table class="small"><tr><th>סוג</th><th>משמעות</th><th>דוגמה</th></tr>
+<tr><td>חוט</td><td>מוליך ישיר בין שתי נקודות</td><td class="ltr">חוט,W1,J1-1,SPL1,,,PWR</td></tr>
+<tr><td>ספלייס</td><td>הגדרת נקודת פיצול. שמות שמתחילים ב־SPL מזוהים אוטומטית. נקודת פיצול היא פנימית ולא נגישה לבודק.</td><td class="ltr">ספלייס,SPL1</td></tr>
+<tr><td>גשר</td><td>גשר בתוך מחבר (מאחד רשתות)</td><td class="ltr">גשר,,J2-5,J2-6</td></tr>
+<tr><td>סיכוך</td><td>מוליך סיכוך / Drain. הרשת מסומנת כרשת סיכוך.</td><td class="ltr">סיכוך,SH1,J1-8,J2-SHELL</td></tr>
+<tr><td>נגד</td><td>נגד בין שתי נקודות. ערך באוהם (אפשר 3.3k), טולרנס באחוזים</td><td class="ltr">נגד,R1,R1-1,R1-2,3.3,5</td></tr>
+<tr><td>דיודה</td><td>מוצא = אנודה, יעד = קתודה, ערך = מפל מתח (וולט)</td><td class="ltr">דיודה,D1,D1-A,D1-K,0.7</td></tr>
+<tr><td>קבל</td><td>ערך בפאראד (אפשר 100n)</td><td class="ltr">קבל,C1,C1-1,C1-2,100n</td></tr>
+<tr><td>לא מחובר</td><td>פין שלא מחובר לכלום (חייב להיות מבודד)</td><td class="ltr">לא מחובר,,J1-9</td></tr>
+<tr><td>רשת</td><td>נקודה ששייכת לרשת (רשימת נקודות בלי טופולוגיה). מזהה = שם הרשת. הכיסוי נבדק כקשירות בין כל נקודות הרשת.</td><td class="ltr">רשת,PWR,J1-1</td></tr>
+<tr><td>מחבר</td><td>מחבר ומק״ט לפי הסכמה (להצלבה מול המכני). ערך = מק״ט</td><td class="ltr">מחבר,J1,,,M83723/75R1415N</td></tr>
 </table>
-<p class="small">נקודה ששמה מתחיל בשם של רכיב (למשל <code>R1-1</code>) נחשבת פנימית ולא נגישה לבודק. אפשר גם להדביק פורמט פשוט של <code>net,pin</code>, שורה לכל פין ברשת.</p>
+<p class="small">נקודה ששמה מתחיל בשם של רכיב (למשל <code>R1-1</code>) נחשבת פנימית ולא נגישה לבודק. אפשר גם להדביק רשימה פשוטה בשתי עמודות, <code>רשת,פין</code>, שורה לכל פין ברשת.</p>
 </details>
 <details><summary>מחולל חיבורים ישירים (פין X לפין X)</summary>
 <div class="grid">
@@ -145,30 +157,30 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <div class="tab" id="tMech">
 <p>רשימת מחברים ורכיבים מהשרטוט המכני (BOM / טבלת מחברים). ההצלבה בודקת שכל רכיב שבשרטוט החשמלי קיים גם במכני, שהמק״טים זהים ושמספרי הפינים בתוך טווח המחבר.</p>
 <div class="toolbar"><input type="file" id="mechFile" accept=".csv,.txt,text/csv"><button class="secondary" data-tpl="mech">הכנס כותרת</button></div>
-<textarea id="mech" class="code" spellcheck="false" placeholder="ref,part_number,description,pins"></textarea>
-<p class="small muted">עמודות: <code>ref,part_number,description,pins</code>. בעמודה pins רושמים את מספר המגעים במחבר, והיא לא חובה.</p>
+<textarea id="mech" class="code" spellcheck="false" placeholder="מזהה,מק״ט,תיאור,מגעים"></textarea>
+<p class="small muted">עמודות: <code>מזהה,מק״ט,תיאור,מגעים</code>. בעמודה מגעים רושמים את מספר המגעים במחבר, והיא לא חובה.</p>
 </div>
 
 <div class="tab" id="tTests">
 <p>תוכנית הבדיקה, או תוצאות הבדיקה אם הן כוללות ערכים מדודים. שורה לכל בדיקה.</p>
 <div class="toolbar"><input type="file" id="testsFile" accept=".csv,.txt,text/csv"><button class="secondary" data-tpl="tests">הכנס כותרת</button></div>
-<textarea id="tests" class="code" spellcheck="false" placeholder="step,type,from,to,low,high,unit,voltage,measured,result,note"></textarea>
+<textarea id="tests" class="code" spellcheck="false" placeholder="צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה"></textarea>
 <details><summary>פורמט תוכנית הבדיקה</summary>
-<p class="small">עמודות: <code>step,type,from,to,low,high,unit,voltage,measured,result,note</code>. חובה רק type, from ו־to.</p>
-<table class="small"><tr><th>type</th><th>משמעות</th><th>גבולות</th></tr>
-<tr><td>CONT</td><td>רציפות בין שתי נקודות</td><td>high = התנגדות מקסימלית</td></tr>
-<tr><td>RES</td><td>מדידת התנגדות דרך נגד או רשת נגדים</td><td>low–high באוהם</td></tr>
-<tr><td>DIODE</td><td>from→to בכיוון ההולכה (אנודה→קתודה), או הפוך לבדיקת חסימה</td><td>low–high במתח</td></tr>
-<tr><td>CAP</td><td>מדידת קיבול</td><td>low–high בפאראד</td></tr>
-<tr><td>ISO</td><td>בידוד. <code>to=ALL</code> פירושו רשת מול כל השאר. <code>ALL,ALL</code> פירושו כל רשת מול כל רשת.</td><td>low = התנגדות בידוד מינימלית</td></tr>
-<tr><td>HIPOT</td><td>מתח גבוה, באותה צורה כמו ISO</td><td>voltage = מתח הבדיקה</td></tr>
+<p class="small">עמודות: <code>צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה</code>. חובה רק סוג, מוצא ויעד. גם כותרות וסוגים באנגלית (CONT, ISO…) נקראים.</p>
+<table class="small"><tr><th>סוג</th><th>משמעות</th><th>גבולות</th></tr>
+<tr><td>רציפות</td><td>רציפות בין שתי נקודות</td><td>מקסימום = התנגדות מקסימלית</td></tr>
+<tr><td>התנגדות</td><td>מדידת התנגדות דרך נגד או רשת נגדים</td><td>מינימום–מקסימום באוהם</td></tr>
+<tr><td>דיודה</td><td>מוצא→יעד בכיוון ההולכה (אנודה→קתודה), או הפוך לבדיקת חסימה</td><td>מינימום–מקסימום בוולט</td></tr>
+<tr><td>קיבול</td><td>מדידת קיבול</td><td>מינימום–מקסימום בפאראד</td></tr>
+<tr><td>בידוד</td><td>יעד = <code>כולם</code> פירושו רשת מול כל השאר. מוצא ויעד <code>כולם</code> פירושו כל רשת מול כל רשת.</td><td>מינימום = התנגדות בידוד מינימלית</td></tr>
+<tr><td>מתח גבוה</td><td>HIPOT, באותה צורה כמו בידוד</td><td>מתח = מתח הבדיקה</td></tr>
 </table>
-<p class="small">unit: <code>ohm</code>, <code>mohm</code> (מילי), <code>kohm</code>, <code>Mohm</code> (מגה), <code>V</code>, <code>F</code>. אפשר גם לכתוב ישירות 100M, 3.3k או 12m. בעמודות measured ו־result אפשר לרשום תוצאות, והמנוע יבדוק אותן מול הגבולות.</p>
+<p class="small">יחידה: <code>אוהם</code>, <code>מילי-אוהם</code>, <code>קילו-אוהם</code>, <code>מגה-אוהם</code>, <code>וולט</code>, <code>פאראד</code>. אפשר גם לכתוב ישירות 100M, 3.3k או 12m. בעמודות נמדד ותוצאה (עבר / נכשל) אפשר לרשום תוצאות, והמנוע יבדוק אותן מול הגבולות.</p>
 </details>
 </div>
 
 <div class="tab" id="tReport">
-<p>ייבוא דוח HTML שהופק ממערכת הבדיקה, בפורמט <code>Net1 (SIDE A - x, SIDE B - y) resistance: … mOhm</code>. הקובץ נקרא מקומית, והקוד שבתוכו לא מורץ. כל רשת בדוח הופכת לשורת CONT, וכל תוצאת בידוד ל־ISO מול כל השאר. זה מאפשר להריץ עליו את אותה הצלבה מול השרטוט.</p>
+<p>ייבוא דוח HTML שהופק ממערכת הבדיקה, בפורמט <code>Net1 (SIDE A - x, SIDE B - y) resistance: … mOhm</code>. הקובץ נקרא מקומית, והקוד שבתוכו לא מורץ. כל רשת בדוח הופכת לבדיקת רציפות, וכל תוצאת בידוד לבדיקת בידוד מול כל השאר. זה מאפשר להריץ עליו את אותה הצלבה מול השרטוט.</p>
 <div class="grid">
 <div><label for="repFile">קובץ HTML של הדוח</label><input type="file" id="repFile" accept=".html,.htm,text/html"></div>
 <div><label for="repA">שם מחבר צד A</label><input id="repA" value="P1"></div>
@@ -257,7 +269,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <div class="tab" id="rSugg">
 <p class="small">בדיקות שהוספתן תסגור את פערי הכיסוי שנמצאו. הן כתובות בפורמט של תוכנית הבדיקה, אפשר לייצא אותן ולהעביר להנדסת הבדיקות. <b>את הגבולות חובה לאמת מול המפרט.</b></p>
 <div class="toolbar"><button id="expSugg" class="secondary">ייצוא בדיקות מוצעות CSV</button><button id="simSugg" class="secondary">סימולציה: הוסף לתוכנית ונתח מחדש</button></div>
-<div class="scroll"><table><thead><tr><th>type</th><th>from</th><th>to</th><th>low</th><th>high</th><th>unit</th><th>voltage</th><th>סיבה</th></tr></thead><tbody id="suggRows"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>סוג</th><th>מוצא</th><th>יעד</th><th>מינימום</th><th>מקסימום</th><th>יחידה</th><th>מתח</th><th>סיבה</th></tr></thead><tbody id="suggRows"></tbody></table></div>
 </div>
 
 <div class="tab" id="rNets">
@@ -270,7 +282,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <h2>כללי הניתוח</h2>
 <details><summary>מה המנוע בודק ואיך</summary>
 <ul class="small">
-<li><b>רציפות:</b> המנוע בונה רשתות מהחוטים, הגשרים והסיכוכים. בכל בדיקת CONT הוא מחשב את המסלול בשרטוט ומסמן כל חוט שהזרם עובר בו. רשת מכוסה רק כשכל החוטים בה מכוסים, ובכלל זה כל ענפי הפיצול. נקודות פיצול ונקודות של רכיבים פנימיים לא נחשבות נגישות.</li>
+<li><b>רציפות:</b> המנוע בונה רשתות מהחוטים, הגשרים והסיכוכים. בכל בדיקת רציפות הוא מחשב את המסלול בשרטוט ומסמן כל חוט שהזרם עובר בו. רשת מכוסה רק כשכל החוטים בה מכוסים, ובכלל זה כל ענפי הפיצול. נקודות פיצול ונקודות של רכיבים פנימיים לא נחשבות נגישות.</li>
 <li><b>חוטים מקבילים / לולאות:</b> כשיש שני מסלולים באותה רשת, בדיקת רציפות לא מזהה נתק בחוט אחד מהם. המצב מסומן כפער.</li>
 <li><b>נגדים:</b> המנוע מחשב התנגדות אקוויוולנטית בין נקודות הבדיקה, כולל נגדים בטור ובמקביל, ובודק שהערך הנומינלי בתוך החלון ושהחלון תואם את הטולרנס. נגד נחשב מכוסה רק אם נתק בו היה מכשיל בדיקה. גם זיהוי קצר נבדק.</li>
 <li><b>דיודות:</b> נדרשת בדיקה בכיוון ההולכה עם גבול תחתון גדול מ־0 (לזיהוי דיודה מקוצרת וקיטוביות הפוכה), ולפי ההגדרה גם בכיוון החסימה.</li>
@@ -281,13 +293,26 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 </details>
 </section>
 
+<div id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgMsg"><div>
+<p id="dlgMsg"></p>
+<textarea id="dlgText" readonly hidden></textarea>
+<div class="toolbar"><button id="dlgOk">אישור</button><button id="dlgCopy" class="secondary" hidden>העתק</button><button id="dlgCancel" class="secondary" hidden>ביטול</button></div>
+</div></div>
+
 <script id="hqa-engine">
-/* Harness QA engine v4.2: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.5: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
 const SEV_ORDER={critical:0,gap:1,warn:2,info:3};
 const DEFAULT_SETTINGS={conductorMax:1,isoMinM:100,wireAllow:0.5,hipotV:500,requireHipot:false,requireDiodeRev:true};
+/* Hebrew is the working language of the data files. English codes are still read (older files). */
+const HE_DRAW={WIRE:'חוט',SPLICE:'ספלייס',JUMPER:'גשר',SHIELD:'סיכוך',R:'נגד',D:'דיודה',C:'קבל',NC:'לא מחובר',CONN:'מחבר',NET:'רשת'};
+const HE_TEST={CONT:'רציפות',RES:'התנגדות',DIODE:'דיודה',CAP:'קיבול',ISO:'בידוד',HIPOT:'מתח גבוה'};
+const DRAW_HE_IN={'חוט':'WIRE','ספלייס':'SPLICE','פיצול':'SPLICE','גשר':'JUMPER','סיכוך':'SHIELD','נגד':'R','דיודה':'D','קבל':'C','לא מחובר':'NC','לא-מחובר':'NC','מחבר':'CONN','רשת':'NET'};
+const HE_UNIT={ohm:'אוהם',V:'וולט',F:'פאראד'};
+const ALL_HE='כולם';
+const HEADERS={drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה',tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה',mech:'מזהה,מק״ט,תיאור,מגעים'};
 
 /* ---------- CSV ---------- */
 function parseCsv(text){
@@ -325,8 +350,10 @@ const MECH_SPEC={ref:['ref','id','designator','מזהה','connector','מחבר']
 /* ---------- quantities ---------- */
 const PFX={p:1e-12,n:1e-9,u:1e-6,'µ':1e-6,'μ':1e-6,m:1e-3,k:1e3,K:1e3,M:1e6,G:1e9};
 const BASE=/^(ohms?|Ω|ω|v|vdc|volts?|f|a|hz)?$/i;
+const HE_UNITS=[[/^(אוהם|אום|וולט|פאראד|פרד)$/,1],[/^מילי[-־ ]?(אוהם|אום|וולט)$/,1e-3],[/^קילו[-־ ]?(אוהם|אום|וולט)$/,1e3],[/^מגה[-־ ]?(אוהם|אום)$/,1e6],[/^גיגה[-־ ]?(אוהם|אום)$/,1e9],[/^(מיקרו[-־ ]?פאראד)$/,1e-6],[/^(ננו[-־ ]?פאראד)$/,1e-9]];
 function unitFactor(u){
   u=String(u??'').trim();if(!u)return 1;
+  for(const [re,f] of HE_UNITS)if(re.test(u))return f;
   if(/^meg/i.test(u))return 1e6;
   if(BASE.test(u))return 1;
   const p=u[0],r=u.slice(1);
@@ -357,7 +384,7 @@ const round4=v=>Number.isFinite(v)?+v.toPrecision(4):v;
 function refOf(p){const s=String(p);const i=s.lastIndexOf('-');if(i>0)return s.slice(0,i);return /^[A-Za-z]+\d+$/.test(s)?s:null;}
 function pinOf(p){const s=String(p);const i=s.lastIndexOf('-');return i>0?s.slice(i+1):'';}
 const isSpliceName=p=>/^(SPL|SPLICE|SP)[-_ ]?\d/i.test(String(p));
-const isAll=p=>/^(ALL|\*|כולם|OTHERS|REST)$/i.test(String(p).trim());
+const isAll=p=>/^(ALL|\*|כולם|הכל|הכול|OTHERS|REST)$/i.test(String(p).trim());
 function UF(){const par=new Map();const f=x=>{if(!par.has(x))par.set(x,x);let r=x;while(par.get(r)!==r)r=par.get(r);while(par.get(x)!==r){const n=par.get(x);par.set(x,r);x=n;}return r;};return{find:f,union:(a,b)=>{const ra=f(a),rb=f(b);if(ra===rb)return false;par.set(ra,rb);return true;}};}
 const pairKey=(a,b)=>a<b?a+'|'+b:b+'|'+a;
 const list=(arr,n=12)=>arr.length<=n?arr.join(', '):arr.slice(0,n).join(', ')+' ועוד '+(arr.length-n);
@@ -382,7 +409,7 @@ function buildModel(drawText){
     if(t.idx.type===undefined){add('critical','שרטוט חשמלי','כותרת','חסרה עמודת type (או net,pin)','השתמש בכפתור "הכנס כותרת"','nohdr');return{empty:true,findings:F,nodes,edges,comps,nets:[],netOf:new Map(),conns,ncPins,virtual};}
     for(const it of t.items){
       if(/מהבודק|from tester/i.test(it.note||''))unverified++;
-      const type=(it.type||'').toUpperCase(),a=it.from||'',b=it.to||'',where='שורה '+it.line;
+      const type=DRAW_HE_IN[(it.type||'').trim()]||(it.type||'').toUpperCase(),a=it.from||'',b=it.to||'',where='שורה '+it.line;
       if(['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN'].includes(type)){
         const kind=type.startsWith('J')?'JUMPER':(type.startsWith('S')||type==='DRAIN')?'SHIELD':'WIRE';
         if(!a||!b){add('warn','שרטוט חשמלי',where,'חוט ללא שתי נקודות קצה','','wireend');continue;}
@@ -401,7 +428,7 @@ function buildModel(drawText){
       else if(type==='NET'){const net=it.id||it.net,pin=a;if(!net||!pin){add('warn','שרטוט חשמלי',where,'שורת NET חסרה שם רשת או נקודה','','rowmiss');continue;}
         node(pin);if(!netFirst.has(net)){netFirst.set(net,pin);edges.push({kind:'VIRTUAL',id:'',a:pin,b:pin,net,line:it.line,self:true});}
         else edges.push({kind:'VIRTUAL',id:'',a:netFirst.get(net),b:pin,net,line:it.line});}
-      else if(type)add('warn','שרטוט חשמלי',where,'סוג שורה לא מוכר: '+type,'סוגים נתמכים: WIRE, SPLICE, JUMPER, SHIELD, R, D, C, NC, CONN','badtype');
+      else if(type)add('warn','שרטוט חשמלי',where,'סוג שורה לא מוכר: '+type,'סוגים נתמכים: חוט, ספלייס, גשר, סיכוך, נגד, דיודה, קבל, לא מחובר, מחבר, רשת','badtype');
     }
   }
   const compIds=new Set(comps.map(c=>c.id));
@@ -436,13 +463,13 @@ function buildModel(drawText){
     add('warn','שרטוט חשמלי',name,'שם הרשת מופיע ב־'+ns.length+' קבוצות חוטים שלא מחוברות ביניהן ('+ns.map(n=>n.testable[0]||n.nodes[0]).join(' | ')+')','ייתכן שחסר חוט או פיצול בהזנה – לבדוק מול הסכמה','netsplit');
   }
   for(const n of nets){
-    if(n.nc&&n.nodes.length>1)add('critical','פינים לא מחוברים',n.nodes.filter(p=>nodes.get(p).nc).join(', '),'פין שמוגדר NC מחובר בשרטוט ('+list(n.nodes,6)+')','לברר מול הסכמה: NC או מחובר','ncwired');
+    if(n.nc&&n.nodes.length>1)add('critical','פינים לא מחוברים',n.nodes.filter(p=>nodes.get(p).nc).join(', '),'פין שמוגדר "לא מחובר" מחובר בשרטוט ('+list(n.nodes,6)+')','לברר מול הסכמה: לא מחובר או מחובר','ncwired');
     n.cycles=n.cycles.filter(e=>e.kind!=='VIRTUAL');
     if(n.cycles.length&&!n.virtual)add('gap','רציפות',n.name,'חוטים מקבילים / לולאה ברשת ('+n.cycles.map(e=>e.id||e.a+'↔'+e.b).join(', ')+'): בדיקת רציפות לא מזהה נתק בחוט אחד מהמסלולים','לשקול בדיקה ייעודית לכל חוט (למשל מדידת התנגדות מדויקת, או בדיקה לפני הסגירה)','parallel');
   }
   for(const c of comps){
     if(netOf.get(c.a)===netOf.get(c.b))add('warn',c.kind==='R'?'נגדים':c.kind==='D'?'דיודות':'קבלים',c.id,'שני קצות הרכיב באותה רשת – הרכיב מקוצר בשרטוט שהוזן','לבדוק את החיווט סביב הרכיב בסכמה','compshort');
-    if(nodes.get(c.a).nc||nodes.get(c.b).nc)add('critical','פינים לא מחוברים',c.id,'רכיב מחובר לפין שמוגדר NC','','compnc');
+    if(nodes.get(c.a).nc||nodes.get(c.b).nc)add('critical','פינים לא מחוברים',c.id,'רכיב מחובר לפין שמוגדר "לא מחובר"','','compnc');
   }
   /* isolation groups (nets joined through R/D) and resistor clusters */
   const g=UF(),rc=UF();nets.forEach(n=>{g.find(n.idx);rc.find(n.idx);});
@@ -563,12 +590,12 @@ function analyze(input){
     /* resolve points */
     const pts=[];let bad=false;
     for(const [p,isA] of [[t.from,allFrom],[t.to,allTo]]){
-      if(isA){if(!['ISO','HIPOT'].includes(t.type)){add('warn','תוכנית בדיקה',S_,'ALL נתמך רק בבדיקות ISO / HIPOT','','allbad');bad=true;}continue;}
+      if(isA){if(!['ISO','HIPOT'].includes(t.type)){add('warn','תוכנית בדיקה',S_,'"כולם" נתמך רק בבדיקות בידוד / מתח גבוה','','allbad');bad=true;}continue;}
       if(!p){add('warn','תוכנית בדיקה',S_,'חסרה נקודת בדיקה','','nopt');bad=true;continue;}
       if(!nodes.has(p)){add('critical','הצלבה שרטוט–בדיקה',p,'נקודת בדיקה ('+S_+') לא קיימת בשרטוט החשמלי','לבדוק אם זה שם פין שגוי בתוכנית או חוסר בשרטוט','unknownpt');bad=true;continue;}
       const nd=nodes.get(p);
-      if(nd.internal)add('info','תוכנית בדיקה',S_+' '+p,'בדיקה על נקודה פנימית (פיצול / רכיב) – לוודא שהנקודה נגישה בפועל','','internalpt');
-      if(nd.nc&&!['ISO','HIPOT'].includes(t.type)){add('critical','פינים לא מחוברים',p,S_+': בדיקת '+cat+' על פין שמוגדר NC בשרטוט','לבדוק אם התוכנית או השרטוט שגויים','testnc');}
+      if(nd.internal)add('info','תוכנית בדיקה',S_+' '+p,'בדיקה על נקודה פנימית (ספלייס / רכיב) – לוודא שהנקודה נגישה בפועל','','internalpt');
+      if(nd.nc&&!['ISO','HIPOT'].includes(t.type)){add('critical','פינים לא מחוברים',p,S_+': בדיקת '+cat+' על פין שמוגדר "לא מחובר" בשרטוט','לבדוק אם התוכנית או השרטוט שגויים','testnc');}
       pts.push(p);
     }
     if(bad)continue;
@@ -584,13 +611,13 @@ function analyze(input){
         if(t.type==='CONT'){
           if(!Number.isFinite(t.high))add('warn','רציפות',S_,'לא הוגדר גבול עליון להתנגדות הרציפות','להגדיר high (למשל '+S.conductorMax+' Ω)','nohigh');
           else if(t.high>S.conductorMax*1.0000001)add('warn','רציפות',S_,'גבול הרציפות בתוכנית '+fmtQty(t.high,'Ω')+' גבוה מהגבול שהוגדר למוליך ('+S.conductorMax+' Ω)','לבדוק מול המפרט / לעדכן את הסף בהגדרות','highlimit');
-        }else add('info','נגדים',S_,'מדידת RES בין שתי נקודות באותה רשת – נספרה כבדיקת רציפות','','resinnet');
+        }else add('info','נגדים',S_,'מדידת התנגדות בין שתי נקודות באותה רשת – נספרה כבדיקת רציפות','','resinnet');
       }else{
         const ga=nets[na].group,gb=nets[nb].group;
         const direct=comps.filter(c=>pairKey(netOf.get(c.a),netOf.get(c.b))===pairKey(na,nb));
         if(t.type==='CONT'&&ga===gb){
           const kinds=new Set(direct.map(c=>c.kind));
-          add('warn','רציפות',S_,'רציפות בין '+a+' ל־'+b+' עוברת דרך '+(kinds.has('D')?'דיודה':'נגד / רכיבים')+' ולא דרך מוליך ישיר','לבצע בדיקת '+(kinds.has('D')?'DIODE':'RES')+' עם גבולות מתאימים','contcomp');
+          add('warn','רציפות',S_,'רציפות בין '+a+' ל־'+b+' עוברת דרך '+(kinds.has('D')?'דיודה':'נגד / רכיבים')+' ולא דרך מוליך ישיר','לבצע בדיקת '+(kinds.has('D')?'דיודה':'התנגדות')+' עם גבולות מתאימים','contcomp');
         }else if(t.type==='CONT')add('critical','הצלבה שרטוט–בדיקה',S_,'בדיקת רציפות בין '+a+' ('+nets[na].name+') ל־'+b+' ('+nets[nb].name+') – בשרטוט אלה רשתות מבודדות','לבדוק את הזוג בתוכנית או את השרטוט','contiso');
       }
       if(!(t.type==='RES'&&na!==nb))continue;
@@ -599,7 +626,7 @@ function analyze(input){
       const Rn=effRes(M,na,nb,nomValues);
       if(!(Rn<Infinity)){
         const viaD=comps.some(c=>c.kind==='D'&&pairKey(netOf.get(c.a),netOf.get(c.b))===pairKey(na,nb));
-        add(viaD?'warn':'critical','נגדים',S_,'אין מסלול נגדים בשרטוט בין '+a+' ל־'+b+(viaD?' (רק דיודה)':''),viaD?'להשתמש בבדיקת DIODE':'לבדוק את הזוג בתוכנית או את השרטוט','resnopath');continue;
+        add(viaD?'warn':'critical','נגדים',S_,'אין מסלול נגדים בשרטוט בין '+a+' ל־'+b+(viaD?' (רק דיודה)':''),viaD?'להשתמש בבדיקת דיודה':'לבדוק את הזוג בתוכנית או את השרטוט','resnopath');continue;
       }
       const Rmin=effRes(M,na,nb,resValues('min')),Rmax=effRes(M,na,nb,resValues('max'));
       const lo=t.low,hi=t.high,fl=Number.isFinite(lo),fh=Number.isFinite(hi);
@@ -661,7 +688,7 @@ function analyze(input){
       const cov=t.type==='ISO'?isoCov:hipCov,sm=t.type==='ISO'?isoSteps:hipSteps;
       if(t.type==='ISO'){if(!Number.isFinite(t.low))add('warn','בידוד',S_,'לא הוגדר גבול תחתון להתנגדות הבידוד','להגדיר low (למשל '+S.isoMinM+'M)','isonolow');
         else if(t.low<isoMin*(1-1e-9))weakIso.push(t);}
-      else if(!Number.isFinite(t.voltage))add('warn','מתח גבוה',S_,'לא הוגדר מתח לבדיקת HIPOT','להגדיר voltage','hvnov');
+      else if(!Number.isFinite(t.voltage))add('warn','מתח גבוה',S_,'לא הוגדר מתח לבדיקת מתח גבוה','להגדיר voltage','hvnov');
       else if(t.voltage<S.hipotV)add('warn','מתח גבוה',S_,'מתח הבדיקה ('+t.voltage+'V) נמוך מהנדרש ('+S.hipotV+'V)','','hvlow');
       const gA=a!==undefined?nets[na].group:null,gB=b!==undefined?nets[nb].group:null;
       if(t.type==='ISO'&&Number.isFinite(t.low)&&t.low>=isoMin*(1-1e-9)){if(allFrom&&allTo)fullIsoAll=true;else{if(gA!==null)fullIsoFrom.add(gA);if(gB!==null)fullIsoFrom.add(gB);}}
@@ -680,7 +707,7 @@ function analyze(input){
   if(!fullIsoAll){const byG=new Map();
     for(const t of weakIso){const p=isAll(t.from)?t.to:t.from;if(isAll(p)||!netOf.has(p))continue;const g=nets[netOf.get(p)].group;if(fullIsoFrom.has(g))continue;
       if(!byG.has(g))byG.set(g,{low:t.low,steps:[]});byG.get(g).steps.push(t.step);}
-    for(const [g,v] of byG)add0('warn','בידוד',groups[g].name,'נבדק רק בסף '+fmtQty(v.low,'Ω')+' (צעדים '+list(v.steps,6)+') ולא בבדיקת בידוד מלאה ('+S.isoMinM+' MΩ) כנקודת מוצא. כיסוי הזוגות שלו נשען על בדיקות של רשתות אחרות מול ALL','לוודא שזה מכוון (למשל רשת שמחוברת דרך נגד) ומתועד, או להוסיף בדיקת בידוד מלאה','isoweak');}
+    for(const [g,v] of byG)add0('warn','בידוד',groups[g].name,'נבדק רק בסף '+fmtQty(v.low,'Ω')+' (צעדים '+list(v.steps,6)+') ולא בבדיקת בידוד מלאה ('+S.isoMinM+' MΩ) כנקודת מוצא. כיסוי הזוגות שלו נשען על בדיקות של רשתות אחרות מול "כולם"','לוודא שזה מכוון (למשל רשת שמחוברת דרך נגד) ומתועד, או להוסיף בדיקת בידוד מלאה','isoweak');}
 
   /* ---- continuity coverage ---- */
   let wTot=0,wCov=0,pTot=0,pCov=0,netsTot=0,netsCov=0,vTot=0,vCov=0;
@@ -734,7 +761,7 @@ function analyze(input){
       rT++;const ok=cv.open.length>0;if(ok)rC++;
       trace.push({type:'נגד',id:c.id,where:c.a+' ↔ '+c.b+(c.value>0?' | '+fmtQty(c.value,'Ω')+(Number.isFinite(c.tol)?' ±'+c.tol+'%':''):''),req:'זיהוי נתק וקצר בנגד',steps:[...new Set([...cv.open,...cv.short])],status:ok?(cv.short.length?'מכוסה':'חלקי – קצר לא מזוהה'):'לא מכוסה',ok:ok&&cv.short.length>0});
       if(!ok){
-        add('gap','נגדים',c.id,'אין בדיקה שנתק בנגד יכשיל אותה'+(c.value>0?' ('+fmtQty(c.value,'Ω')+')':''),'להוסיף בדיקת RES בין צידי הנגד','rnocov');
+        add('gap','נגדים',c.id,'אין בדיקה שנתק בנגד יכשיל אותה'+(c.value>0?' ('+fmtQty(c.value,'Ω')+')':''),'להוסיף בדיקת התנגדות בין צידי הנגד','rnocov');
         if(pa&&pb&&c.value>0){
           const vmin=resValues('min'),vmax=resValues('max');
           const lo=effRes(M,na,nb,vmin),hi=effRes(M,na,nb,vmax);
@@ -746,18 +773,18 @@ function analyze(input){
       if(ok)dC++;
       trace.push({type:'דיודה',id:c.id,where:'A:'+c.a+' → K:'+c.b,req:'הולכה'+(S.requireDiodeRev?' + חסימה':''),steps:[...new Set([...cv.fwd,...cv.rev])],status:fwdOk?(revOk?'מכוסה':'חלקי – חסרה בדיקת חסימה'):(cv.rev.length?'חלקי – חסימה בלבד':'לא מכוסה'),ok});
       if(!fwdOk){
-        add('gap','דיודות',c.id,cv.rev.length?'נבדקה רק בכיוון החסימה – קיטוביות והולכה לא אומתו':'אין בדיקת דיודה בכיוון ההולכה','להוסיף DIODE מהאנודה לקתודה','dnofwd');
+        add('gap','דיודות',c.id,cv.rev.length?'נבדקה רק בכיוון החסימה – קיטוביות והולכה לא אומתו':'אין בדיקת דיודה בכיוון ההולכה','להוסיף בדיקת דיודה מהאנודה לקתודה','dnofwd');
         if(pa&&pb)suggestions.push({type:'DIODE',from:pa,to:pb,low:Number.isFinite(c.value)?round4(c.value*0.7):0.3,high:Number.isFinite(c.value)?round4(c.value*1.3):1.0,unit:'V',voltage:'',why:'הולכה '+c.id+' (לאמת חלון מול המפרט)'});
       }
       if(S.requireDiodeRev&&!cv.rev.length){
-        add(fwdOk?'warn':'gap','דיודות',c.id,'אין בדיקת חסימה (קתודה→אנודה) – דליפה / דיודה פגומה בכיוון ההפוך לא תזוהה','להוסיף DIODE מהקתודה לאנודה','dnorev');
+        add(fwdOk?'warn':'gap','דיודות',c.id,'אין בדיקת חסימה (קתודה→אנודה) – דליפה / דיודה פגומה בכיוון ההפוך לא תזוהה','להוסיף בדיקת דיודה מהקתודה לאנודה','dnorev');
         if(pa&&pb)suggestions.push({type:'DIODE',from:pb,to:pa,low:'',high:'',unit:'V',voltage:'',why:'חסימה '+c.id+' (להגדיר גבול לפי יכולת הבודק)'});
       }
       if(!pa||!pb)add('warn','דיודות',c.id,'לאחד מצידי הדיודה אין נקודה נגישה','','dnoaccess');
     }else{
       cT++;const ok=cv.cap.length>0;if(ok)cC++;
       trace.push({type:'קבל',id:c.id,where:c.a+' ↔ '+c.b+(Number.isFinite(c.value)?' | '+fmtQty(c.value,'F'):''),req:'מדידת קיבול',steps:cv.cap,status:ok?'מכוסה':'לא מכוסה',ok});
-      if(!ok){add('gap','קבלים',c.id,'אין מדידת קיבול לקבל','להוסיף CAP או לנמק בכתב','cnocov');if(pa&&pb)suggestions.push({type:'CAP',from:pa,to:pb,low:Number.isFinite(c.value)?round4(c.value*0.8):'',high:Number.isFinite(c.value)?round4(c.value*1.2):'',unit:'F',voltage:'',why:'כיסוי קבל '+c.id});}
+      if(!ok){add('gap','קבלים',c.id,'אין מדידת קיבול לקבל','להוסיף מדידת קיבול או לנמק בכתב','cnocov');if(pa&&pb)suggestions.push({type:'CAP',from:pa,to:pb,low:Number.isFinite(c.value)?round4(c.value*0.8):'',high:Number.isFinite(c.value)?round4(c.value*1.2):'',unit:'F',voltage:'',why:'כיסוי קבל '+c.id});}
     }
   }
   if(rT)metrics.push({key:'res',label:'נגדים מכוסים',covered:rC,total:rT});
@@ -771,26 +798,26 @@ function analyze(input){
     for(let i=0;i<G.length;i++)for(let j=i+1;j<G.length;j++){tot++;const x=G[i].idx,y=G[j].idx;if(cov[x*nG+y])cv++;else{for(const [u,v] of [[x,y],[y,x]]){if(!unc.has(u))unc.set(u,new Set());unc.get(u).add(v);}}}
     metrics.push({key:type,label,covered:cv,total:tot});
     for(const g of G){const miss=unc.get(g.idx)?.size||0,steps=[...(sm.get(g.idx)||[])];
-      trace.push({type:type==='iso'?'בידוד':'HIPOT',id:g.name,where:g.nc?'פין NC':g.shield?'סיכוך':'',req:'מול '+(G.length-1)+' קבוצות',steps,status:miss?'חסר מול '+miss:'מכוסה',ok:!miss});}
+      trace.push({type:type==='iso'?'בידוד':'מתח גבוה',id:g.name,where:g.nc?'פין לא מחובר':g.shield?'סיכוך':'',req:'מול '+(G.length-1)+' קבוצות',steps,status:miss?'חסר מול '+miss:'מכוסה',ok:!miss});}
     if(!sev)return;
     let budget=60;
     while(unc.size&&budget-->0){
       let best=null;for(const [u,s] of unc)if(!best||s.size>unc.get(best).size)best=u;
       const s=unc.get(best);if(!s.size){unc.delete(best);continue;}
       const g=groups[best],partners=[...s].map(v=>groups[v].name);
-      add(sev,g.shield?'סיכוך':g.nc?'פינים לא מחוברים':cat,g.name,(type==='iso'?'בידוד':'HIPOT')+' לא נבדק מול '+s.size+(s.size===1?' קבוצה: ':' קבוצות: ')+list(partners,10),'להוסיף '+(type==='iso'?'ISO':'HIPOT')+' מ־'+g.name+' מול כל השאר','isogap');
+      add(sev,g.shield?'סיכוך':g.nc?'פינים לא מחוברים':cat,g.name,(type==='iso'?'בידוד':'מתח גבוה')+' לא נבדק מול '+s.size+(s.size===1?' קבוצה: ':' קבוצות: ')+list(partners,10),'להוסיף בדיקת '+(type==='iso'?'בידוד':'מתח גבוה')+' מ־'+g.name+' מול כל השאר','isogap');
       const p=pickGroupPin(M,g);
       if(p)suggestions.push({type:type==='iso'?'ISO':'HIPOT',from:p,to:'ALL',low:type==='iso'?S.isoMinM+'M':'',high:'',unit:'ohm',voltage:type==='iso'?'':S.hipotV,why:(type==='iso'?'בידוד ':'מתח גבוה ')+g.name+' מול כל השאר'});
       for(const v of s){unc.get(v)?.delete(best);if(unc.get(v)&&!unc.get(v).size)unc.delete(v);}
       unc.delete(best);
     }
-    if(unc.size)add(sev,cat,'—','קיימים פערי '+(type==='iso'?'בידוד':'HIPOT')+' נוספים (הרשימה קוצרה) – ראה מטריצת העקיבות','','isomore');
+    if(unc.size)add(sev,cat,'—','קיימים פערי '+(type==='iso'?'בידוד':'מתח גבוה')+' נוספים (הרשימה קוצרה) – ראה מטריצת העקיבות','','isomore');
   };
   if(G.length>1){
     isoReport(isoCov,isoSteps,'זוגות בידוד שכוסו','בידוד','gap','iso');
     const anyHip=P.tests.some(t=>t.type==='HIPOT');
-    if(S.requireHipot||anyHip)isoReport(hipCov,hipSteps,'זוגות HIPOT שכוסו','מתח גבוה',S.requireHipot?'gap':'warn','hip');
-    else add('info','מתח גבוה','—','אין בדיקות HIPOT בתוכנית (לא הוגדר כדרישה)','לסמן בהגדרות אם המפרט דורש','nohipot');
+    if(S.requireHipot||anyHip)isoReport(hipCov,hipSteps,'זוגות מתח גבוה שכוסו','מתח גבוה',S.requireHipot?'gap':'warn','hip');
+    else add('info','מתח גבוה','—','אין בדיקות מתח גבוה (HIPOT) בתוכנית (לא הוגדר כדרישה)','לסמן בהגדרות אם המפרט דורש','nohipot');
   }
 
   /* ---- mechanical vs electrical ---- */
@@ -884,13 +911,13 @@ function parseReportText(t){
 function reportToTestsCsv(rep,prefA,prefB){
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const pa=p=>prefA?prefA+'-'+p:p,pb=p=>prefB?prefB+'-'+p:p;
-  const lines=['step,type,from,to,low,high,unit,voltage,measured,result,note'];
+  const lines=[HEADERS.tests];
   const hv=s=>{const m=String(s).match(/(\d+(?:\.\d+)?)\s*V/i);return m?m[1]:'';};
-  const pf=s=>/fail/i.test(s)?'FAIL':/pass|ok/i.test(s)?'PASS':'';
+  const pf=s=>/fail/i.test(s)?'נכשל':/pass|ok/i.test(s)?'עבר':'';
   for(const r of rep.rows){
-    lines.push(['N'+r.id+'-C','CONT',pa(r.a),pb(r.b),'',rep.meta.limit??'','ohm','',r.mohm+'m','','Net'+r.id].map(q).join(','));
-    if(r.isolation)lines.push(['N'+r.id+'-I','ISO',pa(r.a),'ALL',rep.meta.isoLimit??'','','ohm','',/infinite|∞/i.test(r.isolation)?'inf':r.isolation,pf(r.isolation),'Net'+r.id+' isolation: '+r.isolation].map(q).join(','));
-    if(r.hipot)lines.push(['N'+r.id+'-H','HIPOT',pa(r.a),'ALL','','','',hv(r.hipot),'',pf(r.hipot),'Net'+r.id+' DC hipot: '+r.hipot].map(q).join(','));
+    lines.push(['N'+r.id+'-C',HE_TEST.CONT,pa(r.a),pb(r.b),'',rep.meta.limit??'',HE_UNIT.ohm,'',r.mohm+'m','','Net'+r.id].map(q).join(','));
+    if(r.isolation)lines.push(['N'+r.id+'-I',HE_TEST.ISO,pa(r.a),ALL_HE,rep.meta.isoLimit??'','',HE_UNIT.ohm,'',/infinite|∞/i.test(r.isolation)?'inf':r.isolation,pf(r.isolation),'Net'+r.id+' isolation: '+r.isolation].map(q).join(','));
+    if(r.hipot)lines.push(['N'+r.id+'-H',HE_TEST.HIPOT,pa(r.a),ALL_HE,'','','',hv(r.hipot),'',pf(r.hipot),'Net'+r.id+' DC hipot: '+r.hipot].map(q).join(','));
   }
   return lines.join('\n');
 }
@@ -1007,7 +1034,7 @@ const normPoint=s=>String(s??'').trim().replace(/\s*-\s*/g,'-').replace(/\s+/g,'
 function tableToCsv(table,map,target,opts={}){
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const join=opts.joiner??'-';
-  const heads={drawing:['type','id','from','to','value','tol','net','note'],tests:['step','type','from','to','low','high','unit','voltage','measured','result','note'],mech:['ref','part_number','description','pins']}[target];
+  const heads=HEADERS[target].split(',');
   const out=[];let skipped=0;
   for(const r of table.rows){
     if(headerScore(r.cells)>=2){skipped++;continue;}
@@ -1019,12 +1046,13 @@ function tableToCsv(table,map,target,opts={}){
     let type=(g.type||'').trim();
     if(target==='drawing'){
       const T=type.toUpperCase();
-      if(!['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN','SPLICE','SPL','R','D','C','NC','CONN','CONNECTOR'].includes(T))type=opts.defaultType||'WIRE';
-      if(!from||(!to&&!/^(NC|SPLICE|SPL|CONN)/i.test(type))){skipped++;continue;}
+      if(!DRAW_HE_IN[type.trim()]&&!['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN','SPLICE','SPL','R','D','C','NC','CONN','CONNECTOR'].includes(T))type=HE_DRAW[opts.defaultType||'WIRE'];
+      if(!from||(!to&&!/^(NC|SPLICE|SPL|CONN|לא מחובר|ספלייס|מחבר)/i.test(type))){skipped++;continue;}
       out.push([type,g.id,from,to,g.value,g.tol,g.net,g.note]);
     }else{
-      type=canonType(type)||guessTestType(type+' '+(g.note||''))||opts.defaultType||'CONT';
+      type=HE_TEST[canonType(type)||guessTestType(type+' '+(g.note||''))||opts.defaultType||'CONT'];
       if(!from||!to){skipped++;continue;}
+      if(isAll(to))to=ALL_HE;
       out.push([g.step,type,from,to,g.low,g.high,g.unit,g.voltage,g.measured,g.result,g.note]);
     }
   }
@@ -1065,8 +1093,8 @@ function pairsFromLines(lines,target,opts={}){
 }
 function pairsToCsv(recs,target){
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  const lines=target==='tests'?['step,type,from,to,low,high,unit,voltage,measured,result,note']:['type,id,from,to,value,tol,net,note'];
-  recs.forEach((r,i)=>lines.push((target==='tests'?[r.step||'P'+(i+1),r.type,r.from,r.to,r.low,r.high,'',r.voltage,'','','עמ׳ '+r.page+(r.extra.length?' | נקודות נוספות בשורה: '+r.extra.join(' '):'')]:[r.type,'',r.from,r.to,'','','','עמ׳ '+r.page]).map(q).join(',')));
+  const lines=[HEADERS[target==='tests'?'tests':'drawing']];
+  recs.forEach((r,i)=>lines.push((target==='tests'?[r.step||'P'+(i+1),HE_TEST[r.type]||r.type,r.from,isAll(r.to)?ALL_HE:r.to,r.low,r.high,'',r.voltage,'','','עמ׳ '+r.page+(r.extra.length?' | נקודות נוספות בשורה: '+r.extra.join(' '):'')]:[HE_DRAW[r.type]||r.type,'',r.from,r.to,'','','','עמ׳ '+r.page]).map(q).join(',')));
   return lines.join('\n');
 }
 
@@ -1100,18 +1128,19 @@ function parseTesterLog(text){
     const note=x=>[x,group&&group.label?'test '+group.label:''].filter(Boolean).join(' | ');
     const gres=()=>group?group.result:'';
     if((m=L.match(/^Isolement A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
-      rows.push([++n,'ISO',m[1].trim(),'ALL',num(P.iso.min),'','ohm',P.iso.v,m[2]==='='?m[3]:m[2]+m[3],gres(),note('Isolement / inférieurs')]);stats.ISO++;continue;}
+      rows.push([++n,HE_TEST.ISO,m[1].trim(),ALL_HE,num(P.iso.min),'',HE_UNIT.ohm,P.iso.v,m[2]==='='?m[3]:m[2]+m[3],gres(),note('Isolement / inférieurs')]);stats.ISO++;continue;}
     if((m=L.match(/^Non-continuite A\s*\(([^)]+)\)\s*B\s*\[[^\]]*\]\s*R\s*([=<>≥≤]+)\s*(.+)$/i))){
       const thr=m[2].startsWith('>')?num(m[3]):'';
-      rows.push([++n,'ISO',m[1].trim(),'ALL',thr,'','ohm','',m[2].startsWith('>')?'':m[3],gres(),note('Non-continuité (R'+m[2]+m[3]+')')]);stats.NONCONT++;continue;}
+      rows.push([++n,HE_TEST.ISO,m[1].trim(),ALL_HE,thr,'',HE_UNIT.ohm,'',m[2].startsWith('>')?'':m[3],gres(),note('Non-continuité (R'+m[2]+m[3]+')')]);stats.NONCONT++;continue;}
     if((m=L.match(/^Continuite A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*R\s*=\s*(.+)$/i))){
-      rows.push([++n,'CONT',m[1].trim(),m[2].trim(),num(P.cont.min),num(P.cont.max),'ohm','',m[3],gres(),note('')]);stats.CONT++;continue;}
+      rows.push([++n,HE_TEST.CONT,m[1].trim(),m[2].trim(),num(P.cont.min),num(P.cont.max),HE_UNIT.ohm,'',m[3],gres(),note('')]);stats.CONT++;continue;}
     if((m=L.match(/^Mesure de Resistance.*?A\s*\(([^)]+)\)\s*B\s*\(([^)]+)\)\s*-?\s*R\s*=\s*(.+)$/i))){
-      rows.push([++n,'RES',m[1].trim(),m[2].trim(),num(P.res.min),num(P.res.max),'ohm','',m[3],'',note('Résistance 4 fils')]);stats.RES++;continue;}
+      rows.push([++n,HE_TEST.RES,m[1].trim(),m[2].trim(),num(P.res.min),num(P.res.max),HE_UNIT.ohm,'',m[3],'',note('Résistance 4 fils')]);stats.RES++;continue;}
   }
   stats.fail=rows.filter(r=>r[9]==='FAIL').length;
+  for(const r of rows)r[9]=r[9]==='PASS'?'עבר':r[9]==='FAIL'?'נכשל':r[9];
   meta.contMax=P.cont.max;meta.isoMin=P.iso.min;meta.isoV=P.iso.v;
-  const csv=['step,type,from,to,low,high,unit,voltage,measured,result,note',...rows.map(r=>r.map(q).join(','))].join('\n');
+  const csv=[HEADERS.tests,...rows.map(r=>r.map(q).join(','))].join('\n');
   return{meta,csv,count:rows.length,stats};
 }
 
@@ -1124,18 +1153,18 @@ function testsToNetlist(testsCsv){
   const nets=new Map();for(const p of pts){const r=uf.find(p);if(!nets.has(r))nets.set(r,[]);nets.get(r).push(p);}
   for(const t of T){const m=t.note.match(/test (E\d+(?:, E\d+)*)/);if(m&&t.from&&!isAll(t.from)&&!labels.has(uf.find(t.from)))labels.set(uf.find(t.from),m[1].replace(/\s+/g,''));}
   const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
-  const out=['type,id,from,to,value,tol,net,note'];let i=0;
+  const out=[HEADERS.drawing];let i=0;
   const sorted=[...nets.entries()].sort((a,b)=>natural(a[1][0],b[1][0]));
   for(const [r,ps] of sorted){i++;const name=labels.has(r)?'N'+i+' ('+labels.get(r)+')':'N'+i;
-    ps.sort(natural);for(const p of ps)out.push(['NET',name,p,'','','','','מהבודק – לא אומת'].map(q).join(','));}
+    ps.sort(natural);for(const p of ps)out.push([HE_DRAW.NET,name,p,'','','','','מהבודק – לא אומת'].map(q).join(','));}
   let k=0;
   for(const t of T)if(t.type==='RES'&&Number.isFinite(t.low)&&Number.isFinite(t.high)&&t.high>t.low){
     const v=(t.low+t.high)/2,tol=(t.high-t.low)/(t.high+t.low)*100;
-    out.push(['R','R?'+(++k),t.from,t.to,+v.toPrecision(4),+tol.toPrecision(3),'','מהבודק – לא אומת (נגזר מחלון הבדיקה)'].map(q).join(','));}
+    out.push([HE_DRAW.R,'R?'+(++k),t.from,t.to,+v.toPrecision(4),+tol.toPrecision(3),'','מהבודק – לא אומת (נגזר מחלון הבדיקה)'].map(q).join(','));}
   return{csv:out.join('\n'),nets:nets.size,points:pts.size};
 }
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist};
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -1143,55 +1172,68 @@ root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,pa
 (function(){
 'use strict';
 const H=globalThis.HQA,$=id=>document.getElementById(id);
+/* Embedded (e.g. opened inside the chat): no native dialogs, downloads or print, so the page uses its own. */
+const EMBEDDED=(()=>{try{return window.self!==window.top;}catch(e){return true;}})();
+function dialog({msg,text=null,ok='אישור',cancel=null}){return new Promise(res=>{
+  const d=$('dlg'),ta=$('dlgText');$('dlgMsg').textContent=msg;ta.hidden=$('dlgCopy').hidden=text===null;if(text!==null)ta.value=text;
+  $('dlgOk').textContent=ok;$('dlgCancel').hidden=!cancel;if(cancel)$('dlgCancel').textContent=cancel;d.hidden=false;
+  const done=v=>{d.hidden=true;document.removeEventListener('keydown',esc);res(v);};
+  const esc=e=>{if(e.key==='Escape')done(false);};document.addEventListener('keydown',esc);
+  $('dlgOk').onclick=()=>done(true);$('dlgCancel').onclick=()=>done(false);
+  $('dlgCopy').textContent='העתק';
+  $('dlgCopy').onclick=()=>{try{navigator.clipboard.writeText(ta.value).then(()=>{$('dlgCopy').textContent='הועתק ✓';},()=>ta.select());}catch(e){ta.select();}};
+  $('dlgOk').focus();});}
+const ask=msg=>dialog({msg,ok:'כן, להמשיך',cancel:'ביטול'});
+const say=msg=>dialog({msg});
 const KEY='harness-qa-v4',OLD_KEY='harness-qa-engineering-private-v2';
 const REVIEW=['פתוח','מאושר – להעביר לטיפול','לא רלוונטי – מנומק','תוקן – לאמת','סגור'];
-const TPL={drawing:'type,id,from,to,value,tol,net,note',mech:'ref,part_number,description,pins',tests:'step,type,from,to,low,high,unit,voltage,measured,result,note'};
+const TPL=H.HEADERS;
 const fresh=()=>({v:4,meta:{},settings:{...H.DEFAULT_SETTINGS},drawing:'',mech:'',tests:'',reviews:{},reportMeta:null,docs:{}});
 let data=fresh(),last=null;
 
 const DEMO={
-drawing:`type,id,from,to,value,tol,net,note
-CONN,J1,,,M83723/75R1415N,,,מחבר ראשי
-CONN,J2,,,D38999/26WB35PN,,,מחבר ציוד
-CONN,J3,,,MS27467T11B35S,,,מחבר מנורה
-SPLICE,SPL1,,,,,,פיצול הזנה
-WIRE,W1,J1-1,SPL1,,,PWR_28V,
-WIRE,W2,SPL1,J2-1,,,PWR_28V,
-WIRE,W3,SPL1,J3-1,,,PWR_28V,ענף למנורה
-WIRE,W4,J1-2,J2-2,,,RTN,
-WIRE,W5,J1-3,J2-3,,,SIG_A,
-WIRE,W6,J1-4,R1-1,,,SENSE_IN,
-R,R1,R1-1,R1-2,3.3,5,,נגד טורי
-WIRE,W7,R1-2,J2-4,,,SENSE_OUT,
-WIRE,W8,J1-5,D1-A,,,LAMP_IN,
-D,D1,D1-A,D1-K,0.7,,,דיודת הגנה
-WIRE,W9,D1-K,J3-2,,,LAMP_OUT,
-WIRE,W10,J1-6,J2-6,,,DATA_H,
-WIRE,W11,J1-7,J2-7,,,DATA_L,
-SHIELD,SH1,J1-8,J2-8,,,SHLD_DATA,סיכוך זוג הנתונים
-SHIELD,SH2,J2-8,J2-SHELL,,,SHLD_DATA,חיבור למעטפת
-NC,,J1-9,,,,,
-NC,,J2-9,,,,,`,
-mech:`ref,part_number,description,pins
+drawing:`סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה
+מחבר,J1,,,M83723/75R1415N,,,מחבר ראשי
+מחבר,J2,,,D38999/26WB35PN,,,מחבר ציוד
+מחבר,J3,,,MS27467T11B35S,,,מחבר מנורה
+ספלייס,SPL1,,,,,,פיצול הזנה
+חוט,W1,J1-1,SPL1,,,PWR_28V,
+חוט,W2,SPL1,J2-1,,,PWR_28V,
+חוט,W3,SPL1,J3-1,,,PWR_28V,ענף למנורה
+חוט,W4,J1-2,J2-2,,,RTN,
+חוט,W5,J1-3,J2-3,,,SIG_A,
+חוט,W6,J1-4,R1-1,,,SENSE_IN,
+נגד,R1,R1-1,R1-2,3.3,5,,נגד טורי
+חוט,W7,R1-2,J2-4,,,SENSE_OUT,
+חוט,W8,J1-5,D1-A,,,LAMP_IN,
+דיודה,D1,D1-A,D1-K,0.7,,,דיודת הגנה
+חוט,W9,D1-K,J3-2,,,LAMP_OUT,
+חוט,W10,J1-6,J2-6,,,DATA_H,
+חוט,W11,J1-7,J2-7,,,DATA_L,
+סיכוך,SH1,J1-8,J2-8,,,SHLD_DATA,סיכוך זוג הנתונים
+סיכוך,SH2,J2-8,J2-SHELL,,,SHLD_DATA,חיבור למעטפת
+לא מחובר,,J1-9,,,,,
+לא מחובר,,J2-9,,,,,`,
+mech:`מזהה,מק״ט,תיאור,מגעים
 J1,M83723/75R1415N,מחבר ראשי,15
 J2,D38999/26WB35SN,מחבר ציוד,13
 J3,MS27467T11B35S,מחבר מנורה,13
 R1,RCR07G3R3JS,נגד 3.3 אוהם,
 D1,1N4148,דיודה,
 L1,TAG-100,תווית זיהוי,`,
-tests:`step,type,from,to,low,high,unit,voltage,measured,result,note
-1,CONT,J1-1,J2-1,,1,ohm,,,,
-2,CONT,J1-2,J2-2,,1,ohm,,,,
-3,CONT,J1-3,J2-3,,1,ohm,,,,
-4,RES,J1-4,J2-4,3.1,3.6,ohm,,,,
-5,DIODE,J1-5,J3-2,0.4,1.0,V,,,,
-6,CONT,J1-6,J2-6,,1,ohm,,,,
-7,CONT,J1-7,J2-6,,1,ohm,,,,שגיאה מכוונת להדגמה
-8,CONT,J1-8,J2-SHELL,,1,ohm,,,,
-9,ISO,J1-1,ALL,100M,,ohm,500,,,
-10,ISO,J1-2,ALL,100M,,ohm,500,,,
-11,ISO,J1-3,ALL,100M,,ohm,500,,,
-12,ISO,J1-6,ALL,100M,,ohm,500,,,`,
+tests:`צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה
+1,רציפות,J1-1,J2-1,,1,אוהם,,,,
+2,רציפות,J1-2,J2-2,,1,אוהם,,,,
+3,רציפות,J1-3,J2-3,,1,אוהם,,,,
+4,התנגדות,J1-4,J2-4,3.1,3.6,אוהם,,,,
+5,דיודה,J1-5,J3-2,0.4,1.0,וולט,,,,
+6,רציפות,J1-6,J2-6,,1,אוהם,,,,
+7,רציפות,J1-7,J2-6,,1,אוהם,,,,שגיאה מכוונת להדגמה
+8,רציפות,J1-8,J2-SHELL,,1,אוהם,,,,
+9,בידוד,J1-1,כולם,100M,,אוהם,500,,,
+10,בידוד,J1-2,כולם,100M,,אוהם,500,,,
+11,בידוד,J1-3,כולם,100M,,אוהם,500,,,
+12,בידוד,J1-6,כולם,100M,,אוהם,500,,,`,
 meta:{pn:'DEMO-100',drawingNo:'DEMO-100-E',drawingRev:'B',mechNo:'DEMO-100-M',mechRev:'B',atpNo:'ATP-DEMO-100',atpRev:'A'}
 };
 
@@ -1224,22 +1266,22 @@ tabs('data-tab');tabs('data-rtab');
 /* ---- inputs ---- */
 for(const [fileId,target] of [['drawFile','drawing'],['mechFile','mech'],['testsFile','tests']])
   $(fileId).addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;const txt=await f.text();
-    if($(target).value.trim()&&!confirm('להחליף את התוכן הנוכחי בקובץ '+f.name+'?')){e.target.value='';return;}
+    if($(target).value.trim()&&!await ask('להחליף את התוכן הנוכחי בקובץ '+f.name+'?')){e.target.value='';return;}
     $(target).value=txt.replace(/^﻿/,'');data[target]=$(target).value;save();e.target.value='';});
-for(const b of document.querySelectorAll('[data-tpl]'))b.addEventListener('click',()=>{const t=$(b.dataset.tpl);if(t.value.trim()&&!confirm('להוסיף שורת כותרת בתחילת הטקסט?'))return;t.value=TPL[b.dataset.tpl]+'\n'+t.value;data[b.dataset.tpl]=t.value;save();});
-$('genRun').onclick=()=>{
+for(const b of document.querySelectorAll('[data-tpl]'))b.addEventListener('click',async()=>{const t=$(b.dataset.tpl);if(t.value.trim()&&!await ask('להוסיף שורת כותרת בתחילת הטקסט?'))return;t.value=TPL[b.dataset.tpl]+'\n'+t.value;data[b.dataset.tpl]=t.value;save();});
+$('genRun').onclick=async()=>{
   const A=$('genA').value.trim(),B=$('genB').value.trim(),pins=$('genPins').value.split(/[\s,]+/).filter(Boolean);
-  if(!A||!B||!pins.length)return alert('יש למלא שמות מחברים ורשימת פינים');
+  if(!A||!B||!pins.length)return say('יש למלא שמות מחברים ורשימת פינים');
   let t=$('drawing').value.trim();if(!t)t=TPL.drawing;
-  const rows=pins.map(p=>`WIRE,,${A}-${p},${B}-${p},,,,`);
-  if($('genShell').checked)rows.push(`SHIELD,,${A}-SHELL,${B}-SHELL,,,SHELL,`);
+  const rows=pins.map(p=>`חוט,,${A}-${p},${B}-${p},,,,`);
+  if($('genShell').checked)rows.push(`סיכוך,,${A}-SHELL,${B}-SHELL,,,SHELL,`);
   $('drawing').value=t+'\n'+rows.join('\n');data.drawing=$('drawing').value;save();notify('נוספו '+rows.length+' חיבורים');
 };
-$('demoLoad').onclick=()=>{
-  if((data.drawing||data.tests||data.mech)&&!confirm('להחליף את כל המקורות בנתוני הדוגמה?'))return;
+$('demoLoad').onclick=async()=>{
+  if((data.drawing||data.tests||data.mech)&&!await ask('להחליף את כל המקורות בנתוני הדוגמה?'))return;
   data.drawing=DEMO.drawing;data.mech=DEMO.mech;data.tests=DEMO.tests;data.meta={...data.meta,...DEMO.meta};data.reportMeta=null;fill();save();run();
 };
-$('clearAll').onclick=()=>{if(!confirm('לנקות את השרטוט החשמלי, המכני ותוכנית הבדיקה? (פרטי הפרויקט וסטטוסי הסקירה יישמרו)'))return;
+$('clearAll').onclick=async()=>{if(!await ask('לנקות את השרטוט החשמלי, המכני ותוכנית הבדיקה? (פרטי הפרויקט וסטטוסי הסקירה יישמרו)'))return;
   data.drawing=data.mech=data.tests='';data.reportMeta=null;fill();save();$('results').hidden=true;};
 
 /* ---- tester HTML report ---- */
@@ -1259,12 +1301,12 @@ $('repParse').onclick=async()=>{
     const rep=H.parseReportText(htmlToText(await f.text()));
     if(!rep.rows.length)return msg.textContent='לא זוהו שורות Net בפורמט הנתמך. שום נתון לא הועבר.';
     const csv=H.reportToTestsCsv(rep,$('repA').value.trim(),$('repB').value.trim());
-    if($('tests').value.trim()&&!confirm('להחליף את תוכנית הבדיקה הנוכחית בנתוני הדוח? (ביטול = לא לייבא)'))return;
+    if($('tests').value.trim()&&!await ask('להחליף את תוכנית הבדיקה הנוכחית בנתוני הדוח? (ביטול = לא לייבא)'))return;
     $('tests').value=csv;data.tests=csv;
     data.reportMeta={...rep.meta,file:f.name};
     for(const [k,v] of [['pn',rep.meta.pn],['drawingNo',rep.meta.drawingNo]])if(!data.meta[k]&&v)data.meta[k]=v;
     fill();save();
-    msg.textContent='חולצו '+rep.rows.length+' רשתות. '+rep.rows.filter(r=>r.isolation).length+' תוצאות בידוד, '+rep.rows.filter(r=>r.hipot).length+' תוצאות HIPOT. הנתונים הועברו ללשונית תוכנית הבדיקה.';
+    msg.textContent='חולצו '+rep.rows.length+' רשתות. '+rep.rows.filter(r=>r.isolation).length+' תוצאות בידוד, '+rep.rows.filter(r=>r.hipot).length+' תוצאות מתח גבוה. הנתונים הועברו ללשונית תוכנית הבדיקה.';
   }catch(e){msg.textContent='שגיאה בקריאת הקובץ: '+e.message;}
 };
 function renderRepMeta(){
@@ -1274,12 +1316,18 @@ function renderRepMeta(){
 }
 
 /* ---- PDF import ---- */
-const PDFJS='lib/pdfjs-3.11.174/';let pdfjsP=null,pdfState=null,pdfUrl=null;
+/* pdf.js: the copy bundled next to this page (lib/) is used first; a standalone copy of this single
+   file (e.g. opened inside a chat) falls back to the same version on cdnjs. */
+const PDFJS_SOURCES=['lib/pdfjs-3.11.174/','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'];let pdfjsP=null,pdfState=null,pdfUrl=null;
+function loadScript(src){return new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=()=>{sc.remove();err(Error(src));};document.head.append(sc);});}
 function loadPdfjs(){
   if(globalThis.pdfjsLib)return Promise.resolve(globalThis.pdfjsLib);
-  return pdfjsP??=new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=PDFJS+'pdf.min.js';
-    sc.onload=()=>{globalThis.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';ok(globalThis.pdfjsLib);};
-    sc.onerror=()=>{pdfjsP=null;err(Error('לא ניתן לטעון את רכיב קריאת ה־PDF (lib/pdfjs). אם הקובץ נפתח מהמחשב, יש לפתוח אותו מהאתר.'));};document.head.append(sc);});
+  return pdfjsP??=(async()=>{
+    for(const base of PDFJS_SOURCES){
+      try{await loadScript(base+'pdf.min.js');globalThis.pdfjsLib.GlobalWorkerOptions.workerSrc=base+'pdf.worker.min.js';return globalThis.pdfjsLib;}catch(e){}
+    }
+    pdfjsP=null;throw Error('לא ניתן לטעון את רכיב קריאת ה־PDF (לא נמצא lib/pdfjs ואין גישה ל־cdnjs).');
+  })();
 }
 function pageList(spec,n){
   if(!spec.trim())return Array.from({length:n},(_,i)=>i+1);
@@ -1290,7 +1338,7 @@ function pageList(spec,n){
 const TARGET_LABEL={drawing:'השרטוט החשמלי',tests:'תוכנית הבדיקה',mech:'השרטוט המכני'};
 function setDefTypes(){
   const t=$('pdfTarget').value,sel=$('pdfDefType');sel.replaceChildren();
-  const opts=t==='drawing'?[['WIRE','חוט (WIRE)'],['SHIELD','סיכוך (SHIELD)'],['JUMPER','גשר (JUMPER)']]:t==='tests'?[['CONT','רציפות (CONT)'],['ISO','בידוד (ISO)'],['HIPOT','HIPOT'],['RES','התנגדות (RES)'],['DIODE','דיודה (DIODE)']]:[['','—']];
+  const opts=t==='drawing'?[['WIRE','חוט'],['SHIELD','סיכוך'],['JUMPER','גשר']]:t==='tests'?[['CONT','רציפות'],['ISO','בידוד'],['HIPOT','מתח גבוה'],['RES','התנגדות'],['DIODE','דיודה']]:[['','—']];
   for(const [v,l] of opts)sel.add(new Option(l,v));
 }
 $('pdfTarget').addEventListener('change',()=>{setDefTypes();if(pdfState)buildPdfView(true);});
@@ -1337,7 +1385,7 @@ function buildPdfView(keepMsg){
     add('זוהה דוח בודק: '+(m.program||'')+(m.date?' | '+m.date:'')+(m.result?' | תוצאה כוללת: '+m.result:''));
     add('מהדורת סכמה חשמלית לפי הבודק: '+(m.drawingRev||'לא צוינה')+(m.harnessRev?' | מהדורת תיק רתמה: '+m.harnessRev:'')+(data.meta.drawingRev?' | בפרויקט: '+data.meta.drawingRev:' | יש להזין בפרטי הפרויקט את מהדורת השרטוט שבידך'),m.drawingRev&&data.meta.drawingRev&&m.drawingRev!==data.meta.drawingRev?'warn':'');
     add(st.CONT+' בדיקות רציפות, '+st.ISO+' בדיקות בידוד'+(Number.isFinite(m.isoMin)?' ('+H.fmtQty(m.isoMin,'Ω')+(m.isoV?' / '+m.isoV+'V':'')+')':'')+', '+st.NONCONT+' בדיקות Non-continuité, '+st.RES+' מדידות התנגדות, '+st.groups+' קבוצות'+(st.fail?' | כשלים: '+st.fail:''),st.fail?'warn':'');
-    $('pdfHint').textContent='בדוח בודק כל שורת Continuité הופכת ל־CONT, Isolement ל־ISO מול כל השאר, Non-continuité ל־ISO בסף הנמוך, ו־Mesure 4 fils ל־RES. הגבולות נלקחים מבלוקי ה־Paramètres.';
+    $('pdfHint').textContent='בדוח בודק כל שורת Continuité הופכת לבדיקת רציפות, Isolement לבידוד מול כל השאר, Non-continuité לבידוד בסף הנמוך, ו־Mesure 4 fils למדידת התנגדות. הגבולות נלקחים מבלוקי ה־Paramètres.';
   }else{
     pdfState.pairs=H.pairsFromLines(pdfState.lines,t,{defaultType:$('pdfDefType').value});
     $('pdfHint').textContent='מצב טקסט חופשי: בכל שורה נלקחות שתי הנקודות הראשונות שנראות כמו מחבר-פין (J1-12, P2-A). סוג הבדיקה מנוחש לפי מילים בשורה (continuity, insulation, hipot…).';
@@ -1371,7 +1419,8 @@ function renderPdfTable(){
     tbl.append(body);
   }else if($('pdfMode').value==='tester'){
     const rows=H.parseCsv(res.csv),thead=document.createElement('thead'),hr=document.createElement('tr');
-    for(const h of rows[0].cells)hr.append(Object.assign(document.createElement('th'),{textContent:h}));thead.append(hr);tbl.append(thead);
+    const HE={step:'צעד',type:'סוג',from:'מוצא',to:'יעד',low:'מינימום',high:'מקסימום',unit:'יחידה',voltage:'מתח',measured:'נמדד',result:'תוצאה',note:'הערה'};
+    for(const h of rows[0].cells)hr.append(Object.assign(document.createElement('th'),{textContent:HE[h]||h}));thead.append(hr);tbl.append(thead);
     const body=document.createElement('tbody');
     for(const r of rows.slice(1,301)){const tr=document.createElement('tr');for(const c of r.cells)tr.append(td(c,'ltr'));body.append(tr);}
     tbl.append(body);
@@ -1386,9 +1435,9 @@ function renderPdfTable(){
   $('pdfAppend').disabled=$('pdfReplace').disabled=!res.count;
   pdfState.preview=preview;
 }
-function pdfApply(replace){
+async function pdfApply(replace){
   const t=$('pdfTarget').value,res=pdfResult();if(!res.count)return;
-  if(replace&&$(t).value.trim()&&!confirm('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
+  if(replace&&$(t).value.trim()&&!await ask('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
   const cur=$(t).value.trim();
   $(t).value=replace||!cur?res.csv:cur+'\n'+res.csv.split('\n').slice(1).join('\n');
   data[t]=$(t).value;
@@ -1397,9 +1446,9 @@ function pdfApply(replace){
   notify('הועברו '+res.count+' שורות אל '+TARGET_LABEL[t]+' – לבדוק מול המסמך');
   document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech'})[t]+']').click();
 }
-$('pdfNetlist').onclick=()=>{
+$('pdfNetlist').onclick=async()=>{
   if(!pdfState?.log)return;const n=H.testsToNetlist(pdfState.log.csv);
-  if($('drawing').value.trim()&&!confirm('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
+  if($('drawing').value.trim()&&!await ask('להחליף את השרטוט החשמלי בטיוטה מהבודק ('+n.nets+' רשתות, '+n.points+' נקודות)?'))return;
   $('drawing').value=n.csv;data.drawing=n.csv;save();
   notify('נוצרה טיוטה: '+n.nets+' רשתות. יש לאמת כל רשת מול השרטוט ולמחוק את הסימון "מהבודק" בשורות שאומתו');
   document.querySelector('[data-tab=tDraw]').click();
@@ -1475,7 +1524,7 @@ function renderTrace(){
 }
 function renderSugg(){
   const body=$('suggRows');body.replaceChildren();
-  for(const s of last.suggestions){const tr=document.createElement('tr');for(const k of ['type','from','to','low','high','unit','voltage'])tr.append(td(String(s[k]??''),'ltr'));tr.append(td(s.why));body.append(tr);}
+  for(const s of last.suggestions.map(heSugg)){const tr=document.createElement('tr');for(const k of ['type','from','to','low','high','unit','voltage'])tr.append(td(String(s[k]??''),'ltr'));tr.append(td(s.why));body.append(tr);}
   if(!last.suggestions.length){const tr=document.createElement('tr');const t=td('אין בדיקות מוצעות.');t.colSpan=8;tr.append(t);body.append(tr);}
   $('simSugg').disabled=$('expSugg').disabled=!last.suggestions.length;
 }
@@ -1489,18 +1538,20 @@ function renderNets(){
 const cell=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
 function download(name,rows,type='text/csv;charset=utf-8'){
   const content=typeof rows==='string'?rows:'﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
+  if(EMBEDDED)return dialog({msg:'כאן אי אפשר להוריד קבצים. העתק את התוכן ושמור אותו כקובץ בשם '+name+', או פתח את הכלי באתר כדי להוריד ישירות.',text:content.replace(/^﻿/,''),ok:'סגור'});
   const u=URL.createObjectURL(new Blob([content],{type}));const a=Object.assign(document.createElement('a'),{href:u,download:name});
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
 }
 const base=()=>(data.meta.pn||'harness').replace(/[^\w.-]+/g,'_');
 const metaCols=()=>[data.meta.pn||'',data.meta.drawingNo||'',data.meta.drawingRev||'',data.meta.atpNo||'',data.meta.atpRev||''];
-$('expFind').onclick=()=>{if(!last)return;download(base()+'_findings.csv',[['n','severity','domain','item','finding','recommendation','review_status','reviewer_note','part_number','drawing','drawing_rev','atp','atp_rev'],...last.findings.map(f=>{const r=data.reviews[f.key]||{};return[f.n,H.SEV_LABEL[f.sev],f.cat,f.el,f.msg,f.rec,r.status||REVIEW[0],r.note||'',...metaCols()];})]);};
-$('expTrace').onclick=()=>{if(!last)return;download(base()+'_traceability.csv',[['element_type','id','location','requirement','test_steps','status','part_number','drawing','drawing_rev','atp','atp_rev'],...last.trace.map(r=>[r.type,r.id,r.where,r.req,r.steps.join(' '),r.status,...metaCols()])]);};
-const suggRows=()=>last.suggestions.map((s,i)=>['S'+(i+1),s.type,s.from,s.to,s.low,s.high,s.unit,s.voltage,'','',s.why]);
-$('expSugg').onclick=()=>{if(!last)return;download(base()+'_suggested_tests.csv',[['step','type','from','to','low','high','unit','voltage','measured','result','note'],...suggRows()]);};
-$('simSugg').onclick=()=>{
+$('expFind').onclick=()=>{if(!last)return;download(base()+'_findings.csv',[['מס׳','חומרה','תחום','פריט','ממצא','המלצה','סטטוס סקירה','הערת מבקר','מק״ט','שרטוט','מהדורת שרטוט','תוכנית בדיקה','מהדורת תוכנית'],...last.findings.map(f=>{const r=data.reviews[f.key]||{};return[f.n,H.SEV_LABEL[f.sev],f.cat,f.el,f.msg,f.rec,r.status||REVIEW[0],r.note||'',...metaCols()];})]);};
+$('expTrace').onclick=()=>{if(!last)return;download(base()+'_traceability.csv',[['סוג','מזהה','מיקום','דרישה','צעדי בדיקה','סטטוס','מק״ט','שרטוט','מהדורת שרטוט','תוכנית בדיקה','מהדורת תוכנית'],...last.trace.map(r=>[r.type,r.id,r.where,r.req,r.steps.join(' '),r.status,...metaCols()])]);};
+const heSugg=s=>({...s,type:H.HE_TEST[s.type]||s.type,to:s.to==='ALL'?H.ALL_HE:s.to,unit:H.HE_UNIT[s.unit]||s.unit});
+const suggRows=()=>last.suggestions.map(heSugg).map((s,i)=>['S'+(i+1),s.type,s.from,s.to,s.low,s.high,s.unit,s.voltage,'','',s.why]);
+$('expSugg').onclick=()=>{if(!last)return;download(base()+'_suggested_tests.csv',[TPL.tests.split(','),...suggRows()]);};
+$('simSugg').onclick=async()=>{
   if(!last?.suggestions.length)return;
-  if(!confirm('להוסיף '+last.suggestions.length+' בדיקות מוצעות לתוכנית הבדיקה ולנתח מחדש? זו סימולציה, ואפשר להסיר את השורות שמתחילות ב־S אחר כך.'))return;
+  if(!await ask('להוסיף '+last.suggestions.length+' בדיקות מוצעות לתוכנית הבדיקה ולנתח מחדש? זו סימולציה, ואפשר להסיר את השורות שמתחילות ב־S אחר כך.'))return;
   const lines=suggRows().map(r=>r.map(v=>{v=String(v??'');return /[",\n]/.test(v)?cell(v):v;}).join(','));
   data.tests=($('tests').value.trim()||TPL.tests)+'\n'+lines.join('\n');$('tests').value=data.tests;save();run();
 };
@@ -1509,11 +1560,12 @@ $('restore').onclick=()=>$('restoreFile').click();
 $('restoreFile').onchange=async e=>{
   try{const o=JSON.parse(await e.target.files[0].text());
     if(o.format!=='harness-qa-inspector'||o.v!==4)throw Error('format');
-    if(!confirm('השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?'))return;
+    if(!await ask('השחזור יחליף את כל הנתונים הנוכחיים. להמשיך?'))return;
     data={...fresh(),...o,settings:{...H.DEFAULT_SETTINGS,...(o.settings||{})}};delete data.format;fill();save();$('results').hidden=true;notify('שוחזר ✓');
-  }catch(err){alert('קובץ JSON לא תקין או לא מגרסה 4. גיבוי מגרסה 3.3 אפשר לשחזר בגרסת הארכיון.');}finally{e.target.value='';}
+  }catch(err){say('קובץ JSON לא תקין או לא מגרסה 4. גיבוי מגרסה 3.3 אפשר לשחזר בגרסת הארכיון.');}finally{e.target.value='';}
 };
 $('print').onclick=()=>{if(!last)run();window.print();};
+if(EMBEDDED){$('print').hidden=true;$('pdfOpen').hidden=true;}
 
 load();
 if(data.drawing||data.tests)run(false);
