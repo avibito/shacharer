@@ -1,0 +1,277 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Harness QA Inspector — Engineering Demo v3.3</title><style>:root{font-family:Arial,sans-serif;color:#192a3e;background:#eef3f9}*{box-sizing:border-box}body{max-width:1000px;margin:auto;padding:12px}header,section{background:white;border-radius:14px;padding:18px;margin:12px 0;box-shadow:0 2px 8px #172b4312}h1{margin:0 0 8px;font-size:26px}h2{font-size:20px}p{line-height:1.6}label{font-weight:bold;display:block;margin:12px 0 5px}input,select,textarea{width:100%;padding:12px;border:1px solid #bdc8d5;border-radius:8px;font:inherit}textarea{min-height:75px}button,.filebtn{display:inline-block;background:#194775;color:white;border:0;border-radius:8px;padding:11px 13px;margin:5px 2px;font:inherit;cursor:pointer}.danger{background:#9c3941}.secondary{background:#617186}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.item{border:1px solid #d7e0e9;border-radius:10px;padding:14px;margin:12px 0}.muted{color:#5b6878}.warn{color:#874700}.pill{background:#e6f0f8;border-radius:7px;padding:7px;display:inline-block}small{display:block;margin-top:6px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #d9e0e7;padding:8px;text-align:right}th{background:#eaf0f6}.scroll{overflow:auto}#msg{color:#176a45;font-weight:bold}details{margin:12px 0}summary{cursor:pointer;font-weight:bold}</style></head><body><header><h1>Harness QA Inspector</h1><b>Engineering Demo v3.3 — Resistor Evidence Link</b><p class="warn">גרסת הדגמה ציבורית — השתמש רק בקבצים שמותר לך לעבד. אין להעלות נתונים מסווגים או לא מאושרים. הקבצים נקראים מקומית.</p><p class="muted">נתונים נשמרים באחסון המקומי של הדפדפן. פתיחה כקובץ מקומי עלולה ליצור אחסון נפרד מהאתר הציבורי. בצע גיבוי JSON בכל שינוי משמעותי.</p><span class="pill" id="msg">מוכן</span></header><section><h2>פרטי ביקורת</h2><div class="grid"><div><label>מק״ט רתמה</label><input id="pn" placeholder="P/N"></div><div><label>מהדורת שרטוט</label><input id="rev" placeholder="Rev"></div><div><label>מספר תוכנית ATP</label><input id="atp" placeholder="ATP reference"></div><div><label>מבקר</label><input id="inspector"></div></div><label>הערות על מסמכי מקור / פערי מהדורות</label><textarea id="scope"></textarea><button id="saveMeta">שמור פרטי ביקורת</button></section><section><h2>ממצאים ומעקב</h2><button id="add">הוסף ממצא</button><button id="backup">גיבוי JSON</button><button id="restore" class="secondary">שחזור JSON</button><button id="csv">ייצוא ממצאים CSV</button><input id="restoreFile" type="file" accept=".json,application/json" hidden><div id="findings"></div></section><section><h2>מטריצת עקיבות Pin-to-Pin / ATP</h2><p>ייבוא CSV של שורות בדיקה. כל שורה נשמרת כראיה לבדיקה, <b>ולא כאישור אוטומטי</b> להתאמה לשרטוט. ניתן לקבוע מצב סקירה לכל שורה.</p><input id="matrixFile" type="file" accept=".csv,text/csv"><button id="loadMatrix">טען CSV</button><button id="matrixExport">ייצוא מטריצה CSV</button><p id="matrixCount"></p><div class="scroll"><table><thead><tr><th>מס׳</th><th>מוצא</th><th>יעד</th><th>ערך</th><th>מצב סקירה</th><th>הערה</th></tr></thead><tbody id="matrix"></tbody></table></div><small>הצגת 100 השורות הראשונות בלבד כדי לשמור על ביצועים בטלפון; כל השורות נכללות בייצוא ובגיבוי.</small></section><section><h2>בדיקת נגדים — הדגמה</h2><p>הזנת ערך נומינלי, טולרנס באחוזים וערך נמדד באוהם. החישוב בודק גבולות מספריים בלבד; אינו מאשר חיבור, שיטת מדידה או התאמה לשרטוט.</p><div class="grid"><div><label for="rId">מזהה נגד</label><input id="rId" value="R1"></div><div><label for="rNom">נומינלי (Ω)</label><input id="rNom" type="number" step="any" value="3.30"></div><div><label for="rTol">טולרנס (%)</label><input id="rTol" type="number" step="any" value="5"></div><div><label for="rMeasured">נמדד (Ω)</label><input id="rMeasured" type="number" step="any" value="3.40"></div></div><button id="rCalc">חשב ובדוק</button><button id="rAdd">שמור תוצאת בדיקה</button><p id="rResult" aria-live="polite"></p><div class="scroll"><table><thead><tr><th>מזהה</th><th>נומינלי</th><th>טולרנס</th><th>תחום מותר (Ω)</th><th>נמדד</th><th>תוצאה</th><th>פעולה</th></tr></thead><tbody id="resistors"></tbody></table></div><small>אין לשייך תוצאה זו אוטומטית לסטטוס ״תואם לפי ראיות״ במטריצת העקיבות.</small></section><section><h2>בדיקת פיצולים וכיסוי פינים — הדגמה v2.4</h2><p>השווה שתי רשימות <b>נפרדות</b>: רשתות ופינים צפויים מהשרטוט מול זוגות רציפות מתוך ATP. מנגנון ההשוואה בודק קשריות רשת באמצעות מסלולי רציפות, ומזהה פינים ללא כיסוי, קשרים בין רשתות שונות ושורות ATP שלא ניתן לשייך. <b>אין כאן ניתוח שרטוט אוטומטי, בדיקת ערכי מדידה או אישור FAI.</b></p><p class="warn">יש להזין נתוני ניסיון פיקטיביים בלבד. חיבורים דרך נגד אינם שקולים לרציפות ישירה: יש להפריד אותם לרשתות שונות ולאמת בנפרד.</p><div class="grid"><div><label for="netCsv">רשימת רשתות ופינים צפויים (CSV)</label><textarea id="netCsv" rows="7" dir="ltr" spellcheck="false" placeholder="net,pin&#10;N1,J1-01&#10;N1,SPL-01&#10;N1,J2-01"></textarea><small>עמודות: net,pin — שורה לכל פין ברשת. מזהה SPL מייצג נקודת פיצול רק אם היא מוגדרת במקור.</small></div><div><label for="atpCsv">זוגות רציפות ב־ATP (CSV)</label><textarea id="atpCsv" rows="7" dir="ltr" spellcheck="false" placeholder="from,to&#10;J1-01,SPL-01&#10;SPL-01,J2-01"></textarea><small>עמודות: from,to — זוגות רציפות בלבד. אין לערבב בדיקות בידוד, נגדים או Non-continuity.</small></div></div><button id="traceDemo">טען דוגמה פיקטיבית</button><button id="traceCheck">בדוק כיסוי ופיצולים</button><button id="traceSave">שמור נתוני השוואה</button><button id="traceExport">ייצוא דוח פערים CSV</button><p id="traceSummary" aria-live="polite"></p><div class="scroll"><table><thead><tr><th>מזהה</th><th>סוג</th><th>רשת / פין</th><th>ממצא</th></tr></thead><tbody id="traceIssues"></tbody></table></div><small>״ללא פערים״ פירושו שלא נמצאו פערים לפי רשימות הקלט והכללים המוגבלים האלה — לא כיסוי הנדסי מלא. הדוח דורש סקירת מבקר.</small></section><section><h2>גבולות הבדיקה</h2><p>יש לאמת מול שרטוט המקור כל פין, רשת, פיצול, נגד, ערך נומינלי, טולרנס ובדיקת בידוד. שורות ATP לבדן אינן מוכיחות כיסוי מלא של השרטוט. אין לסמן "כיסוי מלא" לפני השלמת מטריצת עקיבות.</p></section><section><h2>השוואה הנדסית מורחבת — v2.6 (נתוני הדגמה)</h2><p>השוואת רשתות צפויות, זוגות רציפות, ורכיבים טוריים. בדיקה זו <b>אינה</b> קוראת שרטוט PDF ואינה מאשרת ATP או FAI. זוג רציפות מציין בדיקה מתוכננת בלבד, לא תוצאת מדידה.</p><div class="grid"><div><label>רשתות מהשרטוט (net,pin)</label><textarea id="xNets" dir="ltr" rows="9" spellcheck="false"></textarea></div><div><label>בדיקות ATP (from,to)</label><textarea id="xAtp" dir="ltr" rows="9" spellcheck="false"></textarea></div><div><label>נגדים בין רשתות (id,from,to,ohms)</label><textarea id="xRes" dir="ltr" rows="5" spellcheck="false"></textarea><small>נקודות נגד אינן נחשבות זוג רציפות ישיר. זיהוי מסלול דרך נגד מחייב אימות ערך מדוד וטולרנס בנפרד.</small></div></div><button id="xDemo">טען תרחיש הדגמה v2.6</button><button id="xCheck">נתח פערים</button><button id="xSave">שמור נתוני השוואה</button><button id="xExport">ייצוא ממצאים CSV</button><p id="xSummary" aria-live="polite"></p><div class="scroll"><table><thead><tr><th>מזהה</th><th>סיווג</th><th>נקודה / רשת</th><th>הסבר</th></tr></thead><tbody id="xIssues"></tbody></table></div><small>מזהי F כאן נפרדים מדוח v2.4. הבדיקה מבוססת על קישוריות רשומה; ללא נתוני תוצאות, מהדורות ותצורת מדידה, לא ניתן להסיק תקינות חשמלית או כיסוי מלא.</small></section><section><h2>קישור ממצא נגד לתוצאת מדידה — v2.7</h2><p>מודול זה מצלב את רשומת הנגד ברשימת ההשוואה המורחבת עם מדידה שנשמרה במודול בדיקת הנגדים. ההתאמה לפי מזהה נגד וערך נומינלי; יש לאמת ידנית את נקודות החיבור ואת מקור הראיה. <b>תוצאה מספרית תקינה אינה אישור הנדסי.</b></p><button id="linkAnalyze">בדוק קשרי נגדים וראיות</button><button id="linkSave">שמור הערות ראיה</button><button id="linkExport">ייצוא דוח נגדים CSV</button><p id="linkSummary" aria-live="polite"></p><div class="scroll"><table><thead><tr><th>נגד</th><th>מסלול בסכמה</th><th>נומינלי בסכמה</th><th>מדידה שמורה</th><th>טולרנס</th><th>תוצאה מספרית</th><th>סטטוס סקירה</th><th>מקור ראיה / הערת מבקר</th></tr></thead><tbody id="linkRows"></tbody></table></div><small>אם קיימות מדידות כפולות לאותו נגד, המודול מסמן צורך בבירור ואינו בוחר מדידה אוטומטית. יש לשמור הערות ראיה בכפתור הייעודי.</small></section>
+<section id="pdfModule"><h2>טעינת מסמכים הנדסיים — v2.8 (הדגמה)</h2>
+<p class="muted">הקבצים נפתחים בדפדפן המקומי בלבד, ללא שליחה לשרת וללא שמירת תוכן ה־PDF באחסון האתר. אחרי רענון יש לבחור אותם מחדש. אין חילוץ אוטומטי או אישור הנדסי.</p>
+<div id="pdfSlots" class="grid"></div>
+<p id="pdfStatus" role="status" aria-live="polite">טרם נבחרו מסמכים.</p>
+<button type="button" id="pdfManifest">ייצוא רשימת מסמכים CSV</button>
+<button type="button" id="pdfClear" class="secondary">נקה מסמכים שנבחרו</button>
+<p class="muted">הייצוא מכיל שמות קבצים ופרטים שהוזנו בלבד, ולא את הקבצים עצמם. אין להזין מידע הנדסי אמיתי באתר הציבורי ללא אישור.</p>
+</section>
+<section id="htmlModule"><h2>ייבוא דוח בדיקות HTML — v3.0</h2><p>טען דוח HTML שהופק ממערכת בדיקה. הקובץ נקרא מקומית בדפדפן, ללא העלאה לשרת וללא הרצת קוד מתוך המסמך. התוצאות אינן מוכיחות התאמה לשרטוט.</p><label for="htmlReport">בחירת קובץ HTML של דוח בדיקות</label><input type="file" id="htmlReport" accept=".html,.htm,text/html"><button type="button" id="htmlParse">חלץ נתוני בדיקה</button><button type="button" id="htmlExport" disabled>ייצוא נתונים CSV</button><p id="htmlMessage" role="status" aria-live="polite">טרם נותח דוח.</p><div id="htmlMeta" class="item"></div><div class="scroll"><table><thead><tr><th>רשת</th><th>צד A</th><th>צד B</th><th>התנגדות (mΩ)</th><th>רציפות ≤1Ω</th><th>בידוד</th><th>DC Hipot</th></tr></thead><tbody id="htmlRows"></tbody></table></div><small>שדות הזיהוי נקראים משורות הדוח המקורי; ייצוא CSV כולל את פרטי הזיהוי בכל שורת רשת. הגבול להתנגדות נלקח מפרמטר הדוח, אם זוהה. "Infinite" ו־"&gt;500 MOhm" הם ערכים מדווחים ולא מדידה עצמאית. התאמה למהדורת השרטוט וכיסוי כל הפינים מחייבים הצלבה נפרדת.</small></section>
+<section id="compare31"><h2>הצלבה ראשונית מול שרטוט — v3.3</h2><p>מקרה בדיקה XM1067AB, מהדורה 05. רשימת הפינים להלן הועתקה ידנית מסכמת השרטוט שנבדקה; <b>אין כאן חילוץ אוטומטי של קווי PDF</b>. אפשר לצרף את קובץ השרטוט לשם תיעוד מקומי, אך הוא אינו מפוענח.</p><label>שרטוט PDF — אסמכתה מקומית (אופציונלי)</label><input type="file" id="cmpPdf" accept=".pdf,application/pdf"><p id="cmpPdfName" class="muted">לא נבחר שרטוט</p><label>רשימת חיבורים צפויים מתוך הסכמה (ניתנת לעריכה, פין בכל שורה)</label><textarea id="cmpExpected" rows="7" dir="ltr" spellcheck="false"></textarea><p class="muted">פורמט: פין בצד A, פסיק, פין בצד B. בדוק את הרשימה מול השרטוט לפני הסתמכות עליה. SHELL נבחן בנפרד.</p><button type="button" id="cmpLoad">טען 26 חיבורי דוגמה מהשרטוט</button><button type="button" id="cmpCheck">השווה לדוח HTML שכבר נותח</button><button type="button" id="cmpExport" disabled>ייצוא מטריצת עקיבות CSV</button><p id="cmpSummary" role="status"></p><div class="scroll"><table><thead><tr><th>צד A נדרש</th><th>צד B נדרש</th><th>רשת בדוח</th><th>התנגדות mΩ</th><th>בידוד</th><th>DC Hipot</th><th>סטטוס</th></tr></thead><tbody id="cmpRows"></tbody></table></div><p class="warn">בדיקת ההתאמה היא לפי זוגות הפינים והערכים הרשומים בלבד. תוצאת Infinite או DC Hipot בדוח אינה מספקת לבדה פירוט של כל זוגות הבידוד. חיבורי סיכוך, מעטפת, ענפים ומהדורת מוצר דורשים סקירה הנדסית נוספת.</p></section><script>
+'use strict';const KEY='harness-qa-engineering-private-v2';const $=id=>document.getElementById(id);const STATUS=['טרם נבדק','תואם לפי ראיות','פער/אי התאמה','דורש הבהרה','לא ישים'];const fresh=()=>({meta:{pn:'',rev:'',atp:'',inspector:'',scope:''},findings:[],matrix:[],resistors:[],trace:{nets:"",atp:""}});let data=fresh();function notify(s){$('msg').textContent=s}function save(){try{localStorage.setItem(KEY,JSON.stringify(data));notify('השינויים נשמרו במכשיר ✓ '+new Date().toLocaleTimeString('he-IL'))}catch(e){notify('שגיאת שמירה — בצע גיבוי JSON');alert('שמירה מקומית נכשלה')}}function load(){try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&Array.isArray(o.findings)&&Array.isArray(o.matrix))data=o;data.resistors=Array.isArray(data.resistors)?data.resistors:[];data.trace=data.trace&&typeof data.trace==="object"?data.trace:{nets:"",atp:""}}}catch(e){notify('לא ניתן לקרוא אחסון מקומי')}for(const k of Object.keys(data.meta))if($(k))$(k).value=data.meta[k]||'';render();renderResistors();renderTraceInputs()};function el(tag,props={},txt){const e=document.createElement(tag);for(const [k,v] of Object.entries(props))e[k]=v;if(txt!==undefined)e.textContent=txt;return e}function render(){const host=$('findings');host.replaceChildren();for(const f of data.findings){const d=el('div',{className:'item'});d.append(el('strong',{},f.id));const l1=el('label',{},'נושא');const topic=el('input',{value:f.topic||''});topic.onchange=()=>{f.topic=topic.value;save()};const l2=el('label',{},'סטטוס');const st=el('select');for(const x of STATUS)st.add(el('option',{value:x,textContent:x,selected:x===f.status}));st.onchange=()=>{f.status=st.value;save()};const l3=el('label',{},'הערה / ראיה');const note=el('textarea',{value:f.note||''});note.onchange=()=>{f.note=note.value;save()};const del=el('button',{className:'danger'},'מחק');del.onclick=()=>{if(confirm('למחוק ממצא?')){data.findings=data.findings.filter(x=>x!==f);save();render()}};d.append(l1,topic,l2,st,l3,note,del);host.append(d)}$('matrixCount').textContent='שורות מטריצה: '+data.matrix.length;const tbody=$('matrix');tbody.replaceChildren();data.matrix.slice(0,100).forEach((r,i)=>{const tr=el('tr');for(const v of [i+1,r.from,r.to,r.value])tr.append(el('td',{},String(v??'')));const td=el('td'),select=el('select');for(const s of STATUS)select.add(el('option',{value:s,textContent:s,selected:s===r.review}));select.onchange=()=>{r.review=select.value;save()};td.append(select);tr.append(td);const note=el('input',{value:r.note||''});note.onchange=()=>{r.note=note.value;save()};const last=el('td');last.append(note);tr.append(last);tbody.append(tr)})}function download(name,content,type){const u=URL.createObjectURL(new Blob([content],{type}));const a=el('a',{href:u,download:name});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}function csvCell(x){return '"'+String(x??'').replaceAll('"','""')+'"'}function toCsv(rows){return '\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n')};function parseCsv(s){s=s.replace(/^\ufeff/,'');let rows=[],row=[],field='',quoted=false;for(let i=0;i<s.length;i++){const c=s[i];if(c==='"'){if(quoted&&s[i+1]==='"'){field+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(field);field=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&s[i+1]==='\n')i++;row.push(field);if(row.some(x=>x!==''))rows.push(row);row=[];field=''}else field+=c}row.push(field);if(row.some(x=>x!==''))rows.push(row);return rows};$('saveMeta').onclick=()=>{for(const k of Object.keys(data.meta))data.meta[k]=$(k).value;save()};$('add').onclick=()=>{data.findings.unshift({id:'F-'+Date.now(),topic:'',status:STATUS[0],note:''});save();render()};$('backup').onclick=()=>download('harness_private_backup.json',JSON.stringify({format:'harness-qa-engineering-private',version:2,...data},null,2),'application/json');$('restore').onclick=()=>$('restoreFile').click();$('restoreFile').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());let next;if(o.format==='harness-qa-engineering-private'&&Array.isArray(o.findings)&&Array.isArray(o.matrix)){next={meta:o.meta||fresh().meta,findings:o.findings,matrix:o.matrix,resistors:Array.isArray(o.resistors)?o.resistors:[],trace:o.trace&&typeof o.trace==="object"?o.trace:{nets:"",atp:""}}}else if(o.format==='harness-qa-public-demo'&&Array.isArray(o.items)){next=fresh();next.findings=o.items.map(x=>({id:String(x.id),topic:String(x.topic||''),status:STATUS.includes(x.status)?x.status:STATUS[0],note:String(x.note||'')+' | סטטוס מקור: '+String(x.status||'')}))}else throw Error('format');if(!confirm('שחזור יחליף את כל הנתונים הקיימים בגרסה הפרטית. להמשיך?'))return;data=next;save();load()}catch(err){alert('קובץ JSON לא תקין או לא תואם')}finally{e.target.value=''}};$('csv').onclick=()=>download('harness_findings.csv',toCsv([['id','topic','status','note'],...data.findings.map(x=>[x.id,x.topic,x.status,x.note])]),'text/csv');$('matrixExport').onclick=()=>download('harness_traceability.csv',toCsv([['from','to','value','review','note'],...data.matrix.map(x=>[x.from,x.to,x.value,x.review,x.note])]),'text/csv');$('loadMatrix').onclick=async()=>{const file=$('matrixFile').files[0];if(!file)return alert('בחר קובץ CSV');const rows=parseCsv(await file.text());if(rows.length<2)return alert('לא נמצאו שורות');const h=rows[0].map(x=>x.trim().toLowerCase());const pick=(names,defaultIndex)=>{const i=h.findIndex(x=>names.includes(x));return i<0?defaultIndex:i};const a=pick(['from','source','מוצא','point_a'],0),b=pick(['to','target','יעד','point_b'],1),c=pick(['value','measured','measurement','ערך'],2);if(!confirm('לייבא '+(rows.length-1)+' שורות? הייבוא יחליף את מטריצת העקיבות הנוכחית בלבד.'))return;data.matrix=rows.slice(1).map(r=>({from:r[a]||'',to:r[b]||'',value:r[c]||'',review:STATUS[0],note:''}));save();render()};
+function resistorInput(){const id=$('rId').value.trim(),nom=Number($('rNom').value),tol=Number($('rTol').value),measured=Number($('rMeasured').value);if(!id||!['rNom','rTol','rMeasured'].every(k=>$(k).value.trim()!==''))throw Error('יש למלא את כל השדות');if(![nom,tol,measured].every(Number.isFinite)||nom<=0||tol<0||tol>100||measured<0)throw Error('ערכים לא תקינים: נומינלי חיובי, טולרנס 0–100%, נמדד לא שלילי');const low=nom*(1-tol/100),high=nom*(1+tol/100),pass=measured>=low-1e-10&&measured<=high+1e-10;return {id,nom,tol,measured,low,high,pass};}
+function showResistor(r){$('rResult').textContent=`${r.id}: תחום מותר ${r.low.toFixed(4)}–${r.high.toFixed(4)} Ω; נמדד ${r.measured} Ω — ${r.pass?'בתחום הטולרנס':'מחוץ לטולרנס'}. בדיקה מספרית בלבד.`}
+$('rCalc').onclick=()=>{try{showResistor(resistorInput())}catch(e){alert(e.message)}};
+$('rAdd').onclick=()=>{try{const r=resistorInput();data.resistors??=[];data.resistors.push(r);save();showResistor(r);renderResistors()}catch(e){alert(e.message)}};
+function renderResistors(){const host=$('resistors');host.replaceChildren();for(const [i,r] of (data.resistors||[]).entries()){const tr=el('tr');for(const v of [r.id,r.nom+' Ω','±'+r.tol+'%',r.low.toFixed(4)+'–'+r.high.toFixed(4),r.measured+' Ω',r.pass?'בתחום':'מחוץ לתחום'])tr.append(el('td',{},v));const td=el('td'),del=el('button',{className:'danger'},'מחק');del.onclick=()=>{if(confirm('למחוק תוצאת בדיקה?')){data.resistors.splice(i,1);save();renderResistors()}};td.append(del);tr.append(td);host.append(tr)}}
+function renderTraceInputs(){const t=data.trace||{nets:'',atp:''};$('netCsv').value=t.nets||'';$('atpCsv').value=t.atp||'';}
+function traceRows(src,heads){const rows=parseCsv(src).filter(r=>r.some(v=>v.trim()));if(!rows.length)throw Error('קובץ נתונים ריק');const header=rows[0].map(v=>v.trim().toLowerCase());if(header.length<2||header[0]!==heads[0]||header[1]!==heads[1])throw Error('כותרות נדרשות: '+heads.join(','));const result=rows.slice(1).map((r,i)=>{const a=(r[0]||'').trim(),b=(r[1]||'').trim();if(!a||!b)throw Error('שורה '+(i+2)+' חסרה ערך');return [a,b]});if(!result.length)throw Error('אין שורות נתונים');return result;}
+let traceIssues=[];
+function inspectTrace(){const nets=traceRows($('netCsv').value,['net','pin']),pairs=traceRows($('atpCsv').value,['from','to']);const pinNet=new Map(),members=new Map(),issues=[];const add=(type,where,msg)=>issues.push({id:'F-'+String(issues.length+1).padStart(2,'0'),type,where,msg});for(const [net,pin] of nets){if(pinNet.has(pin)&&pinNet.get(pin)!==net)add('שיוך כפול',pin,'אותו פין מוגדר ביותר מרשת אחת');pinNet.set(pin,net);if(!members.has(net))members.set(net,new Set());members.get(net).add(pin)}const graph=new Map();for(const pin of pinNet.keys())graph.set(pin,new Set());const seenPairs=new Set();for(const [a,b] of pairs){const key=[a,b].sort().join('|');if(seenPairs.has(key))add('כפילות ATP',key,'אותו זוג מופיע יותר מפעם אחת');seenPairs.add(key);if(!pinNet.has(a)||!pinNet.has(b)){add('נקודת ATP לא ממופה',a+' ↔ '+b,'לפחות נקודה אחת אינה ברשימת השרטוט');continue}if(pinNet.get(a)!==pinNet.get(b)){add('חיבור בין רשתות',a+' ↔ '+b,'הזוג משויך לשתי רשתות שונות');continue}if(a===b){add('בדיקה עצמית',a,'בדיקה בין נקודה לעצמה אינה מוכיחה כיסוי');continue}graph.get(a).add(b);graph.get(b).add(a)}for(const [net,pins] of members){const list=[...pins];const visited=new Set(),stack=[list[0]];while(stack.length){const p=stack.pop();if(visited.has(p))continue;visited.add(p);for(const q of graph.get(p)||[])if(!visited.has(q))stack.push(q)}for(const pin of list){if((graph.get(pin)||new Set()).size===0)add('פין ללא זוג רציפות',net+' / '+pin,'אין זוג ATP תקף המכסה את הפין');else if(!visited.has(pin))add('רשת לא מחוברת',net+' / '+pin,'אין מסלול רציפות ברשת מהפין הראשון אל נקודה זו')}if(list.length===1)add('רשת עם נקודה אחת',net,'לא ניתן להוכיח רציפות ברשת עם פין אחד בלבד')}
+traceIssues=issues;const body=$('traceIssues');body.replaceChildren();for(const issue of issues){const tr=el('tr');for(const value of [issue.id,issue.type,issue.where,issue.msg])tr.append(el('td',{},value));body.append(tr)}$('traceSummary').textContent=`${members.size} רשתות, ${pinNet.size} פינים ייחודיים, ${pairs.length} זוגות ATP, ${issues.length} פערים/הערות לבדיקה. ${issues.length?'נדרשת סקירת ממצאים.':'לא זוהו פערים בכללים אלה בלבד; אין אישור כיסוי מלא.'}`;return issues;}
+$('traceDemo').onclick=()=>{if(($('netCsv').value.trim()||$('atpCsv').value.trim())&&!confirm('להחליף את רשימות ההשוואה הנוכחיות בנתוני דוגמה?'))return;$('netCsv').value='net,pin\nN1,J1-01\nN1,SPL-01\nN1,J2-01\nN1,J3-07\nN2,J1-02\nN2,J2-02';$('atpCsv').value='from,to\nJ1-01,SPL-01\nSPL-01,J2-01\nJ1-02,J2-02';$('traceSummary').textContent='דוגמה נטענה: J3-07 אינו מכוסה, כדי להמחיש זיהוי פער. לחץ ״בדוק כיסוי ופיצולים״.';$('traceIssues').replaceChildren();traceIssues=[]};
+$('traceCheck').onclick=()=>{try{inspectTrace()}catch(e){alert(e.message)}};
+$('traceSave').onclick=()=>{try{inspectTrace();data.trace={nets:$('netCsv').value,atp:$('atpCsv').value};save()}catch(e){alert(e.message)}};
+$('traceExport').onclick=()=>{try{const issues=inspectTrace();download('harness_traceability_gaps_demo.csv',toCsv([['id','type','point','finding'],...issues.map(x=>[x.id,x.type,x.where,x.msg])]),'text/csv')}catch(e){alert(e.message)}};
+
+// v2.6 — independent, demonstration-only engineering comparison.
+let xIssues=[];
+const xDemoData={
+ nets:'net,pin\nN1,J1-01\nN1,SPL-01\nN1,J2-01\nN1,J3-07\nN2,J1-02\nN2,J2-02\nN3,J1-04\nN3,R1-A\nN4,R1-B\nN4,J2-04',
+ atp:'from,to\nJ1-01,SPL-01\nSPL-01,J2-01\nJ1-02,J2-02\nJ1-04,R1-A\nR1-B,J2-04\nJ1-02,J2-01\nJ9-99,J1-01\nR1-A,R1-B',
+ resistors:'id,from,to,ohms\nR1,R1-A,R1-B,3.30'
+};
+function xRead(id,headers){
+ const rows=parseCsv($(id).value).filter(r=>r.some(v=>v.trim()));
+ if(!rows.length)throw Error('חסרים נתונים: '+headers.join(','));
+ const actual=rows[0].map(v=>v.trim().toLowerCase());
+ if(actual.length!==headers.length||headers.some((h,i)=>actual[i]!==h))throw Error('כותרות נדרשות בדיוק: '+headers.join(','));
+ const out=rows.slice(1).map((r,i)=>{
+  if(r.length!==headers.length||r.some(v=>!v.trim()))throw Error('שורה '+(i+2)+' אינה כוללת '+headers.length+' ערכים תקינים');
+  return r.map(v=>v.trim());
+ });
+ if(!out.length)throw Error('אין שורות נתונים');
+ return out;
+}
+function xAnalyze(){
+ const nets=xRead('xNets',['net','pin']),pairs=xRead('xAtp',['from','to']);
+ const res=$('xRes').value.trim()?xRead('xRes',['id','from','to','ohms']):[];
+ const issues=[],pinNet=new Map(),members=new Map(),graph=new Map(),resEdges=new Set();
+ const add=(kind,point,detail)=>issues.push({id:'F-'+String(issues.length+1).padStart(2,'0'),kind,point,detail});
+ const edge=(a,b)=>[a,b].sort().join('|');
+ for(const [net,pin] of nets){if(pinNet.has(pin)&&pinNet.get(pin)!==net)add('הגדרת מקור סותרת',pin,'הפין משויך ליותר מרשת אחת');pinNet.set(pin,net);if(!members.has(net))members.set(net,new Set());members.get(net).add(pin);graph.set(pin,new Set())}
+ for(const [id,a,b,ohms] of res){if(!id||!a||!b||!Number.isFinite(Number(ohms))||Number(ohms)<=0){add('דורש הבהרה',id||'נגד','נתוני רכיב טורי לא תקינים');continue}resEdges.add(edge(a,b));if(!pinNet.has(a)||!pinNet.has(b))add('רכיב לא ממופה',id,'קצה נגד אינו מופיע ברשימת הפינים');else if(pinNet.get(a)===pinNet.get(b))add('דורש הבהרה',id,'שני קצות הנגד שויכו לאותה רשת — בדוק את מודל הרשתות')}
+ const used=new Set();
+ for(const [a,b] of pairs){const k=edge(a,b);if(used.has(k))add('זוג ATP כפול',a+' ↔ '+b,'אותו זוג בדיקה מופיע יותר מפעם אחת');used.add(k);
+ if(!pinNet.has(a)||!pinNet.has(b)){add('פין ATP לא ממופה',a+' ↔ '+b,'נקודת בדיקה שאינה ברשימת המקור — דורש אימות');continue}
+ if(resEdges.has(k)){add('בדיקה דרך נגד — דורש אימות',a+' ↔ '+b,'מסלול דרך נגד מזוהה; בדיקת רציפות לבדה אינה מאמתת ערך התנגדות. יש להשוות ערך נמדד, טולרנס ושיטת מדידה');continue}
+ if(pinNet.get(a)!==pinNet.get(b)){add('בדיקה בין רשתות',a+' ↔ '+b,'זוג רציפות מקשר רשתות שונות; יש לברר אם מדובר בבדיקה שגויה או הגדרת רשת חסרה');continue}
+ if(a===b){add('בדיקה עצמית',a,'זוג מאותה נקודה אינו מוכיח קשריות');continue}
+ graph.get(a).add(b);graph.get(b).add(a);
+ }
+ for(const [net,pins] of members){const arr=[...pins];if(!arr.length)continue;const seen=new Set(),stack=[arr[0]];while(stack.length){const a=stack.pop();if(seen.has(a))continue;seen.add(a);for(const b of graph.get(a)||[])if(!seen.has(b))stack.push(b)}
+ for(const pin of arr){if((graph.get(pin)||new Set()).size===0)add(pin.startsWith('SPL')?'ענף פיצול לא מכוסה':'פין ללא זוג רציפות',net+' / '+pin,'לא נמצא זוג רציפות ישיר תקף הכולל את הנקודה');else if(!seen.has(pin))add('רשת מפוצלת בנתוני ATP',net+' / '+pin,'אין מסלול בדיקות רציפות המקשר נקודה זו לרכיב הראשון ברשת')}
+ }
+ xIssues=issues;const body=$('xIssues');body.replaceChildren();for(const i of issues){const tr=document.createElement('tr');for(const v of [i.id,i.kind,i.point,i.detail]){const td=document.createElement('td');td.textContent=v;tr.append(td)}body.append(tr)}
+ $('xSummary').textContent=`${members.size} רשתות, ${pinNet.size} פינים, ${pairs.length} זוגות ATP, ${res.length} נגדים, ${issues.length} ממצאים/נקודות לבירור. אין להסיק כיסוי מלא.`;
+ return issues;
+}
+$('xDemo').onclick=()=>{if(($('xNets').value||$('xAtp').value||$('xRes').value)&&!confirm('להחליף את נתוני ההשוואה המורחבת בנתוני הדגמה?'))return;$('xNets').value=xDemoData.nets;$('xAtp').value=xDemoData.atp;$('xRes').value=xDemoData.resistors;$('xSummary').textContent='נטען תרחיש הדגמה v2.6. לחץ נתח פערים.';$('xIssues').replaceChildren()};
+$('xCheck').onclick=()=>{try{xAnalyze()}catch(e){alert(e.message)}};
+$('xSave').onclick=()=>{try{xAnalyze();data.extendedTrace={nets:$('xNets').value,atp:$('xAtp').value,resistors:$('xRes').value};save()}catch(e){alert(e.message)}};
+$('xExport').onclick=()=>{try{const issues=xAnalyze();download('harness_v26_demo_findings.csv',toCsv([['id','classification','point','detail'],...issues.map(i=>[i.id,i.kind,i.point,i.detail])]))}catch(e){alert(e.message)}};
+const oldLoad=load;
+load=function(){oldLoad();const x=data.extendedTrace||{};$('xNets').value=x.nets||'';$('xAtp').value=x.atp||'';$('xRes').value=x.resistors||'';};
+
+
+// v2.7 — link resistor definitions to saved measurements; no automatic engineering approval.
+let linkReport=[];
+function linkInspect(){
+ const rows=$('xRes').value.trim()?xRead('xRes',['id','from','to','ohms']):[];
+ const stored=Array.isArray(data.resistors)?data.resistors:[];
+ const notes={...(data.resistorEvidence&&typeof data.resistorEvidence==='object'?data.resistorEvidence:{})};
+ for(const inp of $('linkRows').querySelectorAll('textarea[data-resistor-id]'))notes[inp.dataset.resistorId]=inp.value;
+ linkReport=[];const body=$('linkRows');body.replaceChildren();
+ for(const [id,a,b,rawNom] of rows){
+  const nominal=Number(rawNom),matches=stored.filter(r=>String(r.id).trim()===id);
+  const r=matches.length===1?matches[0]:null;
+  const valid=Number.isFinite(nominal)&&nominal>0;
+  const same=r&&Number.isFinite(Number(r.nom))&&Math.abs(Number(r.nom)-nominal)<=Math.max(1e-8,nominal*1e-8);
+  const result=!valid?'נתון נגד שגוי':matches.length===0?'אין מדידה שמורה':matches.length>1?'מספר מדידות — נדרש בירור':!same?'אי התאמה בערך נומינלי':(r.pass?'בתחום מספרי':'מחוץ לתחום מספרי');
+  const review=!valid||matches.length!==1||!same?'דורש בירור':r.pass?'בתחום מספרי — נדרש אימות ראיות':'חריגה מספרית — דורש בירור';
+  const note=String(notes[id]||'');
+  linkReport.push({id,a,b,nominal:rawNom,measured:r&&same?r.measured:'',tolerance:r&&same?r.tol:'',result,review,note});
+  const tr=el('tr');for(const v of [id,a+' ↔ '+b,rawNom+' Ω',r&&same?r.measured+' Ω':'—',r&&same?'±'+r.tol+'%':'—',result,review])tr.append(el('td',{},v));
+  const td=el('td'),inp=el('textarea',{value:note});inp.rows=2;inp.dataset.resistorId=id;inp.placeholder='מסמך, מהדורה, סעיף, מספר בדיקה והערת מבקר (דוגמה בלבד)';td.append(inp);tr.append(td);body.append(tr);
+ }
+ $('linkSummary').textContent=rows.length+' נגדים בהשוואה, '+linkReport.filter(x=>x.result==='בתחום מספרי').length+' מדידות בתחום מספרי. אין אישור אוטומטי של התאמה הנדסית.';
+ return linkReport;
+}
+$('linkAnalyze').onclick=()=>{try{linkInspect()}catch(e){alert(e.message)}};
+$('linkSave').onclick=()=>{try{const rows=linkInspect();data.resistorEvidence=Object.fromEntries(rows.map(r=>[r.id,r.note]));save();linkInspect()}catch(e){alert(e.message)}};
+$('linkExport').onclick=()=>{try{const rows=linkInspect();download('harness_v27_resistor_evidence_demo.csv',toCsv([['id','from','to','schematic_ohms','measured_ohms','tolerance_percent','numeric_result','review_status','evidence_note'],...rows.map(r=>[r.id,r.a,r.b,r.nominal,r.measured,r.tolerance,r.result,r.review,r.note])]),'text/csv')}catch(e){alert(e.message)}};
+
+
+// v2.8 local-only PDF attachment preview. Never persist PDF bytes or metadata.
+const pdfKinds=[['mechanical','שרטוט מכני'],['electrical','סכמה חשמלית'],['atp','תוכנית ATP / דוח חשמלי']];
+const pdfRecords={};
+const pdfRoot=document.getElementById('pdfSlots');
+function pdfEscape(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+for(const [key,title] of pdfKinds){
+ const wrap=document.createElement('div');wrap.className='item';
+ wrap.innerHTML='<h3>'+title+'</h3><label for="pdf_'+key+'">בחר PDF להדגמה</label><input id="pdf_'+key+'" type="file" accept=".pdf,application/pdf"><label for="rev_'+key+'">מהדורת מסמך (ידנית)</label><input id="rev_'+key+'" placeholder="לדוגמה: A"><label for="note_'+key+'">הערות (ידניות)</label><textarea id="note_'+key+'" placeholder="מקור / סעיף / הערה"></textarea><p id="info_'+key+'" class="muted">לא נבחר קובץ</p><button type="button" id="open_'+key+'" disabled>פתח תצוגת PDF</button>';
+ pdfRoot.append(wrap);
+ document.getElementById('pdf_'+key).addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];
+  if(pdfRecords[key]?.url)URL.revokeObjectURL(pdfRecords[key].url);
+  delete pdfRecords[key];
+  const btn=document.getElementById('open_'+key);btn.disabled=true;
+  const info=document.getElementById('info_'+key);
+  if(!f){info.textContent='לא נבחר קובץ';pdfUpdate();return;}
+  if(!(/\.pdf$/i.test(f.name)) && f.type!=='application/pdf'){
+   info.textContent='שגיאה: יש לבחור קובץ PDF בלבד';e.target.value='';pdfUpdate();return;
+  }
+  if(f.size>30*1024*1024){info.textContent='הקובץ גדול מ־30MB; בחר קובץ קטן יותר';e.target.value='';pdfUpdate();return;}
+  const url=URL.createObjectURL(f);
+  pdfRecords[key]={file:f,url};
+  info.textContent='נבחר: '+f.name+' | '+(f.size/1024/1024).toFixed(2)+' MB | תצוגה מקומית';
+  btn.disabled=false;pdfUpdate();
+ });
+ document.getElementById('open_'+key).addEventListener('click',()=>{
+  const rec=pdfRecords[key];if(!rec)return;
+  const a=document.createElement('a');a.href=rec.url;a.target='_blank';a.rel='noopener noreferrer';a.click();
+ });
+}
+function pdfUpdate(){document.getElementById('pdfStatus').textContent=Object.keys(pdfRecords).length+' מתוך 3 מסמכים נבחרו. תצוגה מקומית בלבד; לא בוצע ניתוח תוכן.';}
+document.getElementById('pdfClear').onclick=()=>{
+ for(const [key] of pdfKinds){if(pdfRecords[key]?.url)URL.revokeObjectURL(pdfRecords[key].url);delete pdfRecords[key];document.getElementById('pdf_'+key).value='';document.getElementById('rev_'+key).value='';document.getElementById('note_'+key).value='';document.getElementById('info_'+key).textContent='לא נבחר קובץ';document.getElementById('open_'+key).disabled=true;}pdfUpdate();
+};
+document.getElementById('pdfManifest').onclick=()=>{
+ const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const rows=[['document_type','filename','size_bytes','revision_manual','note_manual','analysis_status'],...pdfKinds.map(([key,title])=>[title,pdfRecords[key]?.file.name||'',pdfRecords[key]?.file.size||'',document.getElementById('rev_'+key).value,document.getElementById('note_'+key).value,'not_analyzed'])];
+ const csv='\ufeff'+rows.map(r=>r.map(quote).join(',')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='harness_v28_pdf_manifest_demo.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+};
+
+load();
+
+// v2.9: safe local HTML report text extraction; never render imported markup.
+let htmlReportRows=[];
+let htmlReportMeta={};
+function reportCSVCell(x){return '"'+String(x??'').replace(/"/g,'""')+'"';}
+function reportDownload(name,content){const blob=new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+function reportField(t,label){
+ const lines=t.split('\n');
+ const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ const re=new RegExp('^\\s*[.#:]?\\s*'+escaped+'\\s*:\\s*(.*?)\\s*$','i');
+ for(const line of lines){const m=line.match(re);if(m)return m[1].trim();}
+ return '';
+}
+document.getElementById('htmlParse').addEventListener('click',async()=>{
+ const input=document.getElementById('htmlReport'),msg=document.getElementById('htmlMessage'),tbody=document.getElementById('htmlRows'),meta=document.getElementById('htmlMeta');
+ tbody.replaceChildren();meta.replaceChildren();htmlReportRows=[];htmlReportMeta={};document.getElementById('htmlExport').disabled=true;
+ const file=input.files?.[0];if(!file){msg.textContent='בחר תחילה קובץ HTML.';return;}
+ if(!/\.html?$/i.test(file.name)||file.size>10*1024*1024){msg.textContent='נדרש קובץ HTML עד 10MB.';return;}
+ try{
+ const raw=await file.text();const doc=new DOMParser().parseFromString(raw,'text/html');
+ doc.querySelectorAll('script,style,template,svg,iframe,object').forEach(e=>e.remove());
+ doc.querySelectorAll('br').forEach(e=>e.replaceWith(doc.createTextNode('\n')));
+ const t=(doc.body?.textContent||'').replace(/\u00a0/g,' ').replace(/\r/g,'');
+ const maximum=t.match(/Conductor Maximum Resistance\s*=\s*([\d.]+)\s*Ohm/i);
+ const limit=maximum?Number(maximum[1]):null;
+ const metaFields={'תיאור':reportField(t,'Description'),'מק״ט':reportField(t,'Part Number'),'מספר שרטוט':reportField(t,'Drawing number'),'מהדורת שרטוט':reportField(t,'Drawing rev'),'מספר סידורי':reportField(t,'SN'),'תוצאת דוח':reportField(t,'Test Result'),'תאריך בדיקה':reportField(t,'Date/Time'),'מהדורת מוצר':reportField(t,'Revision'),'תאריך אישור תוכנה':reportField(t,'Date of approval'),'גבול התנגדות מוליך':limit===null?'לא זוהה':limit+' Ω','גבול התנגדות מוליך Ω':limit};
+ htmlReportMeta=metaFields;
+ const nets=new Map();
+ const resist=/Net(\d+)\s*\(SIDE A\s*-\s*([^,()]+),\s*SIDE B\s*-\s*([^()]+)\)\s*,?\s*resistance:\s*([\d.]+)\s*mOhm/gi;
+ for(const m of t.matchAll(resist)){const id=Number(m[1]);nets.set(id,{id,a:m[2].trim(),b:m[3].trim(),mohm:Number(m[4]),isolation:'לא דווח',hipot:'לא דווח'});}
+ const iso=/Net(\d+)\s*\(SIDE A\s*-\s*([^,()]+),\s*SIDE B\s*-\s*([^()]+)\)\s*isolation:\s*([^\n]+)/gi;
+ for(const m of t.matchAll(iso)){const n=nets.get(Number(m[1]));if(n&&n.a===m[2].trim()&&n.b===m[3].trim())n.isolation=m[4].trim();}
+ const hipot=/DC Net(\d+)\s*\(SIDE A\s*-\s*([^,()]+),\s*SIDE B\s*-\s*([^()]+)\):\s*([^\n]+)/gi;
+ for(const m of t.matchAll(hipot)){const n=nets.get(Number(m[1]));if(n&&n.a===m[2].trim()&&n.b===m[3].trim())n.hipot=m[4].trim();}
+ htmlReportRows=[...nets.values()].sort((a,b)=>a.id-b.id);
+ if(!htmlReportRows.length){msg.textContent='לא זוהו שורות Net בפורמט הנתמך. לא בוצעה הסקת נתונים.';return;}
+ for(const [k,v] of Object.entries(metaFields)){const line=document.createElement('p');line.textContent=k+': '+(v||'לא זוהה');meta.appendChild(line);}
+ for(const n of htmlReportRows){const tr=document.createElement('tr');const status=limit===null?'לא ניתן לקבוע':n.mohm/1000<=limit?'בטווח':'חריגה';for(const value of ['Net'+n.id,n.a,n.b,n.mohm.toFixed(2),status,n.isolation,n.hipot]){const td=document.createElement('td');td.textContent=value;tr.appendChild(td);}tbody.appendChild(tr);}
+ const isos=htmlReportRows.filter(x=>x.isolation!=='לא דווח').length,hips=htmlReportRows.filter(x=>x.hipot!=='לא דווח').length,over=limit===null?'לא חושבו':htmlReportRows.filter(x=>x.mohm/1000>limit).length;
+ msg.textContent='חולצו '+htmlReportRows.length+' רשתות; '+isos+' תוצאות בידוד; '+hips+' תוצאות DC Hipot; חריגות התנגדות: '+over+'. נדרש אימות מול שרטוט.';
+ document.getElementById('htmlExport').disabled=false;
+ }catch(err){msg.textContent='שגיאה בקריאת הקובץ: '+err.message;}
+});
+document.getElementById('htmlExport').addEventListener('click',()=>{if(!htmlReportRows.length)return;const header=['Net','Side A','Side B','Resistance mOhm','Isolation','DC Hipot','Description','Part Number','Drawing number','Drawing rev','Serial Number','Report Result','Test Date','Product Revision','Conductor Max Ohm'];const rows=htmlReportRows.map(n=>['Net'+n.id,n.a,n.b,n.mohm,n.isolation,n.hipot,htmlReportMeta['תיאור'],htmlReportMeta['מק״ט'],htmlReportMeta['מספר שרטוט'],htmlReportMeta['מהדורת שרטוט'],htmlReportMeta['מספר סידורי'],htmlReportMeta['תוצאת דוח'],htmlReportMeta['תאריך בדיקה'],htmlReportMeta['מהדורת מוצר'],htmlReportMeta['גבול התנגדות מוליך']]);reportDownload('html_electrical_report_extracted.csv',[header,...rows].map(r=>r.map(reportCSVCell).join(',')).join('\r\n'));});
+
+
+// v3.3: human-transcribed schematic expectations; local-only cross-check against parsed HTML report.
+const cmpPins='A B C D E F G H J K L M N P R S T U V W X Y Z a b c'.split(' ');
+const cmpDefault=cmpPins.map(p=>p+','+p).join('\n');
+let cmpResult=[];
+document.getElementById('cmpExpected').value=cmpDefault;
+document.getElementById('cmpLoad').onclick=()=>{if(document.getElementById('cmpExpected').value.trim()!==cmpDefault&&!confirm('להחליף את הרשימה שהוזנה?'))return;document.getElementById('cmpExpected').value=cmpDefault;document.getElementById('cmpSummary').textContent='נטענו 26 זוגות פינים שהועתקו ידנית מהשרטוט. נדרש אישור מבקר.';};
+document.getElementById('cmpPdf').addEventListener('change',e=>{const f=e.target.files?.[0];document.getElementById('cmpPdfName').textContent=f?'נבחרה אסמכתה מקומית: '+f.name+' — אין פענוח אוטומטי של PDF':'לא נבחר שרטוט';});
+document.getElementById('cmpCheck').onclick=()=>{
+ const sum=document.getElementById('cmpSummary'),body=document.getElementById('cmpRows');body.replaceChildren();cmpResult=[];document.getElementById('cmpExport').disabled=true;
+ if(!htmlReportRows.length){sum.textContent='ראשית יש לטעון ולחלץ את דוח HTML במודול הקודם.';return;}
+ const raw=document.getElementById('cmpExpected').value.trim().split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const expected=[],keys=new Set();
+ for(let i=0;i<raw.length;i++){const fields=raw[i].split(',').map(x=>x.trim());if(fields.length!==2||!fields[0]||!fields[1]){sum.textContent='שגיאה ברשימת הפינים, שורה '+(i+1);return;}const k=fields.join('|');if(keys.has(k)){sum.textContent='כפילות ברשימת הפינים: '+raw[i];return;}keys.add(k);expected.push(fields);}
+ const maxOhm=htmlReportMeta['גבול התנגדות מוליך Ω'] == null ? NaN : Number(htmlReportMeta['גבול התנגדות מוליך Ω']);
+ const validLimit=Number.isFinite(maxOhm)&&maxOhm>0;
+ const reportByPair=new Map();for(const n of htmlReportRows){const k=n.a+'|'+n.b;if(!reportByPair.has(k))reportByPair.set(k,[]);reportByPair.get(k).push(n);}
+ let matched=0,missing=0,extra=0,over=0;
+ for(const [a,b] of expected){const nets=reportByPair.get(a+'|'+b)||[];let status='';let n=nets[0];if(!nets.length){status='לא נמצא בדוח';missing++;}else if(nets.length>1){status='כפילות בדוח — דורש בירור';}else{matched++;if(validLimit&&n.mohm/1000>maxOhm){status='חריגת התנגדות';over++;}else status='זוג פינים תואם; יתר הדרישות לא אומתו';}
+ cmpResult.push({a,b,net:n?'Net'+n.id:'',res:n?.mohm??'',iso:n?.isolation??'',hipot:n?.hipot??'',status});}
+ for(const n of htmlReportRows){if(n.a==='SHELL'&&n.b==='SHELL'){cmpResult.push({a:'SHELL',b:'SHELL',net:'Net'+n.id,res:n.mohm,iso:n.isolation,hipot:n.hipot,status:'בדיקת מעטפת מדווחת — סיכוכים דורשים אימות נפרד'});continue;}if(!keys.has(n.a+'|'+n.b)){extra++;cmpResult.push({a:n.a,b:n.b,net:'Net'+n.id,res:n.mohm,iso:n.isolation,hipot:n.hipot,status:'זוג נוסף בדוח — דורש בירור'});}}
+ for(const r of cmpResult){const tr=document.createElement('tr');for(const v of [r.a,r.b,r.net,r.res,r.iso,r.hipot,r.status]){const td=document.createElement('td');td.textContent=String(v);tr.append(td);}body.append(tr);}
+ const reportPn=htmlReportMeta['מק״ט']||'',reportRev=htmlReportMeta['מהדורת שרטוט']||'',reportDrawing=htmlReportMeta['מספר שרטוט']||'';
+ const idMatch=reportPn==='XM1067AB'&&reportRev==='05'&&reportDrawing==='XM1067AB-PV1002';
+ sum.textContent=`${expected.length} חיבורים צפויים; ${matched} זוגות נמצאו בדוח; ${missing} חסרים; ${extra} זוגות נוספים; ${over} חריגות התנגדות; התאמת מזהי מסמך: ${idMatch?'כן':'דורש בירור'}. בדיקת SHELL והסיכוכים אינה מאושרת אוטומטית.`;
+ document.getElementById('cmpExport').disabled=false;
+};
+document.getElementById('cmpExport').onclick=()=>{if(!cmpResult.length)return;const rows=[['side_a_expected','side_b_expected','report_net','resistance_mohm','isolation_reported','dc_hipot_reported','review_status'],...cmpResult.map(r=>[r.a,r.b,r.net,r.res,r.iso,r.hipot,r.status])];reportDownload('XM1067AB_v31_preliminary_traceability.csv',rows.map(row=>row.map(reportCSVCell).join(',')).join('\r\n'));};
+</script><div style="position:fixed;bottom:0;left:0;right:0;background:#fff3cd;color:#664d03;padding:7px;text-align:center;font-size:12px;z-index:9999">גרסת הדגמה ציבורית — נתוני ניסיון בלבד. אין להזין מידע הנדסי אמיתי ללא אישור החברה.</div>
+<section id="coverage32"><h2>סקירת כיסוי חשמלי — v3.3</h2><p>סקירה מבוססת ראיות של בדיקות מוליכים, בידוד, Hipot וסיכוך. מודול זה <b>אינו מפענח אוטומטית שרטוט PDF</b>, ואינו מאשר כיסוי מלא של בדיקות בין כל זוגות הרשתות.</p>
+<button type="button" id="covRun">נתח כיסוי לפי דוח HTML שנטען</button><button type="button" id="covExport" disabled>ייצוא סקירת כיסוי CSV</button><p id="covSummary" role="status"></p><div class="scroll"><table><thead><tr><th>תחום</th><th>ראיה זמינה</th><th>הערכת כיסוי</th><th>המשך בדיקה נדרש</th></tr></thead><tbody id="covRows"></tbody></table></div>
+<h3>נושאים לסקירת מבקר</h3><label><input type="checkbox" id="covShield"> אומתה תצורת הסיכוכים והחיבור למעטפות בשני הקצוות מול השרטוט וראיות בדיקה</label><label><input type="checkbox" id="covIso"> אומתה מטריצת זוגות הבידוד הנדרשים מול תיעוד בדיקות מפורט</label><label><input type="checkbox" id="covHip"> אומתה תכולת בדיקות Hipot, זוגות/רשתות, גבולות, מתח ומשך</label><label><input type="checkbox" id="covRev"> אומתה התאמת מהדורת מוצר לפי EDR</label><p class="warn">סימון תיבת סקירה מתעד הצהרת מבקר בלבד; אינו מהווה ראיית בדיקה עצמאית. אין לקבוע 'כיסוי מלא' ללא תיעוד תומך.</p></section>
+<section id="findings33"><h2>ממצאים ודוח סקירה — v3.3</h2><p>ממצאים מסוג <b>חוסר ראיות / אימות נדרש</b> אינם מעידים בהכרח על אי־התאמה במוצר. מספרי F נוצרים עבור סקירה זו בלבד.</p><button type="button" id="findRun">צור ממצאים מסקירת הכיסוי</button><button type="button" id="findExport" disabled>ייצוא דוח ממצאים CSV</button><p id="findSummary" role="status"></p><div class="scroll"><table><thead><tr><th>מזהה</th><th>תחום</th><th>סיווג</th><th>ראיה</th><th>פעולה נדרשת</th></tr></thead><tbody id="findRows"></tbody></table></div><p class="warn">דוח זה הוא כלי עזר לביקורת; אינו מהווה אישור הנדסי או שחרור מוצר.</p></section>
+<script>
+let covRecords=[];
+const covText=id=>document.getElementById(id);
+function covAdd(topic,evidence,status,action){covRecords.push({topic,evidence,status,action});}
+covText('covRun').addEventListener('click',()=>{
+ const tbody=covText('covRows');tbody.replaceChildren();covRecords=[];document.getElementById('findRows').replaceChildren();document.getElementById('findExport').disabled=true;document.getElementById('findSummary').textContent='יש ליצור ממצאים מחדש לאחר סקירה.';covText('covExport').disabled=true;
+ if(!htmlReportRows.length){covText('covSummary').textContent='ראשית טען וחלץ את דוח ה־HTML במודול הקודם.';return;}
+ const rows=htmlReportRows,conductors=rows.filter(r=>r.a!=='SHELL'&&r.b!=='SHELL');
+ const lim=htmlReportMeta['גבול התנגדות מוליך Ω'] == null ? NaN : Number(htmlReportMeta['גבול התנגדות מוליך Ω']);const validLim=Number.isFinite(lim)&&lim>0;
+ const measured=conductors.filter(r=>Number.isFinite(r.mohm));const above=validLim?measured.filter(r=>r.mohm/1000>lim):[];
+ const pinSet=new Set(conductors.map(r=>r.a+'|'+r.b));
+ const expected=covText('cmpExpected').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map(x=>x.split(',').map(z=>z.trim())).filter(x=>x.length===2);
+ const absent=expected.filter(x=>!pinSet.has(x[0]+'|'+x[1]));
+ covAdd('Pin-to-Pin / רציפות',`${measured.length} מדידות התנגדות למוליכים; ${expected.length} זוגות צפויים ברשימה הידנית; ${absent.length} זוגות חסרים בדוח`,absent.length?'פער בזוגות המדווחים':'התאמה לרשימה הידנית בלבד','לאמת שרשימת הזוגות הועתקה במלואה מהשרטוט');
+ covAdd('התנגדות מוליך',`${measured.length} מדידות; גבול ${validLim?lim+' Ω':'לא זוהה'}; חריגות ${validLim?above.length:'לא ניתן לחשב'}`,!validLim?'גבול לא אומת':above.length?'חריגה מדווחת':'בתחום לפי גבול הדוח','לאמת תנאי מדידה, כיול ודרישות השרטוט');
+ const iso=rows.filter(r=>r.isolation&&r.isolation!=='לא דווח');
+ covAdd('בידוד',`${iso.length}/${rows.length} תוצאות בידוד לפי רשת`,iso.length===rows.length?'תוצאות קיימות; כיסוי זוגות לא אומת':'תוצאות חסרות','לדרוש פירוט זוגות רשתות שנבדקו וגבולות הקבלה');
+ const hip=rows.filter(r=>r.hipot&&r.hipot!=='לא דווח');
+ covAdd('DC Hipot',`${hip.length}/${rows.length} תוצאות DC Hipot לפי רשת`,hip.length===rows.length?'תוצאות קיימות; כיסוי זוגות לא אומת':'תוצאות חסרות','לאמת מטריצת הבדיקה, 500V, משך 0.5s וגבולות לפי מסמך מאושר');
+ const shell=rows.find(r=>r.a==='SHELL'&&r.b==='SHELL');
+ covAdd('מעטפת וסיכוכים',shell?`דווחה רשת ${'Net'+shell.id} בין SHELL ל־SHELL`:'לא דווחה רשת SHELL','דרישת סיכוך לא אומתה','לאמת חיבור סיכוכים למעטפות בשני הצדדים ובידוד הדדי בין הסיכוכים');
+ covAdd('תצורה ומהדורות',`שרטוט ${htmlReportMeta['מספר שרטוט']||'לא זוהה'}; מהדורה ${htmlReportMeta['מהדורת שרטוט']||'לא זוהתה'}; מהדורת מוצר ${htmlReportMeta['מהדורת מוצר']||'לא זוהתה'}`,'מהדורת מוצר דורשת אימות','לבדוק EDR ומסמכי תצורה מאושרים');
+ const checks=[['covShield','מעטפת וסיכוכים'],['covIso','בידוד'],['covHip','DC Hipot'],['covRev','תצורה ומהדורות']];
+ for(const [id,topic] of checks)if(covText(id).checked){const r=covRecords.find(x=>x.topic===topic);r.action+=' | המבקר סימן שנבדק; לצרף ראיה';}
+ for(const r of covRecords){const tr=document.createElement('tr');for(const v of [r.topic,r.evidence,r.status,r.action]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td);}tbody.append(tr);}
+ covText('covSummary').textContent=`נוצרו ${covRecords.length} סעיפי סקירה. ${absent.length} זוגות חסרים מול רשימת הייחוס הידנית. לא בוצע אישור כיסוי מלא.`;
+ covText('covExport').disabled=false;
+});
+covText('covExport').addEventListener('click',()=>{if(!covRecords.length)return;const all=[['domain','available_evidence','coverage_assessment','required_followup'],...covRecords.map(r=>[r.topic,r.evidence,r.status,r.action])];reportDownload('XM1067AB_v33_coverage_review.csv',all.map(r=>r.map(reportCSVCell).join(',')).join('\r\n'));});
+
+let findings33=[];
+document.getElementById('findRun').addEventListener('click',()=>{
+ const body=document.getElementById('findRows');body.replaceChildren();findings33=[];document.getElementById('findExport').disabled=true;
+ if(!covRecords.length){document.getElementById('findSummary').textContent='ראשית לחץ על נתח כיסוי במודול הקודם.';return;}
+ const isUnverified=r=>/לא אומת|לא אומתה|לא אומתו|חסרות|דורשת|לא זוהה|לא ניתן|כיסוי זוגות/.test(r.status);
+ for(const r of covRecords){
+  const nonconforming=/חריגה מדווחת/.test(r.status);
+  if(!nonconforming&&!isUnverified(r))continue;
+  const f={id:'F-'+String(findings33.length+1).padStart(2,'0'),topic:r.topic,classification:nonconforming?'חריגה מדווחת — מחייבת אימות':'חוסר ראיות / אימות נדרש',evidence:r.evidence+' | הערכת כיסוי: '+r.status,action:r.action};findings33.push(f);
+  const tr=document.createElement('tr');for(const v of [f.id,f.topic,f.classification,f.evidence,f.action]){const td=document.createElement('td');td.textContent=v;tr.appendChild(td);}body.appendChild(tr);
+ }
+ document.getElementById('findSummary').textContent=`נוצרו ${findings33.length} פריטי סקירה. אין לקבוע אי־התאמה במוצר ללא ראיות נוספות.`;
+ document.getElementById('findExport').disabled=false;
+});
+document.getElementById('findExport').addEventListener('click',()=>{
+ const header=['finding_id','domain','classification','available_evidence','required_action','part_number','drawing_number','drawing_revision','serial_number','report_result','conductor_max_ohm'];
+ const meta=[htmlReportMeta['מק״ט'],htmlReportMeta['מספר שרטוט'],htmlReportMeta['מהדורת שרטוט'],htmlReportMeta['מספר סידורי'],htmlReportMeta['תוצאת דוח'],htmlReportMeta['גבול התנגדות מוליך Ω']];
+ const rows=[header,...findings33.map(f=>[f.id,f.topic,f.classification,f.evidence,f.action,...meta])];
+ reportDownload('XM1067AB_v33_findings_review.csv',rows.map(r=>r.map(reportCSVCell).join(',')).join('\r\n'));
+});
+</script>
+</body></html>
