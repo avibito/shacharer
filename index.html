@@ -270,6 +270,11 @@ details summary{cursor:pointer;list-style-position:inside}
    <div class="metric"><span class="muted">150% (הערכה)</span><strong id="m150">—</strong></div>
    <div class="metric wide"><span class="muted">זכאות לארוחות*</span><strong id="mMeals" style="font-size:17px;direction:rtl">—</strong></div>
   </div>
+  <div id="overBox" class="alert hidden" style="margin-top:10px">
+   <div id="overText" style="font-weight:700"></div>
+   <label class="field" style="border:0"><span>התקבל אישור חריגה</span><input type="checkbox" id="overApproved"></label>
+   <div class="field stack" style="border:0"><label for="overApprover">אושר על ידי</label><input id="overApprover" placeholder="שם המאשר"></div>
+  </div>
   <p class="small" id="quotaNote"></p>
   <div class="actions"><button type="button" id="dailyCsv">ייצוא יום CSV</button><button type="button" id="shareBtn">שיתוף דוח</button></div>
  </div>
@@ -406,6 +411,7 @@ details summary{cursor:pointer;list-style-position:inside}
   <div class="field"><label for="thursdayRegular">מכסה ליום חמישי (שעות)</label><input id="thursdayRegular" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="meal1">סף שעות נטו למנה מצומצמת</label><input id="meal1" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="meal2">סף שעות נטו לארוחה נוספת</label><input id="meal2" type="number" min="0" max="24" step="0.25"></div>
+  <div class="field"><label for="maxDaily">מקסימום שעות ביום ללא אישור (כולל נסיעות)</label><input id="maxDaily" type="number" min="0" max="24" step="0.25"></div>
   <div class="field"><label for="deductCoffee">ניכוי הפסקת קפה מדווחת</label><input id="deductCoffee" type="checkbox"></div>
   <button type="button" id="saveSettings" class="primary">שמור הגדרות</button>
   <p id="settingsStatus" class="status"></p>
@@ -509,7 +515,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '18.3';
+const VERSION = '18.4';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -527,7 +533,7 @@ const TIME_IDS = TIME_FIELDS.map(f => f[0]);
 const TYPES = { fixed:'מקום קבוע', external:'אתר חיצוני', fixedClock:'דווח בשעון נוכחות', abroad:'עבודה בחו״ל', vacation:'חופשה', sick:'מחלה' };
 const NON_TIMED = new Set(['fixedClock','vacation','sick']);
 const ABSENCE   = new Set(['vacation','sick']);
-const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, deductCoffee:false, vehicles:[], reporterName:'', recipientName:'', recipientPhone:'' };
+const DEFAULTS  = { regular:9, thursdayRegular:8.5, meal1:10, meal2:12, maxDaily:12.5, deductCoffee:false, vehicles:[], reporterName:'', recipientName:'', recipientPhone:'' };
 const TRIP_FROM = { home:'הבית', fixed:'מקום העבודה הקבוע' };
 const TRIP_ROLE = { driver:'נהג', passenger:'נוסע' };
 const WEEKDAYS  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
@@ -546,6 +552,10 @@ const nowHHMM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad
 const mins = t => { if (!/^\d{2}:\d{2}$/.test(t || '')) return null; const [h,m] = t.split(':').map(Number); return h < 24 && m < 60 ? h*60 + m : null; };
 /** Minutes from a to b; null if missing or reversed (reversed times are flagged, never silently treated as overnight). */
 const span = (a, b) => { const x = mins(a), y = mins(b); return x === null || y === null || y < x ? null : y - x; };
+/** Like span, but an end earlier than the start means it ended after midnight (next day). */
+const spanNight = (a, b) => { const x = mins(a), y = mins(b); return x === null || y === null ? null : (y - x + 1440) % 1440; };
+const crossesMidnight = (a, b) => { const x = mins(a), y = mins(b); return x !== null && y !== null && y < x; };
+const MAX_SPAN = 20 * 60; // longer than this is almost surely a typo
 const fmt = n => n === null || n === undefined || Number.isNaN(n) ? '—' : `${pad(Math.floor(n/60))}:${pad(Math.round(n%60))}`;
 const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
 const typeLabel = t => TYPES[t] || TYPES.fixed;
@@ -574,14 +584,14 @@ function toast(text) {
 const tripsOf = d => Array.isArray(d.vehicleTrips) ? d.vehicleTrips.filter(t => t && typeof t === 'object') : [];
 const kmNum = v => v === '' || v === null || v === undefined ? null : Number(v);
 function tripKm(t) { const a = kmNum(t.kmStart), b = kmNum(t.kmEnd); return Number.isFinite(a) && Number.isFinite(b) && b >= a ? b - a : null; }
-const tripMinutes = t => span(t.depart, t.ret);
+const tripMinutes = t => spanNight(t.depart, t.ret);
 function tripProblems(d) {
   const out = [];
   tripsOf(d).forEach((t, i) => {
     const n = `נסיעה ${i + 1} ברכב תפעולי`;
     if (!t.vehicle) out.push(`${n}: לא צוין רכב`);
     if (!t.depart) out.push(`${n}: חסרה שעת יציאה`);
-    if (t.depart && t.ret && tripMinutes(t) === null) out.push(`${n}: שעת החזרה מוקדמת משעת היציאה`);
+    if (t.depart && t.ret && tripMinutes(t) > MAX_SPAN) out.push(`${n}: משך מעל 20 שעות — בדוק את השעות`);
     const a = kmNum(t.kmStart), b = kmNum(t.kmEnd);
     if (Number.isFinite(a) && Number.isFinite(b) && b < a) out.push(`${n}: ק״מ בחזרה קטן מק״מ ביציאה`);
   });
@@ -620,13 +630,13 @@ function analyze(d, key) {
   const type = d.dayType || 'fixed';
   const iso = keyToIso(key);
   const quota = quotaFor(iso);
-  const absence = span(d.leaveHome, d.arriveDest);
+  const absence = spanNight(d.leaveHome, d.arriveDest);
   const problems = [];
 
   if (NON_TIMED.has(type)) {
     if (type === 'fixedClock' && !d.clockConfirmed) problems.push('נדרש אישור דיווח בשעון נוכחות');
     if (!ABSENCE.has(type)) problems.push(...tripProblems(d));
-    return { type, quota, absence, problems, excluded:true, complete:!problems.length, gross:null, net:null };
+    return { type, quota, absence, problems, flags:[], over:0, excluded:true, complete:!problems.length, ok:!problems.length, gross:null, net:null };
   }
 
   const ext = type === 'external';
@@ -636,22 +646,28 @@ function analyze(d, key) {
   else if (mins(begin) === null) problems.push('שעת התחלה לא תקינה');
   if (!end) problems.push(ext ? 'חסרה שעת חזרה הביתה' : 'חסרה שעת סיום עבודה');
   else if (mins(end) === null) problems.push('שעת סיום לא תקינה');
-  const gross = span(begin, end);
-  if (mins(begin) !== null && mins(end) !== null && gross === null) problems.push('שעת הסיום מוקדמת משעת ההתחלה — יש לבדוק');
+  const gross = spanNight(begin, end);
+  const overnight = crossesMidnight(begin, end);
+  if (gross !== null && gross > MAX_SPAN) problems.push('משך יום מעל 20 שעות — בדוק את שעות ההתחלה והסיום');
 
   if (Boolean(d.startCoffee) !== Boolean(d.endCoffee)) problems.push('חסרה אחת משעות ההפסקה');
   const coffee = d.startCoffee && d.endCoffee ? span(d.startCoffee, d.endCoffee) : 0;
   if (d.startCoffee && d.endCoffee && coffee === null) problems.push('שעות ההפסקה אינן תקינות');
   const deduct = settings.deductCoffee ? (coffee || 0) : 0;
   if (settings.deductCoffee && gross !== null && deduct > gross) problems.push('משך ההפסקה ארוך ממשך העבודה');
-  if (d.leaveHome && d.arriveDest && absence === null) problems.push('ההגעה ליעד מוקדמת משעת היציאה');
+  if (absence !== null && absence > 8 * 60) problems.push('נסיעה ליעד מעל 8 שעות — בדוק את השעות');
 
   if (ext && !d.siteName) problems.push('לא צוין שם האתר החיצוני');
   if (type === 'abroad' && !d.country) problems.push('לא צוינה מדינה בעבודה בחו״ל');
   problems.push(...tripProblems(d));
 
-  const net = gross === null ? null : Math.max(0, gross - deduct);
-  return { type, quota, absence, problems, excluded:false, complete: !problems.length && net !== null, gross, net };
+  const net = gross === null || gross > MAX_SPAN ? null : Math.max(0, gross - deduct);
+  // Over the daily maximum: hours still count, but the day needs a recorded approval.
+  const max = Math.round((settings.maxDaily ?? DEFAULTS.maxDaily) * 60);
+  const over = net !== null && max > 0 && net > max ? net - max : 0;
+  const flags = over && !(d.overApproved && (d.overApprover || '').trim()) ? [`חריגה של ${fmt(over)} מעל ${fmt(max)} שעות — נדרש אישור`] : [];
+  const complete = !problems.length && net !== null;
+  return { type, quota, absence, problems, flags, over, max, overnight, excluded:false, complete, ok: complete && !flags.length, gross, net };
 }
 
 /** A full absence day in minutes: the day's quota (weekends fall back to the regular quota). */
@@ -759,6 +775,7 @@ function readForm() {
   const d = { dayType: $('dayType').value, siteName: $('siteName').value.trim(), notes: $('notes').value, country: $('country').value.trim(), clockConfirmed: $('clockConfirmed').checked };
   TIME_IDS.forEach(id => d[id] = $(id).value);
   d.vehicleTrips = readTrips();
+  d.overApproved = $('overApproved').checked; d.overApprover = $('overApprover').value.trim();
   if (ABSENCE.has(d.dayType)) {
     d.absenceUnit = $('absenceUnit').value;
     d.absenceDays = d.absenceUnit === 'days' ? Number($('absDays').value) : null;
@@ -769,6 +786,7 @@ function readForm() {
 
 function validateForm(d) {
   if (d.dayType === 'fixedClock' && !d.clockConfirmed) return 'יש לאשר שהדיווח בוצע בשעון המעסיק';
+  if (d.overApproved && !d.overApprover && !$('overBox').classList.contains('hidden')) return 'יש לרשום מי אישר את החריגה';
   if (ABSENCE.has(d.dayType)) {
     if (d.absenceUnit === 'days' && !(Number.isFinite(d.absenceDays) && d.absenceDays > 0)) return 'יש להזין מספר ימים חיובי';
     if (d.absenceUnit === 'hours') {
@@ -815,6 +833,7 @@ function renderDay() {
   $('absHours').value = Math.floor(absMin / 60);
   $('absMinutes').value = absMin % 60;
   renderTrips(tripsOf(d));
+  $('overApproved').checked = Boolean(d.overApproved); $('overApprover').value = d.overApprover || '';
   const loc = $('locationStatus');
   loc.replaceChildren();
   if (d.locationUrl && /^https:\/\/maps\.google\.com\/\?q=-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(d.locationUrl)) {
@@ -851,6 +870,11 @@ function renderCalc() {
   // Only show real problems once the user has started reporting the day.
   const started = TIME_IDS.some(id => d[id]);
   if (started || r.excluded) r.problems.forEach(t => { const p = document.createElement('div'); p.className = 'alert'; p.textContent = t; box.append(p); });
+  if (r.overnight && r.net !== null) { const p = document.createElement('div'); p.className = 'note'; p.style.marginBottom = '8px'; p.textContent = '🌙 הסיום אחרי חצות — השעות נספרות ליום שבו התחלת.'; box.append(p); }
+  // Daily maximum (incl. travel on external days): ask for an approval record.
+  if (r.over) $('overText').textContent = `${fmt(r.net)} שעות — חריגה של ${fmt(r.over)} מעל המקסימום (${fmt(r.max)}). ` +
+    (d.overApproved && d.overApprover ? `✓ אושר על ידי ${d.overApprover}` : '⚠ נדרש אישור.');
+  $('overBox').className = r.over && d.overApproved && d.overApprover ? 'note' : r.over ? 'alert' : 'alert hidden';
   $('quotaNote').textContent = (r.quota ? `מכסת היום: ${fmt(r.quota)} שעות. ` : 'שישי/שבת — ללא מכסה אוטומטית; כל השעות מוצגות כ״מעל מכסה״. ')
     + '125%/150% הם אומדן בלבד מעל המכסה; זכאות בפועל תלויה בדין, ביום המקוצר, בסך השבוע ובהסכם העבודה. אין לקזז חוסר משעות נוספות באופן אוטומטי.';
 }
@@ -871,7 +895,8 @@ function saveDay() {
   const rec = { ...(old || {}), ...form, date: key };
   if (!ABSENCE.has(rec.dayType)) { delete rec.absenceUnit; delete rec.absenceDays; delete rec.absenceMinutes; }
   if (!rec.vehicleTrips.length) delete rec.vehicleTrips;
-  const total = span(rec.leaveHome, rec.arriveDest);
+  if (!rec.overApproved && !rec.overApprover) { delete rec.overApproved; delete rec.overApprover; }
+  const total = spanNight(rec.leaveHome, rec.arriveDest);
   rec.totalTime = total === null ? '' : fmt(total);
   h[key] = rec;
   try { setHistory(h); }
@@ -993,6 +1018,7 @@ function reportText(d, key) {
     lines.push(`יציאה מהבית: ${d.leaveHome||'—'}`, `הגעה ליעד: ${d.arriveDest||'—'}`, `תחילת עבודה: ${d.startWork||'—'}`, `סיום עבודה: ${d.endWork||'—'}`,
       `הפסקה: ${d.startCoffee||'—'} עד ${d.endCoffee||'—'}`, `חזרה הביתה: ${d.returnHome||'—'}`, `שעות מוכרות: ${fmt(r.net)}`);
     const o = overtime(r); if (o && o.extra) lines.push(`מעל מכסה: ${fmt(o.extra)}`);
+    if (r.over) lines.push(`חריגה מעל ${fmt(r.max)} שעות: ${fmt(r.over)}` + (d.overApproved && d.overApprover ? ` — אושר על ידי ${d.overApprover}` : ' — טרם אושר'));
   }
   tripsOf(d).forEach((t, i) => lines.push(`🚗 נסיעה ${i + 1}: ${tripText(t).replace(/[\u2066\u2069]/g, '')}`));
   if (d.notes) lines.push(`הערות: ${d.notes}`);
@@ -1032,7 +1058,7 @@ function renderMonth() {
     // ⁦…⁩ = LTR isolate, so "07:50–16:50" is not reordered inside the RTL line.
     const detail = r.excluded ? (absenceText(r.d) || '') : `⁦${from}–${to}⁩ · ⁦${fmt(r.net)}⁩`;
     const nTrips = tripsOf(r.d).length;
-    label.textContent = `${r.k} (${wd}) · ${typeLabel(r.d.dayType)}${r.d.siteName ? ' · ' + r.d.siteName : ''} · ${detail}${nTrips ? ' · 🚗' + (nTrips > 1 ? '×' + nTrips : '') : ''}${r.complete ? '' : ' ⚠'}`;
+    label.textContent = `${r.k} (${wd}) · ${typeLabel(r.d.dayType)}${r.d.siteName ? ' · ' + r.d.siteName : ''} · ${detail}${nTrips ? ' · 🚗' + (nTrips > 1 ? '×' + nTrips : '') : ''}${r.ok ? '' : ' ⚠'}`;
     btn.type = 'button'; btn.textContent = 'פתח וערוך';
     btn.onclick = () => { setDate(keyToIso(r.k)); showTab('day'); };
     row.append(label, btn); list.append(row);
@@ -1041,7 +1067,7 @@ function renderMonth() {
   // dashboard
   const timed = data.filter(r => r.complete && !r.excluded);
   const actual = timed.reduce((s,r) => s + r.net, 0), quota = timed.reduce((s,r) => s + r.quota, 0);
-  const flagged = data.filter(r => !r.complete);
+  const flagged = data.filter(r => !r.ok);
   $('sActual').textContent = fmt(actual);
   $('sQuota').textContent = fmt(quota);
   $('sDelta').textContent = signed(actual - quota);
@@ -1052,7 +1078,7 @@ function renderMonth() {
   else if (!flagged.length) { const p = document.createElement('p'); p.className = 'good'; p.textContent = '✓ לא נמצאו בעיות בדיווחים השמורים.'; warn.append(p); }
   flagged.forEach(r => {
     const p = document.createElement('div'); p.className = 'alert'; p.style.cursor = 'pointer';
-    p.textContent = `${r.k}: ${r.problems.join(' · ')}`; p.title = 'לחץ לפתיחה ועריכה';
+    p.textContent = `${r.k}: ${[...r.problems, ...r.flags].join(' · ')}`; p.title = 'לחץ לפתיחה ועריכה';
     p.onclick = () => { setDate(keyToIso(r.k)); showTab('day'); };
     warn.append(p);
   });
@@ -1061,9 +1087,10 @@ function renderMonth() {
   data.forEach(r => {
     const tr = document.createElement('tr');
     const cells = r.excluded
-      ? [r.k, typeLabel(r.type), absenceText(r.d) || 'לא מחושב', 'לא נכלל', '—', r.complete ? '✓' : 'לבדיקה']
-      : [r.k, typeLabel(r.type), r.complete ? fmt(r.net) : '—', r.quota ? fmt(r.quota) : 'ללא', r.complete ? signed(r.net - r.quota) : '—', r.complete ? 'תקין' : 'לבדיקה'];
-    cells.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i >= 2 && i <= 4) td.className = 'num'; if (i === 5) td.className = r.complete ? 'good' : 'bad'; tr.append(td); });
+      ? [r.k, typeLabel(r.type), absenceText(r.d) || 'לא מחושב', 'לא נכלל', '—', r.ok ? '✓' : 'לבדיקה']
+      : [r.k, typeLabel(r.type), r.complete ? fmt(r.net) : '—', r.quota ? fmt(r.quota) : 'ללא', r.complete ? signed(r.net - r.quota) : '—',
+         !r.complete ? 'לבדיקה' : r.flags.length ? 'נדרש אישור' : r.over ? 'אושר' : 'תקין'];
+    cells.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i >= 2 && i <= 4) td.className = 'num'; if (i === 5) td.className = r.ok ? 'good' : 'bad'; tr.append(td); });
     tbody.append(tr);
   });
 
@@ -1581,13 +1608,13 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 // Columns 0–17 keep the original v16 layout so older files still import; new columns are appended.
-const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','הגעה ליעד','משך יציאה עד הגעה ליעד','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון','רכב תפעולי (רכב | מ | יעד | יציאה | חזרה | ק״מ התחלה | ק״מ סוף | תפקיד)'];
+const CSV_HEADERS = ['תאריך','יציאה מהבית','התחלת עבודה','סיום עבודה','הגעה ליעד','משך יציאה עד הגעה ליעד','תחילת הפסקת קפה','סיום הפסקת קפה','מיקום','הערות','סוג יום','שם אתר','חזרה הביתה','שעות מוכרות','מעל מכסה','חוסר מהמכסה','125% הערכה','150% הערכה','מדינה','היקף היעדרות','אישור שעון','רכב תפעולי (רכב | מ | יעד | יציאה | חזרה | ק״מ התחלה | ק״מ סוף | תפקיד)','חריגה מעל המקסימום','אושר על ידי'];
 function csvRow(d, key) {
   const r = analyze(d, key), o = overtime(r);
   return [key, d.leaveHome, d.startWork, d.endWork, d.arriveDest, d.totalTime || (r.absence === null ? '' : fmt(r.absence)), d.startCoffee, d.endCoffee,
     d.locationUrl || 'לא נדגם', d.notes, typeLabel(d.dayType), d.siteName || '', d.returnHome || '',
     o ? fmt(r.net) : '', o ? fmt(o.extra) : '', o ? fmt(o.short) : '', o ? fmt(o.ot125) : '', o ? fmt(o.ot150) : '',
-    d.country || '', absenceText(d), d.dayType === 'fixedClock' ? (d.clockConfirmed ? 'כן' : 'לא') : '', tripsToCell(d)];
+    d.country || '', absenceText(d), d.dayType === 'fixedClock' ? (d.clockConfirmed ? 'כן' : 'לא') : '', tripsToCell(d), r.over ? fmt(r.over) : '', d.overApproved ? (d.overApprover || 'כן') : ''];
 }
 function exportDay() { download(toCsv([CSV_HEADERS, csvRow(readForm(), selectedKey())]), `shacharer_day_${state.date}.csv`, 'text/csv;charset=utf-8'); }
 function exportMonth() {
@@ -1599,7 +1626,8 @@ function exportSmart() {
   const rows = [['תאריך','יום','סוג יום','שם אתר','מדינה','היקף היעדרות','שעות עבודה','תקן','הפרש','סטטוס','הערות בדיקה']];
   data.forEach(r => rows.push([r.k, WEEKDAYS[dateOf(keyToIso(r.k)).getDay()], typeLabel(r.type), r.d.siteName || '', r.d.country || '', absenceText(r.d),
     !r.excluded && r.complete ? fmt(r.net) : '', !r.excluded ? (r.quota ? fmt(r.quota) : 'ללא') : '',
-    !r.excluded && r.complete ? signed(r.net - r.quota) : '', r.complete ? (r.excluded ? 'דיווח ללא שעות' : 'תקין') : 'לבדיקה', r.problems.join(' | ')]));
+    !r.excluded && r.complete ? signed(r.net - r.quota) : '', !r.complete ? 'לבדיקה' : r.excluded ? 'דיווח ללא שעות' : r.flags.length ? 'נדרש אישור' : r.over ? `אושר (${r.d.overApprover})` : 'תקין',
+    [...r.problems, ...r.flags].join(' | ')]));
   download(toCsv(rows), `shacharer_smart_month_${state.month}.csv`, 'text/csv;charset=utf-8');
 }
 function backup() {
@@ -1646,6 +1674,7 @@ async function importData(file) {
         siteName:unquote(r[11]), returnHome:cleanTime(r[12]), country:unquote(r[18]) };
       if (r[20]) rec.clockConfirmed = r[20] === 'כן';
       const trips = tripsFromCell(r[21]); if (trips.length) rec.vehicleTrips = trips;
+      if (r[23]) { rec.overApproved = true; rec.overApprover = unquote(r[23]); }
       const abs = (r[19] || '').match(/^([\d.]+)\s*ימים$|^(\d{2}):(\d{2})\s*שעות$/);
       if (abs && ABSENCE.has(rec.dayType)) {
         if (abs[1]) { rec.absenceUnit = 'days'; rec.absenceDays = Number(abs[1]); }
@@ -1666,7 +1695,7 @@ async function importData(file) {
 
 /* ---------- settings ---------- */
 function renderSettings() {
-  ['regular','thursdayRegular','meal1','meal2'].forEach(id => $(id).value = settings[id]);
+  ['regular','thursdayRegular','meal1','meal2','maxDaily'].forEach(id => $(id).value = settings[id]);
   $('deductCoffee').checked = Boolean(settings.deductCoffee);
   renderVehicleSettings();
   renderSendSettings();
@@ -1686,7 +1715,7 @@ function renderStorageInfo() {
 }
 function saveSettings() {
   const next = { ...settings };
-  for (const id of ['regular','thursdayRegular','meal1','meal2']) {
+  for (const id of ['regular','thursdayRegular','meal1','meal2','maxDaily']) {
     const v = Number($(id).value);
     if ($(id).value === '' || !Number.isFinite(v) || v < 0 || v > 24) { setStatus('settingsStatus', 'יש להזין ערך בין 0 ל-24 בכל שדה', 'warn'); $(id).focus(); return; }
     next[id] = v;
@@ -1944,7 +1973,7 @@ function init() {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => showTab(b.dataset.tab));
   $('stamps').addEventListener('click', e => { const b = e.target.closest('[data-stamp]'); if (b) stamp(b.dataset.stamp); });
 
-  [...TIME_IDS, 'notes','siteName','country','clockConfirmed','absDays','absHours','absMinutes'].forEach(id => $(id).addEventListener('change', saveDay));
+  [...TIME_IDS, 'notes','siteName','country','clockConfirmed','absDays','absHours','absMinutes','overApproved','overApprover'].forEach(id => $(id).addEventListener('change', saveDay));
   $('trips').addEventListener('click', onTripsEvent);
   $('trips').addEventListener('change', onTripsEvent);
   $('addTrip').onclick = addTrip;
