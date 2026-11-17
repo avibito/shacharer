@@ -115,6 +115,15 @@ details summary{cursor:pointer;list-style-position:inside}
 .show-code{display:flex;align-items:center;gap:6px;margin-top:8px}
 .dev-logo{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
 .update-bar{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;margin:0 auto;z-index:60;width:fit-content;background:#063b41;border:1px solid #25f4e8;border-radius:12px;padding:12px 16px;color:#eaffff;font:inherit;font-weight:700;box-shadow:0 6px 24px #000a;cursor:pointer}
+.bank{border:1px solid #294967;border-radius:13px;background:#0b2331;padding:12px;margin:10px 0}
+.bank h3{margin:0 0 8px;color:var(--accent2)}
+.bank .rows{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px}
+.bank .rows b{direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.bank .big{font-size:24px;font-weight:800}
+.bank .lbl{font-size:12px;color:var(--muted)}
+.bank-form{border-top:1px solid #253246;margin-top:10px;padding-top:4px}
+.bank-form h3{color:var(--accent2);margin:10px 0 0}
+.date-in{width:130px;flex:0 0 130px;text-align:center}
 .veh-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #253246}
 .veh-item button{padding:6px 12px;font-size:13px;font-weight:400}
 .veh-add{display:flex;gap:8px;margin-top:10px}
@@ -277,11 +286,12 @@ details summary{cursor:pointer;list-style-position:inside}
  </div>
 
  <div class="panel">
-  <h2>יתרות חופשה ומחלה</h2>
-  <p class="small">היתרות אישיות וניתנות להזנה בהגדרות כשתקבל את הנתונים מהמעסיק. ריק פירושו ״טרם הוגדר״, לא אפס. ניצול מוצג בנפרד ואינו מופחת אוטומטית מיתרת המעסיק. הכול מוצג בשעות; יום שדווח ״לפי ימים״ מומר לפי מכסת אותו יום.</p>
+  <h2>בנק שעות חופשה ומחלה</h2>
+  <p class="small">הערכה לפי היתרה שהזנת מהמעסיק, פחות מה שדיווחת באפליקציה מאז. בסוף כל שנה היתרה נחתכת לפי התקרה, ובתחילת השנה מתווספת המכסה השנתית. הנתון הקובע הוא תמיד של המעסיק.</p>
+  <div id="bankVac" class="bank"></div>
+  <div id="bankSick" class="bank"></div>
+  <h3>ניצול בחודש שנבחר</h3>
   <div class="tiles">
-   <div class="tile"><small>יתרת חופשה לפי המעסיק</small><strong id="balVac">טרם הוגדר</strong></div>
-   <div class="tile"><small>יתרת מחלה לפי המעסיק</small><strong id="balSick">טרם הוגדר</strong></div>
    <div class="tile"><small>חופשה שדווחה בחודש</small><strong id="usedVac">0</strong></div>
    <div class="tile"><small>מחלה שדווחה בחודש</small><strong id="usedSick">0</strong></div>
   </div>
@@ -356,11 +366,23 @@ details summary{cursor:pointer;list-style-position:inside}
 <!-- ============ SETTINGS ============ -->
 <section id="settings" class="hidden">
  <div class="panel">
-  <h2>יתרות אישיות מהמעסיק</h2>
-  <p class="note">השאר ריק עד שתקבל נתונים מאומתים. הזנת יתרה לא משנה דיווחים קיימים.</p>
-  <div class="field"><label for="balVacInput">יתרת חופשה (שעות)</label><input type="number" id="balVacInput" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
-  <div class="field"><label for="balSickInput">יתרת מחלה (שעות)</label><input type="number" id="balSickInput" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
-  <button type="button" id="saveBalances">שמור יתרות אישיות</button>
+  <h2>בנק שעות חופשה ומחלה</h2>
+  <p class="note">מזינים את היתרה כפי שמופיעה בתלוש או אצל המעסיק, ואת התאריך שהיא נכונה אליו. דיווחי חופשה/מחלה אחרי התאריך הזה יורדו ממנה. השאר ריק עד שיש נתון מאומת.</p>
+  <div class="bank-form" data-type="vacation">
+   <h3>חופשה</h3>
+   <div class="field"><label for="bvBalance">יתרה לפי המעסיק (שעות)</label><input type="number" id="bvBalance" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
+   <div class="field"><label for="bvAsOf">נכונה לתאריך</label><input id="bvAsOf" class="ltr date-in" inputmode="numeric" placeholder="DD.MM.YYYY"></div>
+   <div class="field"><label for="bvAnnual">מכסה שנתית — מתווספת ב-1 בינואר (שעות)</label><input type="number" id="bvAnnual" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
+   <div class="field"><label for="bvCap">תקרה בסוף שנה (שעות)</label><input type="number" id="bvCap" min="0" step="0.25" inputmode="decimal" placeholder="ללא"></div>
+  </div>
+  <div class="bank-form" data-type="sick">
+   <h3>מחלה</h3>
+   <div class="field"><label for="bsBalance">יתרה לפי המעסיק (שעות)</label><input type="number" id="bsBalance" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
+   <div class="field"><label for="bsAsOf">נכונה לתאריך</label><input id="bsAsOf" class="ltr date-in" inputmode="numeric" placeholder="DD.MM.YYYY"></div>
+   <div class="field"><label for="bsAnnual">מכסה שנתית — מתווספת ב-1 בינואר (שעות)</label><input type="number" id="bsAnnual" min="0" step="0.25" inputmode="decimal" placeholder="—"></div>
+   <div class="field"><label for="bsCap">תקרה בסוף שנה (שעות)</label><input type="number" id="bsCap" min="0" step="0.25" inputmode="decimal" placeholder="ללא"></div>
+  </div>
+  <button type="button" id="saveBalances" class="primary">שמור בנק שעות</button>
   <p id="balanceStatus" class="status"></p>
  </div>
  <div class="panel">
@@ -473,7 +495,7 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '17.8';
+const VERSION = '17.9';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
@@ -626,8 +648,73 @@ function absenceMinutes(d, key) {
   const days = Number(d.absenceDays ?? d.portion ?? 1) || 0;
   return Math.round(days * fullDayMinutes(keyToIso(key)));
 }
-const balanceText = (b, field) => b[field] == null ? 'טרם הוגדר'
-  : b.unit === 'hours' ? `${fmt(Math.round(b[field] * 60))} שעות` : `${b[field]} ימים (לעדכן בשעות)`;
+/* ---------- vacation / sick hour bank ----------
+   Stored (BK): { version:2, vacation:{balance,asOf,annual,cap}, sick:{…} } — hours; asOf is ISO.
+   Year-end rule: balance is cut to the cap, then the annual allotment is added on 1 January. */
+const BANK_TYPES = { vacation:'חופשה', sick:'מחלה' };
+function getBank() {
+  const b = getBalances(), empty = () => ({ balance:null, asOf:null, annual:null, cap:null });
+  if (b.version === 2) return { vacation: { ...empty(), ...b.vacation }, sick: { ...empty(), ...b.sick } };
+  // v17.8 stored plain hour numbers without a date; older versions stored days (must be re-entered).
+  const legacy = v => b.unit === 'hours' && v != null ? { ...empty(), balance: Number(v) } : { ...empty(), legacyDays: v != null ? v : undefined };
+  return { vacation: legacy(b.vacation), sick: legacy(b.sick) };
+}
+const hrs = m => fmt(Math.round(Math.max(0, m))) + (m < 0 ? ' (במינוס)' : '');
+function bankStatus(type) {
+  const cfg = getBank()[type];
+  if (cfg.balance == null) return null;
+  const today = todayIso(), asOf = cfg.asOf || today;
+  const uses = Object.entries(getHistory())
+    .filter(([, d]) => d && d.dayType === type)
+    .map(([k, d]) => ({ iso: keyToIso(k), min: absenceMinutes(d, k) }))
+    .filter(u => u.iso && u.iso > asOf); // the employer's figure already includes use up to its date
+  const sum = f => uses.filter(f).reduce((n, u) => n + u.min, 0);
+  const cap = cfg.cap == null ? Infinity : cfg.cap * 60, annual = (cfg.annual || 0) * 60;
+  const y0 = Number(asOf.slice(0, 4)), yNow = Number(today.slice(0, 4));
+  let bal = cfg.balance * 60; const rolled = [];
+  for (let y = y0; y < yNow; y++) {
+    bal -= sum(u => u.iso.startsWith(String(y)));
+    const forfeited = Math.max(0, bal - cap);
+    bal = Math.min(bal, cap) + annual;
+    rolled.push({ year: y, forfeited });
+  }
+  const thisYear = u => u.iso.startsWith(String(yNow));
+  const usedYTD = sum(u => thisYear(u) && u.iso <= today), planned = sum(u => thisYear(u) && u.iso > today);
+  const now = bal - usedYTD, endYear = now - planned;
+  return { cfg, now, usedYTD, planned, endYear, forfeit: Math.max(0, endYear - cap), nextStart: Math.min(endYear, cap) + annual,
+    cap, annual, asOf, dated: Boolean(cfg.asOf), rolled, year: yNow, beyond: [...new Set(uses.filter(u => Number(u.iso.slice(0, 4)) > yNow).map(u => u.iso.slice(0, 4)))] };
+}
+function renderBank(type, el) {
+  const st = bankStatus(type), cfg = getBank()[type], name = BANK_TYPES[type];
+  el.replaceChildren();
+  const h = document.createElement('h3'); h.textContent = name; el.append(h);
+  if (!st) {
+    const p = document.createElement('p'); p.className = 'small';
+    p.textContent = cfg.legacyDays != null ? `נשמרה יתרה ישנה בימים (${cfg.legacyDays}). יש להזין אותה מחדש בשעות בהגדרות.` : 'טרם הוגדר. הזן יתרה, מכסה שנתית ותקרה בהגדרות.';
+    el.append(p); return;
+  }
+  const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'יתרה משוערת היום';
+  const big = document.createElement('div'); big.className = 'big'; big.textContent = `\u2066${hrs(st.now)}\u2069 שעות`;
+  const cap = st.cap === Infinity ? 'ללא' : fmt(st.cap);
+  const rows = [
+    ['יתרה משוערת היום', null],
+    [`לפי המעסיק נכון ל-${isoToDisplay(st.asOf)}`, fmt(st.cfg.balance * 60)],
+    ...st.rolled.map(r => [`סוף ${r.year}: קיזוז מעל התקרה`, r.forfeited ? '−' + fmt(r.forfeited) : '0']),
+    [`נוצל ב-${st.year} (מדווח עד היום)`, fmt(st.usedYTD)],
+    ...(st.planned ? [['מתוכנן עד סוף השנה', fmt(st.planned)]] : []),
+    [`צפי ל-31.12.${st.year}`, hrs(st.endYear)],
+    ['תקרה בסוף שנה', cap],
+    [`מכסה שנתית (מתווספת ב-1.1.${st.year + 1})`, st.annual ? fmt(st.annual) : 'לא הוגדרה'],
+    [`יתרה צפויה ב-1.1.${st.year + 1}`, hrs(st.nextStart)],
+  ];
+  const grid = document.createElement('div'); grid.className = 'rows';
+  rows.slice(1).forEach(([k, v]) => { const a = document.createElement('span'), b = document.createElement('b'); a.textContent = k; b.textContent = v; grid.append(a, b); });
+  el.append(lbl, big, grid);
+  const warn = (text, cls = 'alert') => { const p = document.createElement('div'); p.className = cls; p.textContent = text; el.append(p); };
+  if (st.forfeit > 0) warn(`⚠ צפוי קיזוז של ${fmt(st.forfeit)} שעות בסוף ${st.year} (מעל התקרה של ${cap}). כדי לא לאבד אותן יש לנצל עוד ${fmt(st.forfeit)} שעות עד 31.12.${st.year}.`);
+  if (!st.dated) warn('לא נשמר תאריך ליתרה — מניחים שהיא נכונה להיום. עדכן את התאריך בהגדרות.');
+  if (st.endYear < 0) warn('הדיווחים באפליקציה גבוהים מהיתרה. כדאי לבדוק מול המעסיק.');
+}
 
 function overtime(r) {
   if (r.net === null) return null;
@@ -970,10 +1057,9 @@ function renderMonth() {
   renderTeam();
   renderSendSettings();
 
-  // balances
-  const b = getBalances();
-  $('balVac').textContent = balanceText(b, 'vacation');
-  $('balSick').textContent = balanceText(b, 'sick');
+  // vacation / sick bank
+  renderBank('vacation', $('bankVac'));
+  renderBank('sick', $('bankSick'));
   const used = t => `${fmt(data.filter(r => r.d.dayType === t).reduce((n, r) => n + absenceMinutes(r.d, r.k), 0))} שעות`;
   $('usedVac').textContent = used('vacation');
   $('usedSick').textContent = used('sick');
@@ -1349,7 +1435,7 @@ async function importData(file) {
   const count = Object.keys(incoming).length;
   setHistory({ ...h, ...incoming });
   if (newSettings && typeof newSettings === 'object' && confirm('לייבא גם הגדרות חישוב מקובץ הגיבוי?')) { settings = { ...DEFAULTS, ...newSettings }; if (!Array.isArray(settings.vehicles)) settings.vehicles = []; writeJSON(SK, settings); }
-  if (newBalances && typeof newBalances === 'object' && (newBalances.vacation != null || newBalances.sick != null) && confirm('לייבא גם יתרות חופשה ומחלה מקובץ הגיבוי?')) writeJSON(BK, { vacation: newBalances.vacation ?? null, sick: newBalances.sick ?? null, ...(newBalances.unit ? { unit: newBalances.unit } : {}) });
+  if (newBalances && typeof newBalances === 'object' && (newBalances.vacation != null || newBalances.sick != null) && confirm('לייבא גם את בנק שעות החופשה והמחלה מקובץ הגיבוי?')) writeJSON(BK, newBalances);
   renderDay(); renderMonth(); renderSettings();
   setStatus('importStatus', `✓ יובאו ${count} דיווחים.`);
 }
@@ -1360,10 +1446,12 @@ function renderSettings() {
   $('deductCoffee').checked = Boolean(settings.deductCoffee);
   renderVehicleSettings();
   renderSendSettings();
-  const b = getBalances();
-  // Legacy balances were in days; leave the hour fields empty so they get re-entered in hours.
-  $('balVacInput').value = b.unit === 'hours' ? (b.vacation ?? '') : '';
-  $('balSickInput').value = b.unit === 'hours' ? (b.sick ?? '') : '';
+  const bank = getBank();
+  for (const [type, p] of [['vacation', 'bv'], ['sick', 'bs']]) {
+    const c = bank[type];
+    $(p + 'Balance').value = c.balance ?? ''; $(p + 'AsOf').value = c.asOf ? isoToDisplay(c.asOf) : '';
+    $(p + 'Annual').value = c.annual ?? ''; $(p + 'Cap').value = c.cap ?? '';
+  }
   renderStorageInfo();
 }
 function renderStorageInfo() {
@@ -1409,11 +1497,21 @@ function addVehicle() {
 }
 
 function saveBalances() {
-  const parse = id => $(id).value === '' ? null : Number($(id).value);
-  const vacation = parse('balVacInput'), sick = parse('balSickInput');
-  if ([vacation, sick].some(v => v !== null && (!Number.isFinite(v) || v < 0))) { setStatus('balanceStatus', 'יש להזין מספר לא שלילי', 'warn'); return; }
-  writeJSON(BK, { vacation, sick, unit: 'hours' });
-  setStatus('balanceStatus', '✓ היתרות נשמרו בדפדפן');
+  const num = id => $(id).value.trim() === '' ? null : Number($(id).value);
+  const out = { version: 2 };
+  for (const [type, p] of [['vacation', 'bv'], ['sick', 'bs']]) {
+    const c = { balance: num(p + 'Balance'), annual: num(p + 'Annual'), cap: num(p + 'Cap'), asOf: null };
+    if (Object.values(c).some(v => v !== null && (!Number.isFinite(v) || v < 0))) { setStatus('balanceStatus', `${BANK_TYPES[type]}: יש להזין מספרים לא שליליים`, 'warn'); return; }
+    const raw = $(p + 'AsOf').value.trim();
+    if (raw) {
+      const m = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/), iso = m && `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+      if (!iso || !validIso(iso)) { setStatus('balanceStatus', `${BANK_TYPES[type]}: תאריך לא תקין (לדוגמה 01.01.2026)`, 'warn'); return; }
+      c.asOf = iso;
+    } else if (c.balance !== null) { c.asOf = todayIso(); $(p + 'AsOf').value = isoToDisplay(c.asOf); }
+    out[type] = c;
+  }
+  writeJSON(BK, out);
+  setStatus('balanceStatus', '✓ בנק השעות נשמר');
 }
 
 /* ---------- clock picker (dial / wheels / keyboard) ---------- */
