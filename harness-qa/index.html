@@ -88,7 +88,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
 <h1>בודק כיסוי רתמות</h1>
 <p class="muted small" style="margin:0">Harness QA Inspector</p>
-<b>גרסה 4.8: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>גרסה 4.9: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -170,10 +170,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div>
 
 <div class="tab" id="tMech">
-<p>רשימת מחברים ורכיבים מהשרטוט המכני (BOM / טבלת מחברים). ההצלבה בודקת שכל רכיב שבשרטוט החשמלי קיים גם במכני, שהמק״טים זהים ושמספרי הפינים בתוך טווח המחבר.</p>
+<p>הנתונים מהשרטוט המכני: רשימת פריטים ומחברים (BOM) וטבלת החוטים. אפשר לייבא את שתיהן מ־PDF בלשונית "ייבוא מ־PDF" (בחר "שרטוט מכני / BOM"), כל טבלה בתורה עם "הוסף למקור".</p>
 <div class="toolbar"><input type="file" id="mechFile" accept=".csv,.txt,text/csv"><button class="secondary" data-tpl="mech">הכנס כותרת</button></div>
-<textarea id="mech" class="code" spellcheck="false" placeholder="מזהה,מק״ט,תיאור,מגעים"></textarea>
-<p class="small muted">עמודות: <code>מזהה,מק״ט,תיאור,מגעים</code>. בעמודה מגעים רושמים את מספר המגעים במחבר, והיא לא חובה.</p>
+<textarea id="mech" class="code" spellcheck="false" placeholder="מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך"></textarea>
+<p class="small muted">עמודות: <code>מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך</code>. שורה עם מוצא ויעד היא <b>חוט מטבלת החוטים המכנית</b> (מזהה = מספר החוט), ושורה בלי מוצא ויעד היא <b>פריט / מחבר</b>. כל חוט במכני חייב לחבר נקודות של אותה רשת בשרטוט החשמלי, ואם בשניהם רשום חתך, הוא חייב להיות זהה. לשרטוט החשמלי אפשר להוסיף עמודת <code>חתך</code>.</p>
 </div>
 
 <div class="tab" id="tTests">
@@ -321,7 +321,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <li><b>דיודות:</b> נדרשת בדיקה בכיוון ההולכה עם גבול תחתון גדול מ־0 (לזיהוי דיודה מקוצרת וקיטוביות הפוכה), ולפי ההגדרה גם בכיוון החסימה.</li>
 <li><b>בידוד / HIPOT:</b> רשתות שמחוברות דרך נגד או דיודה מאוחדות לקבוצת בידוד אחת. נדרש בידוד בין כל זוג קבוצות, כולל סיכוכים ופינים לא מחוברים (NC). המנוע סופר את הזוגות שכוסו ומציע בדיקות שישלימו את החסר.</li>
 <li><b>סתירות:</b> רציפות בין רשתות שאמורות להיות מבודדות, בדיקה על נקודה שלא קיימת בשרטוט, בדיקה על פין NC, מדידה מחוץ לגבולות, מהדורת דוח שונה מהמהדורה שנבדקה.</li>
-<li><b>מכני מול חשמלי:</b> כל מחבר, רכיב ופיצול צריך להופיע בשני השרטוטים, עם אותו מק״ט, ובטווח הפינים של המחבר.</li>
+<li><b>מכני מול חשמלי:</b> כל מחבר, רכיב ופיצול צריך להופיע בשני השרטוטים, עם אותו מק״ט, ובטווח הפינים של המחבר. כל חוט בטבלת החוטים המכנית צריך לחבר נקודות של אותה רשת בשרטוט החשמלי, באותו חתך. ספלייס במכני (למשל E45) משויך לרשת לפי שמות הספלייסים שהבודק מציין.</li>
 </ul>
 </details>
 </section>
@@ -333,7 +333,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div></div>
 
 <script id="hqa-engine">
-/* Harness QA engine v4.8: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.9: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -345,7 +345,7 @@ const HE_TEST={CONT:'רציפות',RES:'התנגדות',DIODE:'דיודה',CAP:'
 const DRAW_HE_IN={'חוט':'WIRE','ספלייס':'SPLICE','פיצול':'SPLICE','גשר':'JUMPER','סיכוך':'SHIELD','נגד':'R','דיודה':'D','קבל':'C','לא מחובר':'NC','לא-מחובר':'NC','מחבר':'CONN','רשת':'NET'};
 const HE_UNIT={ohm:'אוהם',V:'וולט',F:'פאראד'};
 const ALL_HE='כולם';
-const HEADERS={drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה',tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה',mech:'מזהה,מק״ט,תיאור,מגעים'};
+const HEADERS={drawing:'סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה,חתך',tests:'צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה',mech:'מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך'};
 
 /* ---------- CSV ---------- */
 function parseCsv(text){
@@ -376,9 +376,9 @@ function readTable(text,spec){
   const items=rows.slice(1).map(r=>{const o={line:r.line};for(const f in idx)o[f]=String(r.cells[idx[f]]??'').trim();return o;});
   return{idx,items,empty:false};
 }
-const DRAW_SPEC={type:['type','סוג','kind'],id:['id','ref','מזהה','wire','designator'],from:['from','a','pina','sidea','מוצא','מ','end1'],to:['to','b','pinb','sideb','יעד','אל','end2'],value:['value','ערך','ohms','pn','partnumber'],tol:['tol','tolerance','טולרנס'],net:['net','netname','signal','רשת','אות'],pin:['pin','פין','point'],note:['note','notes','הערה','הערות']};
+const DRAW_SPEC={type:['type','סוג','kind'],id:['id','ref','מזהה','wire','designator'],from:['from','a','pina','sidea','מוצא','מ','end1'],to:['to','b','pinb','sideb','יעד','אל','end2'],value:['value','ערך','ohms','pn','partnumber'],tol:['tol','tolerance','טולרנס'],net:['net','netname','signal','רשת','אות'],pin:['pin','פין','point'],note:['note','notes','הערה','הערות'],gauge:['gauge','awg','חתך']};
 const TEST_SPEC={step:['step','#','no','מס','שלב','צעד'],type:['type','סוג','test'],from:['from','a','pina','sidea','מוצא','מ'],to:['to','b','pinb','sideb','יעד','אל'],low:['low','min','מינימום','lo'],high:['high','max','מקסימום','hi'],unit:['unit','units','יחידה'],voltage:['voltage','v','מתח'],measured:['measured','reading','מדוד','נמדד','מדידה'],result:['result','status','תוצאה'],note:['note','notes','הערה']};
-const MECH_SPEC={ref:['ref','id','designator','מזהה','connector','מחבר'],pn:['partnumber','pn','מקט','part','מק"ט'],desc:['description','desc','תיאור'],pins:['pins','cavities','contacts','פינים','מגעים']};
+const MECH_SPEC={ref:['ref','id','designator','מזהה','connector','מחבר','wire','wireno','חוט'],pn:['partnumber','pn','מקט','part','מק"ט'],desc:['description','desc','תיאור'],pins:['pins','cavities','contacts','פינים','מגעים'],qty:['qty','quantity','כמות'],from:['from','מוצא','end1'],to:['to','יעד','end2'],gauge:['gauge','awg','size','חתך'],color:['color','colour','צבע'],length:['length','len','אורך']};
 
 /* ---------- quantities ---------- */
 const PFX={p:1e-12,n:1e-9,u:1e-6,'µ':1e-6,'μ':1e-6,m:1e-3,k:1e3,K:1e3,M:1e6,G:1e9};
@@ -448,7 +448,7 @@ function buildModel(drawText){
         const kind=type.startsWith('J')?'JUMPER':(type.startsWith('S')||type==='DRAIN')?'SHIELD':'WIRE';
         if(!a||!b){add('warn','שרטוט חשמלי',where,'חוט ללא שתי נקודות קצה','','wireend');continue;}
         if(a===b){add('warn','שרטוט חשמלי',(it.id||where),'חוט מנקודה לעצמה','','wireself');continue;}
-        node(a);node(b);edges.push({kind,id:it.id||'',a,b,net:it.net||'',line:it.line});
+        node(a);node(b);edges.push({kind,id:it.id||'',a,b,net:it.net||'',gauge:it.gauge||'',line:it.line});
       }else if(type==='SPLICE'||type==='SPL'){const n=it.id||a;if(n){spliceDecl.add(n);node(n);}}
       else if(['R','D','C'].includes(type)){
         const id=it.id||(type+'@'+it.line);
@@ -569,7 +569,8 @@ function parseTests(text){
 }
 function parseMech(text){
   const t=readTable(text,MECH_SPEC);
-  return t.empty?null:t.items.filter(x=>x.ref).map(x=>({ref:x.ref,pn:x.pn||'',desc:x.desc||'',pins:x.pins?Number(x.pins):NaN,line:x.line}));
+  const np=v=>String(v||'').trim().replace(/\s*-\s*/g,'-');
+  return t.empty?null:t.items.filter(x=>x.ref||(x.from&&x.to)).map(x=>({ref:x.ref||'',pn:x.pn||'',desc:x.desc||'',pins:x.pins?Number(x.pins):NaN,qty:x.qty||'',from:np(x.from),to:np(x.to),gauge:x.gauge||'',color:x.color||'',length:x.length||'',line:x.line}));
 }
 
 /* ---------- main analysis ---------- */
@@ -869,7 +870,8 @@ function analyze(input){
   for(const r of M.conns.keys())addRef(r,'conn');
   if(!mech)add('info','מכני מול חשמלי','—','לא הוזנה רשימה מהשרטוט המכני – הצלבה מכנית לא בוצעה','להזין בלשונית "שרטוט מכני"','nomech');
   else{
-    const mm=new Map();for(const m of mech){if(mm.has(m.ref))add('warn','מכני מול חשמלי',m.ref,'מופיע פעמיים ברשימה המכנית','','mechdup');mm.set(m.ref,m);}
+    const bom=mech.filter(m=>m.ref&&!(m.from&&m.to)),mwires=mech.filter(m=>m.from&&m.to);
+    const mm=new Map();for(const m of bom){if(mm.has(m.ref))add('warn','מכני מול חשמלי',m.ref,'מופיע פעמיים ברשימה המכנית','','mechdup');mm.set(m.ref,m);}
     let matched=0;
     for(const [r] of elecRefs){
       const m=mm.get(r);
@@ -883,8 +885,37 @@ function analyze(input){
       }
       trace.push({type:'מכני',id:r,where:m.pn,req:'קיים בשני השרטוטים'+(epn?', מק״ט זהה':''),steps:[],status:ok?'תואם':'אי־התאמה',ok});
     }
-    for(const m of mech)if(!elecRefs.has(m.ref))add('info','מכני מול חשמלי',m.ref,'מופיע בשרטוט המכני אך לא בשרטוט החשמלי'+(m.desc?' ('+m.desc+')':''),'לוודא שזה פריט מכני בלבד (תווית, שרוול, מהדק וכו׳)','mechextra');
-    metrics.push({key:'mech',label:'פריטים תואמים במכני',covered:matched,total:elecRefs.size});
+    for(const m of bom)if(!elecRefs.has(m.ref))add('info','מכני מול חשמלי',m.ref,'מופיע בשרטוט המכני אך לא בשרטוט החשמלי'+(m.desc?' ('+m.desc+')':''),'לוודא שזה פריט מכני בלבד (תווית, שרוול, מהדק וכו׳)','mechextra');
+    if(bom.length)metrics.push({key:'mech',label:'פריטים תואמים במכני',covered:matched,total:elecRefs.size});
+    if(mwires.length){
+      /* wire table of the mechanical drawing: each wire must join points of one electrical net */
+      const gN=v=>String(v||'').replace(/awg|#|\s/gi,'').replace(/^0+(?=\d)/,'');
+      const spliceNet=new Map();
+      for(const n of nets){const m=n.name.match(/\(([^)]*)\)/);if(m)for(const e of m[1].split(','))spliceNet.set(e.trim(),n.idx);}
+      const netOfP=x=>netOf.has(x)?netOf.get(x):spliceNet.has(x)?spliceNet.get(x):undefined;
+      const elecById=new Map(M.edges.filter(e=>e.id&&e.kind!=='VIRTUAL').map(e=>[e.id,e]));
+      const elecByPair=new Map(M.edges.filter(e=>e.kind!=='VIRTUAL'&&!e.self).map(e=>[pairKey(e.a,e.b),e]));
+      const seenE=new Set();let okW=0;
+      for(const w of mwires){
+        const id=w.ref||(w.from+'↔'+w.to),na=netOfP(w.from),nb=netOfP(w.to);let ok=true;
+        const e=(w.ref&&elecById.get(w.ref))||elecByPair.get(pairKey(w.from,w.to));
+        if(e)seenE.add(e.idx);
+        const miss=[w.from,w.to].filter(x=>netOfP(x)===undefined);
+        if(miss.length){
+          const sp=miss.filter(x=>/^(E|SPL|SP)\d/i.test(x));
+          if(sp.length===miss.length&&M.virtual)add('info','מכני מול חשמלי',id,'ספלייס '+sp.join(', ')+' לא מופיע ברשימת החשמל (בטיוטה מהבודק מופיעים רק הספלייסים שהבודק ציין)','לבדוק את הרשת של החוט ידנית מול השרטוט','mwsplice');
+          else{ok=false;add('critical','מכני מול חשמלי',id,'קצה של חוט בטבלה המכנית לא קיים בשרטוט החשמלי: '+miss.join(', '),'לבדוק את שם הפין במכני או בחשמלי','mwunknown');}
+        }else if(na!==nb){ok=false;add('critical','מכני מול חשמלי',id,'החוט במכני מחבר '+w.from+' ('+nets[na].name+') ל־'+w.to+' ('+nets[nb].name+') – בשרטוט החשמלי אלה רשתות נפרדות','לברר איזה שרטוט נכון','mwnets');}
+        if(e&&w.ref&&e.id===w.ref&&pairKey(e.a,e.b)!==pairKey(w.from,w.to)){ok=false;add('warn','מכני מול חשמלי',id,'אותו מספר חוט עם קצוות שונים: חשמלי '+e.a+'↔'+e.b+' / מכני '+w.from+'↔'+w.to,'לבדוק את מספור החוטים','mwends');}
+        if(e&&e.gauge&&w.gauge&&gN(e.gauge)!==gN(w.gauge)){ok=false;add('critical','מכני מול חשמלי',id,'חתך שונה: חשמלי '+e.gauge+' / מכני '+w.gauge,'לברר איזה חתך נכון','mwgauge');}
+        if(ok)okW++;
+        trace.push({type:'חוט במכני',id,where:w.from+' ↔ '+w.to+(w.gauge?' | חתך '+w.gauge:'')+(w.length?' | אורך '+w.length:''),req:'אותה רשת בחשמלי'+(e&&e.gauge?', אותו חתך':''),steps:[],status:ok?'תואם':'אי־התאמה',ok});
+      }
+      const realWires=M.edges.filter(e=>e.kind!=='VIRTUAL'&&!e.self);
+      const notInMech=realWires.filter(e=>!seenE.has(e.idx));
+      if(realWires.length&&notInMech.length)add('warn','מכני מול חשמלי',notInMech.length+' חוטים','חוטים בשרטוט החשמלי ללא שורה בטבלת החוטים המכנית: '+list(notInMech.map(e=>e.id||e.a+'↔'+e.b),15),'לבדוק אם הטבלה המכנית חלקית או שחוט חסר','mwmissing');
+      metrics.push({key:'mechw',label:'חוטים במכני תואמים לחשמלי',covered:okW,total:mwires.length});
+    }
   }
 
   /* ---- document identity ---- */
@@ -1027,9 +1058,9 @@ function tableFromLines(lines){
   return{cols,rows};
 }
 const PDF_FIELDS={
-  drawing:{type:'סוג',id:'מזהה / מס׳ חוט',from:'מוצא (מחבר או נקודה)',from_pin:'פין מוצא',to:'יעד (מחבר או נקודה)',to_pin:'פין יעד',value:'ערך / מק״ט',tol:'טולרנס',net:'שם אות / רשת',note:'הערה'},
+  drawing:{gauge:'חתך',type:'סוג',id:'מזהה / מס׳ חוט',from:'מוצא (מחבר או נקודה)',from_pin:'פין מוצא',to:'יעד (מחבר או נקודה)',to_pin:'פין יעד',value:'ערך / מק״ט',tol:'טולרנס',net:'שם אות / רשת',note:'הערה'},
   tests:{step:'צעד',type:'סוג בדיקה',from:'מוצא',from_pin:'פין מוצא',to:'יעד',to_pin:'פין יעד',low:'גבול תחתון',high:'גבול עליון',unit:'יחידה',voltage:'מתח',measured:'מדוד',result:'תוצאה',note:'הערה'},
-  mech:{ref:'מזהה',pn:'מק״ט',desc:'תיאור',pins:'מספר מגעים'}
+  mech:{ref:'מזהה / מס׳ חוט',pn:'מק״ט',desc:'תיאור',pins:'מספר מגעים',qty:'כמות',from:'מוצא',from_pin:'פין מוצא',to:'יעד',to_pin:'פין יעד',gauge:'חתך',color:'צבע',length:'אורך'}
 };
 const HDR=[
   ['from_pin',/^(from|src|source)\s*(pin|cav|cavity|contact|term)/i],['to_pin',/^(to|dest)\s*(pin|cav|cavity|contact|term)/i],
@@ -1044,9 +1075,10 @@ const HDR=[
   ['unit',/^(unit|units|יחידה)$/i],['voltage',/^(volt|voltage|test\s*voltage|v|מתח)$/i],['tol',/^(tol|tolerance|טולרנס)$/i],
   ['measured',/^(measured|reading|actual|מדוד|נמדד)$/i],['result',/^(result|pass\/fail|status|תוצאה)$/i],
   ['value',/^(value|ohms?|resistance|ערך)$/i],
-  ['ref',/^(ref|ref\s*des|designator|item|find\s*no|מזהה)$/i],['pn',/^(p\/?n|part\s*(no|number|#)?|mfr\s*p\/?n|מק"?״?ט)$/i],
+  ['ref',/^(ref|ref\.?\s*des\.?|refdes|designator|reference|מזהה)$/i],['item',/^(item|item\s*no|find\s*no|פריט)$/i],['pn',/^(p\/?n|part\s*(no|number|#)?|mfr\s*p\/?n|מק"?״?ט)$/i],
   ['desc',/^(desc|description|nomenclature|name|תיאור)$/i],['pins',/^(pins|cavities|contacts|qty\s*pins|מגעים)$/i],
-  ['note',/^(note|notes|remark|remarks|הערה|הערות)$/i]
+  ['note',/^(note|notes|remark|remarks|הערה|הערות)$/i],
+  ['gauge',/^(awg|gauge|ga|wire\s*size|size|חתך)$/i],['color',/^(colou?r|צבע)$/i],['length',/^(length|len|אורך)(\s*[\(\[].*)?$/i],['qty',/^(qty|quantity|כמות)$/i]
 ];
 function headerScore(cells){let n=0;for(const c of cells)if(c&&HDR.some(([,re])=>re.test(c.trim())))n++;return n;}
 function autoMap(table,target){
@@ -1063,6 +1095,8 @@ function autoMap(table,target){
       if(f==='pin')field=lastSide?lastSide+'_pin':'';
       if(field==='id'&&target==='tests')field='step';
       if(field==='ref'&&target!=='mech')field='id';
+      if(field==='id'&&target==='mech')field='ref';
+      if((field==='gauge'||field==='color'||field==='length'||field==='qty')&&target!=='mech'&&!(field==='gauge'&&target==='drawing'))field='note';
       if(field==='desc'&&target!=='mech')field='note';
       if(field==='value'&&target==='tests')field='measured';
       if(field&&fields[field]&&!map.includes(field))map[i]=field;
@@ -1079,7 +1113,13 @@ function tableToCsv(table,map,target,opts={}){
   for(const r of table.rows){
     if(headerScore(r.cells)>=2){skipped++;continue;}
     const g={};map.forEach((f,i)=>{if(f&&r.cells[i])g[f]=g[f]?g[f]+' '+r.cells[i]:r.cells[i];});
-    if(target==='mech'){if(!g.ref){skipped++;continue;}out.push([g.ref,g.pn,g.desc,g.pins]);continue;}
+    if(target==='mech'){
+      let mf=normPoint(g.from),mt=normPoint(g.to);
+      if(g.from_pin)mf=mf?mf+join+normPoint(g.from_pin):normPoint(g.from_pin);
+      if(g.to_pin)mt=mt?mt+join+normPoint(g.to_pin):normPoint(g.to_pin);
+      if(!g.ref&&!(mf&&mt)){skipped++;continue;}
+      if(!(mf&&mt)&&!g.pn&&!g.desc&&!g.pins&&!g.qty){skipped++;continue;}   /* a lone first-column text is a title, not an item */
+      out.push([g.ref,g.pn,g.desc,g.pins,g.qty,mf,mt,g.gauge,g.color,g.length]);continue;}
     let from=normPoint(g.from),to=normPoint(g.to);
     if(g.from_pin)from=from?from+join+normPoint(g.from_pin):normPoint(g.from_pin);
     if(g.to_pin)to=to?to+join+normPoint(g.to_pin):normPoint(g.to_pin);
@@ -1088,7 +1128,7 @@ function tableToCsv(table,map,target,opts={}){
       const T=type.toUpperCase();
       if(!DRAW_HE_IN[type.trim()]&&!['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN','SPLICE','SPL','R','D','C','NC','CONN','CONNECTOR'].includes(T))type=HE_DRAW[opts.defaultType||'WIRE'];
       if(!from||(!to&&!/^(NC|SPLICE|SPL|CONN|לא מחובר|ספלייס|מחבר)/i.test(type))){skipped++;continue;}
-      out.push([type,g.id,from,to,g.value,g.tol,g.net,g.note]);
+      out.push([type,g.id,from,to,g.value,g.tol,g.net,g.note,g.gauge]);
     }else{
       type=HE_TEST[canonType(type)||guessTestType(type+' '+(g.note||''))||opts.defaultType||'CONT'];
       if(!from||!to){skipped++;continue;}
@@ -1347,35 +1387,46 @@ const fresh=()=>({v:4,meta:{},settings:{...H.DEFAULT_SETTINGS},drawing:'',mech:'
 let data=fresh(),last=null;
 
 const DEMO={
-drawing:`סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה
+drawing:`סוג,מזהה,מוצא,יעד,ערך,טולרנס,רשת,הערה,חתך
 מחבר,J1,,,M83723/75R1415N,,,מחבר ראשי
 מחבר,J2,,,D38999/26WB35PN,,,מחבר ציוד
 מחבר,J3,,,MS27467T11B35S,,,מחבר מנורה
 ספלייס,SPL1,,,,,,פיצול הזנה
-חוט,W1,J1-1,SPL1,,,PWR_28V,
-חוט,W2,SPL1,J2-1,,,PWR_28V,
-חוט,W3,SPL1,J3-1,,,PWR_28V,ענף למנורה
-חוט,W4,J1-2,J2-2,,,RTN,
-חוט,W5,J1-3,J2-3,,,SIG_A,
-חוט,W6,J1-4,R1-1,,,SENSE_IN,
+חוט,W1,J1-1,SPL1,,,PWR_28V,,20
+חוט,W2,SPL1,J2-1,,,PWR_28V,,22
+חוט,W3,SPL1,J3-1,,,PWR_28V,ענף למנורה,22
+חוט,W4,J1-2,J2-2,,,RTN,,20
+חוט,W5,J1-3,J2-3,,,SIG_A,,22
+חוט,W6,J1-4,R1-1,,,SENSE_IN,,24
 נגד,R1,R1-1,R1-2,3.3,5,,נגד טורי
-חוט,W7,R1-2,J2-4,,,SENSE_OUT,
-חוט,W8,J1-5,D1-A,,,LAMP_IN,
+חוט,W7,R1-2,J2-4,,,SENSE_OUT,,24
+חוט,W8,J1-5,D1-A,,,LAMP_IN,,22
 דיודה,D1,D1-A,D1-K,0.7,,,דיודת הגנה
-חוט,W9,D1-K,J3-2,,,LAMP_OUT,
-חוט,W10,J1-6,J2-6,,,DATA_H,
-חוט,W11,J1-7,J2-7,,,DATA_L,
+חוט,W9,D1-K,J3-2,,,LAMP_OUT,,22
+חוט,W10,J1-6,J2-6,,,DATA_H,,24
+חוט,W11,J1-7,J2-7,,,DATA_L,,24
 סיכוך,SH1,J1-8,J2-8,,,SHLD_DATA,סיכוך זוג הנתונים
 סיכוך,SH2,J2-8,J2-SHELL,,,SHLD_DATA,חיבור למעטפת
 לא מחובר,,J1-9,,,,,
 לא מחובר,,J2-9,,,,,`,
-mech:`מזהה,מק״ט,תיאור,מגעים
-J1,M83723/75R1415N,מחבר ראשי,15
-J2,D38999/26WB35SN,מחבר ציוד,13
-J3,MS27467T11B35S,מחבר מנורה,13
-R1,RCR07G3R3JS,נגד 3.3 אוהם,
-D1,1N4148,דיודה,
-L1,TAG-100,תווית זיהוי,`,
+mech:`מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך
+J1,M83723/75R1415N,מחבר ראשי,15,1,,,,,
+J2,D38999/26WB35SN,מחבר ציוד,13,1,,,,,
+J3,MS27467T11B35S,מחבר מנורה,13,1,,,,,
+R1,RCR07G3R3JS,נגד 3.3 אוהם,,1,,,,,
+D1,1N4148,דיודה,,1,,,,,
+L1,TAG-100,תווית זיהוי,,2,,,,,
+W1,M22759/16-20-9,,,,J1-1,SPL1,20,לבן,850
+W2,M22759/16-22-9,,,,SPL1,J2-1,22,לבן,400
+W3,M22759/16-22-9,,,,SPL1,J3-1,22,לבן,620
+W4,M22759/16-20-9,,,,J1-2,J2-2,20,שחור,1250
+W5,M22759/16-20-9,,,,J1-3,J2-3,20,לבן,1250
+W6,M22759/16-24-9,,,,J1-4,R1-1,24,לבן,300
+W7,M22759/16-24-9,,,,R1-2,J2-4,24,לבן,950
+W8,M22759/16-22-9,,,,J1-5,D1-A,22,לבן,300
+W9,M22759/16-22-9,,,,D1-K,J3-2,22,לבן,320
+W10,M27500-24SC2S23,,,,J1-6,J2-6,24,לבן,1250
+W11,M27500-24SC2S23,,,,J1-7,J2-6,24,כחול,1250`,
 tests:`צעד,סוג,מוצא,יעד,מינימום,מקסימום,יחידה,מתח,נמדד,תוצאה,הערה
 1,רציפות,J1-1,J2-1,,1,אוהם,,,,
 2,רציפות,J1-2,J2-2,,1,אוהם,,,,

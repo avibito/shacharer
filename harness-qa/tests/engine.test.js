@@ -125,7 +125,7 @@ test('demo: applying suggestions closes every coverage gap',()=>{
   const extra=r1.suggestions.map((s,i)=>['S'+i,s.type,s.from,s.to,s.low,s.high,s.unit,s.voltage].join(',')).join('\n');
   const r2=HQA.analyze({...base,tests:grab('tests')+'\n'+extra});
   assert.equal(r2.counts.gap,0,r2.findings.filter(f=>f.sev==='gap').map(f=>f.el+': '+f.msg).join('\n'));
-  for(const m of r2.metrics.filter(m=>m.key!=='mech'))assert.equal(m.covered,m.total,m.label);
+  for(const m of r2.metrics.filter(m=>!['mech','mechw'].includes(m.key)))assert.equal(m.covered,m.total,m.label);
 });
 
 test('tester HTML report text -> tests -> cross-check',()=>{
@@ -243,7 +243,8 @@ test('tester log: draft netlist is flagged as unverified and drives a revision c
 /* ---- Hebrew is the working language; English files keep working ---- */
 test('Hebrew demo gives the expected findings',()=>{
   const r=HQA.analyze({drawing:grab('drawing'),tests:grab('tests'),mech:grab('mech'),meta:{drawingRev:'B'}});
-  assert.equal(r.counts.critical,2);assert.equal(r.counts.gap,7);
+  assert.equal(r.counts.critical,4);assert.equal(r.counts.gap,7);
+  assert.ok(codes(r).includes('mwgauge')&&codes(r).includes('mwnets'));
   assert.equal(metric(r,'wires').covered,11);assert.equal(metric(r,'iso').covered,30);
 });
 test('Hebrew and English inputs give identical analysis',()=>{
@@ -307,6 +308,55 @@ test('QA report: sections, verdict, metrics, reviews, escaping',()=>{
   assert.ok(html.includes('a &amp; b')&&html.includes('ראיה &quot;1&quot;'));
   assert.equal((html.match(/<tr><td>\d+<\/td><td><span class="sev/g)||[]).length,res.findings.length,'one row per finding');
   const doc=HQA.reportDocument(html,'t');assert.ok(doc.startsWith('<!doctype html>')&&doc.includes('dir="rtl"')&&doc.includes('.qa-doc'));
+});
+
+/* ---- mechanical drawing: wire table ---- */
+const MH='מזהה,מק״ט,תיאור,מגעים,כמות,מוצא,יעד,חתך,צבע,אורך\n';
+test('mechanical wire table: same net, gauge, ends, unknown points, electrical wires missing',()=>{
+  const d='WIRE,W1,J1-1,SPL1\nWIRE,W2,SPL1,J2-1\nWIRE,W3,J1-2,J2-2\nWIRE,W4,J1-3,J2-3';
+  const dg='type,id,from,to,value,tol,net,note,gauge\nWIRE,W1,J1-1,SPL1,,,,,22\nWIRE,W2,SPL1,J2-1,,,,,22\nWIRE,W3,J1-2,J2-2,,,,,#20\nWIRE,W4,J1-3,J2-3,,,,,24';
+  const mech=MH+'J1,X,,,1,,,,,\nW1,,,,,J1-1,SPL1,22,,\nW2,,,,,SPL1,J2-1,AWG 22,,\nW3,,,,,J1-2,J2-2,20,,\nW9,,,,,J1-3,J2-2,24,,\nW7,,,,,J1-3,J9-9,24,,';
+  const r=HQA.analyze({drawing:dg,tests:T('1,CONT,J1-1,J2-1,,1'),mech});
+  const c=codes(r);
+  assert.ok(c.includes('mwnets'),'W9 joins two electrical nets');
+  assert.ok(c.includes('mwunknown'),'J9-9 is not in the electrical drawing');
+  assert.ok(!c.includes('mwgauge'),'"AWG 22" = "22", "#20" = "20"');
+  assert.ok(r.findings.some(f=>f.key.startsWith('mwmissing')&&f.msg.includes('W4')));
+  assert.equal(metric(r,'mechw').covered,3);assert.equal(metric(r,'mechw').total,5);
+  assert.equal(metric(r,'mech').total>0,true);
+  // gauge mismatch
+  const g=HQA.analyze({drawing:dg,tests:'',mech:MH+'W4,,,,,J1-3,J2-3,22,,'});
+  assert.ok(codes(g).includes('mwgauge'));
+  // same id, different ends
+  const e=HQA.analyze({drawing:dg,tests:'',mech:MH+'W3,,,,,J1-2,J1-1,20,,'});
+  assert.ok(codes(e).includes('mwends'));
+});
+test('mechanical wire to a splice is matched to the tester-draft net by its splice label',()=>{
+  const r=HQA.parseTesterLog(LOG);const d=HQA.testsToNetlist(r.csv).csv;   // net with J1-1,J2-1,J3-1 is labelled (E1,E2)
+  const ok=HQA.analyze({drawing:d,tests:r.csv,mech:MH+'W1,,,,,J1-1,E1,22,,\nW2,,,,,E2,J3-1,22,,'});
+  assert.equal(metric(ok,'mechw').covered,2);
+  const bad=HQA.analyze({drawing:d,tests:r.csv,mech:MH+'W5,,,,,J1-4,E1,22,,'});
+  assert.ok(codes(bad).includes('mwnets'),'J1-4 is on another net than splice E1');
+  const unk=HQA.analyze({drawing:d,tests:r.csv,mech:MH+'W6,,,,,J1-1,E77,22,,'});
+  assert.ok(codes(unk).includes('mwsplice')&&!codes(unk).includes('mwunknown'));
+});
+test('PDF import of a mechanical wire table (WIRE NO / FROM / PIN / TO / PIN / AWG / COLOR / LENGTH)',()=>{
+  const items=[];let y=700;
+  ['WIRE NO','FROM','PIN','TO','PIN','AWG','COLOR','LENGTH (mm)'].forEach((h,i)=>items.push(item(h,40+i*70,y)));
+  for(let k=1;k<=4;k++){y-=16;['W'+k,'J1',''+k,'J2',''+k,'22','WHT',''+(100*k)].forEach((v,i)=>items.push(item(v,40+i*70,y)));}
+  const tbl=HQA.tableFromLines(HQA.pdfLines(items));const {map}=HQA.autoMap(tbl,'mech');
+  assert.equal(JSON.stringify(map),JSON.stringify(['ref','from','from_pin','to','to_pin','gauge','color','length']));
+  const out=HQA.tableToCsv(tbl,map,'mech',{});assert.equal(out.count,4);
+  assert.ok(out.csv.includes('W3,,,,,J1-3,J2-3,22,WHT,300'));
+  const m=HQA.parseMech(out.csv);assert.equal(m[0].from,'J1-1');assert.equal(m[0].gauge,'22');
+});
+
+test('PDF import of a mechanical BOM: ITEM is not the reference designator',()=>{
+  const items=[];let y=700;
+  ['ITEM','REF DES','PART NUMBER','DESCRIPTION','QTY'].forEach((h,i)=>items.push(item(h,40+i*90,y)));
+  [['1','J1','M83723','CONNECTOR','1'],['2','R1','RCR07','RESISTOR','1']].forEach(r=>{y-=16;r.forEach((v,i)=>items.push(item(v,40+i*90,y)));});
+  const tbl=HQA.tableFromLines(HQA.pdfLines(items));const {map}=HQA.autoMap(tbl,'mech');
+  assert.equal(JSON.stringify(map),JSON.stringify(['','ref','pn','desc','qty']));
 });
 
 console.log(`\n${pass} passed`);
