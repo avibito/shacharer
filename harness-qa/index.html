@@ -48,6 +48,7 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
 .toolbar select,.toolbar input{width:auto;min-width:140px;padding:7px}
 .msg{font-weight:bold;color:var(--ok)}
+#pdfTable th select{min-width:120px;padding:5px;font-size:12px}
 .printonly{display:none}
 @media (max-width:600px){body{padding:8px}header,section{padding:12px}h1{font-size:21px}}
 @media print{
@@ -102,14 +103,14 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <button id="clearAll" class="danger">נקה את כל המקורות</button>
 </div>
 <div class="tabs" role="tablist">
-<button data-tab="tDraw" class="on">שרטוט חשמלי</button>
+<button data-tab="tDocs" class="on">ייבוא מ־PDF</button>
+<button data-tab="tDraw">שרטוט חשמלי</button>
 <button data-tab="tMech">שרטוט מכני</button>
 <button data-tab="tTests">תוכנית בדיקה</button>
 <button data-tab="tReport">ייבוא דוח בודק (HTML)</button>
-<button data-tab="tDocs">מסמכי PDF</button>
 </div>
 
-<div class="tab on" id="tDraw">
+<div class="tab" id="tDraw">
 <p>רשימת החיבורים מהסכמה החשמלית. שורה לכל חוט, רכיב, פיצול או פין לא מחובר.</p>
 <div class="toolbar"><input type="file" id="drawFile" accept=".csv,.txt,text/csv"><button class="secondary" data-tpl="drawing">הכנס כותרת</button></div>
 <textarea id="drawing" class="code" spellcheck="false" placeholder="type,id,from,to,value,tol,net,note"></textarea>
@@ -177,9 +178,35 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 <div id="repMeta" class="small"></div>
 </div>
 
-<div class="tab" id="tDocs">
-<p class="small">צירוף השרטוטים לצפייה בלבד, לצד הניתוח. הקבצים נפתחים בדפדפן, לא מפוענחים ולא נשמרים. בדוח נרשם רק שם הקובץ.</p>
-<div class="grid" id="docSlots"></div>
+<div class="tab on" id="tDocs">
+<p>טען PDF של שרטוט, רשימת חוטים, תוכנית ATP או BOM. המנוע קורא את שכבת הטקסט שבקובץ, בונה ממנה טבלה ומעביר את השורות למקור שבחרת. הקובץ נקרא בדפדפן בלבד, ושום דבר לא נשלח לשרת.</p>
+<div class="grid">
+<div><label for="pdfFile">קובץ PDF</label><input type="file" id="pdfFile" accept=".pdf,application/pdf"></div>
+<div><label for="pdfTarget">מה יש בקובץ?</label><select id="pdfTarget"><option value="drawing">שרטוט חשמלי / רשימת חוטים</option><option value="tests">תוכנית בדיקה / ATP / דוח תוצאות</option><option value="mech">שרטוט מכני / BOM</option></select></div>
+<div><label for="pdfPages">עמודים (ריק = הכל, למשל 2-4,7)</label><input id="pdfPages" dir="ltr" placeholder="1-3"></div>
+<div><label for="pdfMode">שיטת קריאה</label><select id="pdfMode"><option value="table">טבלה (עמודות)</option><option value="pairs">טקסט חופשי: חיפוש זוגות נקודות</option></select></div>
+</div>
+<div class="toolbar"><button id="pdfRead">קרא את הקובץ</button><button id="pdfOpen" class="secondary" disabled>פתח לצפייה</button></div>
+<p id="pdfMsg" class="small" role="status"></p>
+<div id="pdfOut" hidden>
+<div class="toolbar">
+<label class="small" for="pdfDefType" style="margin:0">סוג ברירת מחדל:</label><select id="pdfDefType"></select>
+<label class="small" for="pdfJoin" style="margin:0">חיבור מחבר+פין:</label><select id="pdfJoin"><option value="-">J1-12</option><option value="">J112</option><option value=" ">J1 12</option></select>
+<label class="small" style="margin:0"><input type="checkbox" id="pdfOnlyFull" checked>הצג רק שורות שיתורגמו</label>
+</div>
+<p class="small muted" id="pdfHint"></p>
+<div class="scroll" style="max-height:420px"><table id="pdfTable"></table></div>
+<p class="small" id="pdfCount"></p>
+<div class="toolbar"><button id="pdfAppend">הוסף למקור</button><button id="pdfReplace" class="secondary">החלף את המקור</button><button id="pdfRaw" class="secondary">העתק טקסט גולמי</button></div>
+</div>
+<details><summary>מה אפשר לקרוא מ־PDF ומה לא</summary>
+<ul class="small">
+<li><b>אפשר:</b> טבלאות בקובץ שהופק מתוכנה (CAD, Word, Excel ומערכות בדיקה), כמו רשימת חוטים (Wire List / From-To), טבלת פינים של מחבר, טבלת צעדים ב־ATP, דוח תוצאות ו־BOM. גם טקסט חופשי בסגנון ״Check continuity J1-1 to J2-1״, במצב ״טקסט חופשי״.</li>
+<li><b>אי אפשר:</b> לחלץ חיבורים מהקווים המצוירים בסכמה, כי קו בשרטוט הוא גרפיקה ולא טקסט. אם בשרטוט אין טבלת חיבורים, צריך לבקש מההנדסה רשימת חוטים (Wire List / Netlist), או להזין את החיבורים ידנית בלשונית ״שרטוט חשמלי״.</li>
+<li><b>סריקה:</b> PDF סרוק הוא תמונה בלי שכבת טקסט. הכלי יזהה את זה ויודיע. במקרה כזה צריך לבקש את הקובץ המקורי.</li>
+<li>אחרי הייבוא חובה לעבור על השורות מול המסמך. הקריאה אוטומטית, והמבקר אחראי לאמת אותה.</li>
+</ul>
+</details>
 </div>
 </section>
 
@@ -453,7 +480,7 @@ function effRes(M,x,y,values){
 }
 
 /* ---------- tests ---------- */
-const TYPE_ALIAS={CONT:['CONT','CONTINUITY','CON','C','רציפות'],RES:['RES','R','RESISTANCE','OHM','התנגדות'],DIODE:['DIODE','D','DIO','דיודה'],CAP:['CAP','CAPACITANCE','קבל','קיבול'],ISO:['ISO','INS','IR','INSULATION','ISOLATION','בידוד'],HIPOT:['HIPOT','HV','DWV','מתח גבוה']};
+const TYPE_ALIAS={CONT:['CONT','CONTINUITY','CON','C','CONTINUITY TEST','רציפות'],RES:['RES','R','RESISTANCE','OHM','התנגדות'],DIODE:['DIODE','D','DIO','דיודה'],CAP:['CAP','CAPACITANCE','קבל','קיבול'],ISO:['ISO','INS','IR','INSULATION','ISOLATION','INSULATION RESISTANCE','MEGGER','בידוד'],HIPOT:['HIPOT','HI-POT','HV','DWV','DIELECTRIC','DIELECTRIC WITHSTANDING','מתח גבוה']};
 function canonType(t){t=String(t||'').trim().toUpperCase();for(const [k,al] of Object.entries(TYPE_ALIAS))if(al.includes(t))return k;return null;}
 function parseTests(text){
   const t=readTable(text,TEST_SPEC),F=[],tests=[];
@@ -841,7 +868,182 @@ function reportToTestsCsv(rep,prefA,prefB){
   return lines.join('\n');
 }
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS};
+/* ---------- PDF text -> table ---------- */
+/* items: {str, t:[a,b,c,d,e,f] (pdf.js transform), w:width, page}. Rotated text is normalised so each
+   orientation is read along its own baseline (harness drawings are often landscape / rotated). */
+function pdfLines(items){
+  const groups=new Map();
+  for(const it of items){
+    const s=String(it.str??'');if(!s.trim())continue;
+    const [a,b,c,d,e,f]=it.t,len=Math.hypot(a,b)||1,ux=a/len,uy=b/len;
+    const rot=((Math.round(Math.atan2(b,a)/(Math.PI/2))%4)+4)%4;
+    const x=e*ux+f*uy,y=-e*uy+f*ux,h=Math.hypot(c,d)||len||8;
+    const key=it.page+'|'+rot;if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push({s,x,y,h,w:Math.abs(it.w||s.length*h*0.5),page:it.page});
+  }
+  const lines=[];
+  for(const arr of groups.values()){
+    arr.sort((p,q)=>q.y-p.y||p.x-q.x);
+    let cur=null;
+    for(const it of arr){
+      if(cur&&Math.abs(cur.y-it.y)<=Math.max(1.5,Math.min(cur.h,it.h)*0.45))cur.items.push(it);
+      else{cur={y:it.y,h:it.h,page:it.page,items:[it]};lines.push(cur);}
+    }
+  }
+  for(const l of lines){
+    l.items.sort((p,q)=>p.x-q.x);const cells=[];let c=null;
+    for(const it of l.items){
+      const gap=c?it.x-c.x1:Infinity;
+      if(c&&gap<=Math.max(2.5,it.h*0.55)){c.text+=(gap>it.h*0.12&&!c.text.endsWith(' ')&&!it.s.startsWith(' ')?' ':'')+it.s;c.x1=Math.max(c.x1,it.x+it.w);}
+      else{c={x0:it.x,x1:it.x+it.w,text:it.s};cells.push(c);}
+    }
+    for(const c of cells)c.text=c.text.replace(/\s+/g,' ').trim();
+    l.cells=cells.filter(c=>c.text);delete l.items;
+  }
+  return lines.filter(l=>l.cells.length);
+}
+function pageAnchors(lines){
+  const xs=[];lines.forEach((l,i)=>l.cells.forEach(c=>xs.push({x:c.x0,i})));
+  xs.sort((p,q)=>p.x-q.x);
+  const clusters=[];
+  for(const p of xs){const last=clusters[clusters.length-1];if(last&&p.x-last.max<=6){last.max=p.x;last.lines.add(p.i);}else clusters.push({min:p.x,max:p.x,lines:new Set([p.i])});}
+  const multi=lines.filter(l=>l.cells.length>1).length;
+  const need=Math.max(2,Math.ceil(multi*0.15));
+  let anchors=clusters.filter(c=>c.lines.size>=need).map(c=>c.min);
+  if(!anchors.length)anchors=[xs.length?xs[0].x:0];
+  if(anchors.length>24)anchors=clusters.sort((p,q)=>q.lines.size-p.lines.size).slice(0,24).map(c=>c.min).sort((p,q)=>p-q);
+  return anchors;
+}
+const colOf=(an,x)=>{let k=0;for(let j=0;j<an.length;j++)if(an[j]<=x+4)k=j;return k;};
+function tableFromLines(lines){
+  /* Columns are found per page (tables re-flow between pages), then pages are aligned to the page
+     with the most columns: same count -> by order, otherwise by nearest relative position. */
+  const pages=new Map();for(const l of lines){if(!pages.has(l.page))pages.set(l.page,[]);pages.get(l.page).push(l);}
+  const per=[...pages.entries()].map(([pg,ls])=>({pg,ls,an:pageAnchors(ls)}));
+  const ref=per.reduce((m,p)=>p.an.length>m.an.length?p:m,per[0]||{an:[0]});
+  const cols=ref.an.length,span=a=>(a[a.length-1]-a[0])||1;
+  const rows=[];
+  for(const p of per){
+    const map=p.an.length===cols?p.an.map((_,j)=>j):p.an.map(x=>{const rel=(x-p.an[0])/span(p.an);let best=0,bd=Infinity;
+      ref.an.forEach((rx,j)=>{const d=Math.abs((rx-ref.an[0])/span(ref.an)-rel);if(d<bd){bd=d;best=j;}});return best;});
+    for(const l of p.ls){const cells=Array(cols).fill('');
+      for(const c of l.cells){const k=map[colOf(p.an,c.x0)];cells[k]=cells[k]?cells[k]+' '+c.text:c.text;}
+      rows.push({page:l.page,cells});}
+  }
+  return{cols,rows};
+}
+const PDF_FIELDS={
+  drawing:{type:'סוג',id:'מזהה / מס׳ חוט',from:'מוצא (מחבר או נקודה)',from_pin:'פין מוצא',to:'יעד (מחבר או נקודה)',to_pin:'פין יעד',value:'ערך / מק״ט',tol:'טולרנס',net:'שם אות / רשת',note:'הערה'},
+  tests:{step:'צעד',type:'סוג בדיקה',from:'מוצא',from_pin:'פין מוצא',to:'יעד',to_pin:'פין יעד',low:'גבול תחתון',high:'גבול עליון',unit:'יחידה',voltage:'מתח',measured:'מדוד',result:'תוצאה',note:'הערה'},
+  mech:{ref:'מזהה',pn:'מק״ט',desc:'תיאור',pins:'מספר מגעים'}
+};
+const HDR=[
+  ['from_pin',/^(from|src|source)\s*(pin|cav|cavity|contact|term)/i],['to_pin',/^(to|dest)\s*(pin|cav|cavity|contact|term)/i],
+  ['from',/^(from|src|source|origin|end\s*1|side\s*a|מוצא|מ־?)(\s*(conn|connector|ref|loc|location|point|desig.*))?$/i],
+  ['to',/^(to|dest|destination|end\s*2|side\s*b|יעד|אל)(\s*(conn|connector|ref|loc|location|point|desig.*))?$/i],
+  ['pin',/^(pin|cav|cavity|contact|term|terminal|פין)$/i],
+  ['step',/^(step|test\s*(no|#|num.*)|seq|#|no\.?|מס׳?|צעד)$/i],
+  ['type',/^(type|test(\s*type)?|kind|סוג)$/i],
+  ['id',/^(wire(\s*(no|#|id|num.*))?|id|w\/?n)$/i],
+  ['net',/^(signal|net|function|circuit|אות|רשת)(\s*name)?$/i],
+  ['low',/^(low|min|minimum|lower(\s*limit)?|lo|מינ.*)$/i],['high',/^(high|max|maximum|upper(\s*limit)?|hi|limit|מקס.*)$/i],
+  ['unit',/^(unit|units|יחידה)$/i],['voltage',/^(volt|voltage|test\s*voltage|v|מתח)$/i],['tol',/^(tol|tolerance|טולרנס)$/i],
+  ['measured',/^(measured|reading|actual|מדוד|נמדד)$/i],['result',/^(result|pass\/fail|status|תוצאה)$/i],
+  ['value',/^(value|ohms?|resistance|ערך)$/i],
+  ['ref',/^(ref|ref\s*des|designator|item|find\s*no|מזהה)$/i],['pn',/^(p\/?n|part\s*(no|number|#)?|mfr\s*p\/?n|מק"?״?ט)$/i],
+  ['desc',/^(desc|description|nomenclature|name|תיאור)$/i],['pins',/^(pins|cavities|contacts|qty\s*pins|מגעים)$/i],
+  ['note',/^(note|notes|remark|remarks|הערה|הערות)$/i]
+];
+function headerScore(cells){let n=0;for(const c of cells)if(c&&HDR.some(([,re])=>re.test(c.trim())))n++;return n;}
+function autoMap(table,target){
+  const fields=PDF_FIELDS[target];let best=null,bs=1;
+  for(const r of table.rows){const sc=headerScore(r.cells);if(sc>bs){bs=sc;best=r;}}
+  const map=Array(table.cols).fill('');
+  if(!best)return{map,header:null};
+  let lastSide='';
+  best.cells.forEach((c,i)=>{
+    c=(c||'').trim();if(!c)return;
+    for(const [f,re] of HDR){if(!re.test(c))continue;
+      let field=f;
+      if(f==='from'||f==='to')lastSide=f;
+      if(f==='pin')field=lastSide?lastSide+'_pin':'';
+      if(field==='id'&&target==='tests')field='step';
+      if(field==='ref'&&target!=='mech')field='id';
+      if(field==='desc'&&target!=='mech')field='note';
+      if(field==='value'&&target==='tests')field='measured';
+      if(field&&fields[field]&&!map.includes(field))map[i]=field;
+      break;}
+  });
+  return{map,header:best};
+}
+const normPoint=s=>String(s??'').trim().replace(/\s*-\s*/g,'-').replace(/\s+/g,' ');
+function tableToCsv(table,map,target,opts={}){
+  const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const join=opts.joiner??'-';
+  const heads={drawing:['type','id','from','to','value','tol','net','note'],tests:['step','type','from','to','low','high','unit','voltage','measured','result','note'],mech:['ref','part_number','description','pins']}[target];
+  const out=[];let skipped=0;
+  for(const r of table.rows){
+    if(headerScore(r.cells)>=2){skipped++;continue;}
+    const g={};map.forEach((f,i)=>{if(f&&r.cells[i])g[f]=g[f]?g[f]+' '+r.cells[i]:r.cells[i];});
+    if(target==='mech'){if(!g.ref){skipped++;continue;}out.push([g.ref,g.pn,g.desc,g.pins]);continue;}
+    let from=normPoint(g.from),to=normPoint(g.to);
+    if(g.from_pin)from=from?from+join+normPoint(g.from_pin):normPoint(g.from_pin);
+    if(g.to_pin)to=to?to+join+normPoint(g.to_pin):normPoint(g.to_pin);
+    let type=(g.type||'').trim();
+    if(target==='drawing'){
+      const T=type.toUpperCase();
+      if(!['WIRE','W','JUMPER','JMP','SHIELD','SHLD','DRAIN','SPLICE','SPL','R','D','C','NC','CONN','CONNECTOR'].includes(T))type=opts.defaultType||'WIRE';
+      if(!from||(!to&&!/^(NC|SPLICE|SPL|CONN)/i.test(type))){skipped++;continue;}
+      out.push([type,g.id,from,to,g.value,g.tol,g.net,g.note]);
+    }else{
+      type=canonType(type)||guessTestType(type+' '+(g.note||''))||opts.defaultType||'CONT';
+      if(!from||!to){skipped++;continue;}
+      out.push([g.step,type,from,to,g.low,g.high,g.unit,g.voltage,g.measured,g.result,g.note]);
+    }
+  }
+  return{csv:[heads.join(','),...out.map(r=>r.map(q).join(','))].join('\n'),count:out.length,skipped};
+}
+function guessTestType(s){
+  s=String(s||'');
+  if(/insulat|isolat|בידוד|megger|\bIR\b/i.test(s))return'ISO';
+  if(/hipot|hi-pot|dielectric|dwv|withstand|מתח גבוה/i.test(s))return'HIPOT';
+  if(/diode|דיודה/i.test(s))return'DIODE';
+  if(/capacit|קיבול|קבל/i.test(s))return'CAP';
+  if(/resist|התנגדות/i.test(s)&&!/continu/i.test(s))return'RES';
+  if(/continu|רציפות/i.test(s))return'CONT';
+  return'';
+}
+/* Free-text mode: find connector-pin tokens (J1-12, P2-A, SPL3, J4-SHELL) in each line. */
+const POINT_RE=/\b((?:[A-Z]{1,5}\d{1,4}[A-Z]?)(?:\s*-\s*(?:[A-Za-z0-9]{1,6}))?)\b/g;
+function pairsFromLines(lines,target,opts={}){
+  const recs=[];
+  for(const l of lines){
+    const text=l.cells.map(c=>c.text).join('  ');
+    const pts=[...text.matchAll(POINT_RE)].map(m=>normPoint(m[1])).filter(p=>/-/.test(p)||/^(SPL|SP|TP|GND|E)\d/i.test(p));
+    const all=/\b(all|others|rest|כל השאר|כולם)\b/i.test(text);
+    if(pts.length<2&&!(pts.length===1&&all))continue;
+    const type=target==='tests'?(guessTestType(text)||opts.defaultType||'CONT'):(opts.defaultType||'WIRE');
+    const r={page:l.page,text,from:pts[0],to:pts[1]||'ALL',type,extra:pts.slice(2),step:'',low:'',high:'',voltage:''};
+    if(target==='tests'){
+      const Q='(\\d+(?:\\.\\d+)?\\s*(?:[kKMGm]\\s*)?(?:ohms?|Ω))';
+      const hi=text.match(new RegExp('(?:max(?:imum)?|≤|<=?|up to|עד)\\.?\\s*'+Q,'i')),lo=text.match(new RegExp('(?:min(?:imum)?|≥|>=?|at least|לפחות)\\.?\\s*'+Q,'i'));
+      const v=text.match(/(\d+(?:\.\d+)?)\s*(k?)V(?:DC|AC|RMS)?\b/i),st=text.match(/^\s*(?:step|צעד)?\s*(\d+(?:\.\d+)*)[:.)\s]/i);
+      if(hi)r.high=hi[1].replace(/\s+/g,'');if(lo)r.low=lo[1].replace(/\s+/g,'');
+      if(v&&/ISO|HIPOT/.test(type))r.voltage=String(Number(v[1])*(v[2]?1000:1));
+      if(st)r.step=st[1];
+    }
+    recs.push(r);
+  }
+  return recs;
+}
+function pairsToCsv(recs,target){
+  const q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const lines=target==='tests'?['step,type,from,to,low,high,unit,voltage,measured,result,note']:['type,id,from,to,value,tol,net,note'];
+  recs.forEach((r,i)=>lines.push((target==='tests'?[r.step||'P'+(i+1),r.type,r.from,r.to,r.low,r.high,'',r.voltage,'','','עמ׳ '+r.page+(r.extra.length?' | נקודות נוספות בשורה: '+r.extra.join(' '):'')]:[r.type,'',r.from,r.to,'','','','עמ׳ '+r.page]).map(q).join(',')));
+  return lines.join('\n');
+}
+
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -980,19 +1182,113 @@ function renderRepMeta(){
   for(const [k,l] of Object.entries(L)){const p=document.createElement('div');p.textContent=l+': '+(m[k]??'לא זוהה');box.append(p);}
 }
 
-/* ---- PDF reference docs ---- */
-const docKinds=[['electrical','שרטוט חשמלי'],['mechanical','שרטוט מכני'],['atp','תוכנית בדיקה / ATP']];const docUrls={};
-for(const [k,title] of docKinds){
-  const w=document.createElement('div');w.className='metric';
-  const h=document.createElement('h3');h.textContent=title;
-  const inp=Object.assign(document.createElement('input'),{type:'file',accept:'.pdf,application/pdf'});
-  const info=Object.assign(document.createElement('p'),{className:'small muted',textContent:data.docs?.[k]?'נרשם: '+data.docs[k]:'לא נבחר קובץ'});
-  const btn=Object.assign(document.createElement('button'),{textContent:'פתח',disabled:true,className:'secondary'});
-  inp.onchange=()=>{const f=inp.files[0];if(docUrls[k])URL.revokeObjectURL(docUrls[k]);if(!f){btn.disabled=true;return;}
-    docUrls[k]=URL.createObjectURL(f);btn.disabled=false;info.textContent=f.name+' | '+(f.size/1048576).toFixed(2)+' MB';data.docs={...(data.docs||{}),[k]:f.name};save();};
-  btn.onclick=()=>{if(docUrls[k])window.open(docUrls[k],'_blank','noopener');};
-  w.append(h,inp,info,btn);$('docSlots').append(w);
+/* ---- PDF import ---- */
+const PDFJS='lib/pdfjs-3.11.174/';let pdfjsP=null,pdfState=null,pdfUrl=null;
+function loadPdfjs(){
+  if(globalThis.pdfjsLib)return Promise.resolve(globalThis.pdfjsLib);
+  return pdfjsP??=new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=PDFJS+'pdf.min.js';
+    sc.onload=()=>{globalThis.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';ok(globalThis.pdfjsLib);};
+    sc.onerror=()=>{pdfjsP=null;err(Error('לא ניתן לטעון את רכיב קריאת ה־PDF (lib/pdfjs). אם הקובץ נפתח מהמחשב, יש לפתוח אותו מהאתר.'));};document.head.append(sc);});
 }
+function pageList(spec,n){
+  if(!spec.trim())return Array.from({length:n},(_,i)=>i+1);
+  const out=new Set();for(const part of spec.split(/[,\s]+/).filter(Boolean)){const m=part.match(/^(\d+)(?:-(\d+))?$/);if(!m)throw Error('טווח עמודים לא תקין: '+part);
+    for(let i=+m[1];i<=Math.min(n,+(m[2]||m[1]));i++)out.add(i);}
+  return[...out].sort((x,y)=>x-y);
+}
+const TARGET_LABEL={drawing:'השרטוט החשמלי',tests:'תוכנית הבדיקה',mech:'השרטוט המכני'};
+function setDefTypes(){
+  const t=$('pdfTarget').value,sel=$('pdfDefType');sel.replaceChildren();
+  const opts=t==='drawing'?[['WIRE','חוט (WIRE)'],['SHIELD','סיכוך (SHIELD)'],['JUMPER','גשר (JUMPER)']]:t==='tests'?[['CONT','רציפות (CONT)'],['ISO','בידוד (ISO)'],['HIPOT','HIPOT'],['RES','התנגדות (RES)'],['DIODE','דיודה (DIODE)']]:[['','—']];
+  for(const [v,l] of opts)sel.add(new Option(l,v));
+}
+$('pdfTarget').addEventListener('change',()=>{setDefTypes();if(pdfState)buildPdfView(true);});
+for(const id of ['pdfDefType','pdfJoin','pdfOnlyFull'])$(id).addEventListener('change',()=>pdfState&&renderPdfTable());
+$('pdfMode').addEventListener('change',()=>{if(pdfState)buildPdfView(true);});
+setDefTypes();
+$('pdfFile').addEventListener('change',()=>{const f=$('pdfFile').files[0];if(pdfUrl)URL.revokeObjectURL(pdfUrl);pdfUrl=f?URL.createObjectURL(f):null;$('pdfOpen').disabled=!f;pdfState=null;$('pdfOut').hidden=true;$('pdfMsg').textContent=f?f.name+' | '+(f.size/1048576).toFixed(2)+' MB':'';});
+$('pdfOpen').onclick=()=>{if(pdfUrl)window.open(pdfUrl,'_blank','noopener');};
+$('pdfRead').onclick=async()=>{
+  const f=$('pdfFile').files[0],msg=$('pdfMsg');
+  if(!f)return msg.textContent='בחר קובץ PDF.';
+  if(f.size>60*1048576)return msg.textContent='הקובץ גדול מ־60MB.';
+  msg.textContent='קורא…';$('pdfOut').hidden=true;
+  try{
+    const lib=await loadPdfjs();
+    /* isEvalSupported:false – fonts are never compiled to JS (hardening for untrusted PDFs). */
+    const doc=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false,disableFontFace:true}).promise;
+    const pages=pageList($('pdfPages').value,doc.numPages),items=[];
+    for(const n of pages){const pg=await doc.getPage(n);const tc=await pg.getTextContent();
+      for(const it of tc.items)if(it.str)items.push({str:it.str,t:it.transform,w:it.width,page:n});
+      msg.textContent='קורא… עמוד '+n+' מתוך '+doc.numPages;}
+    if(!items.length){msg.textContent='לא נמצא טקסט בעמודים שנבחרו ('+pages.length+'). כנראה שזה PDF סרוק (תמונה). צריך לבקש את הקובץ המקורי שהופק מהתוכנה.';return;}
+    const lines=H.pdfLines(items);
+    pdfState={file:f.name,pages,numPages:doc.numPages,lines};
+    data.docs={...(data.docs||{}),[$('pdfTarget').value]:f.name};save();
+    buildPdfView(false);
+    msg.textContent=f.name+': נקראו '+pages.length+' עמודים, '+lines.length+' שורות טקסט.';
+  }catch(e){msg.textContent='שגיאה בקריאת הקובץ: '+(e&&e.message||e);}
+};
+function buildPdfView(keepMsg){
+  const t=$('pdfTarget').value,mode=$('pdfMode').value;
+  if(mode==='table'){
+    pdfState.table=H.tableFromLines(pdfState.lines);
+    const saved=(data.pdfMaps||{})[t+'|'+pdfState.table.cols];
+    const am=H.autoMap(pdfState.table,t);
+    pdfState.map=saved&&saved.length===pdfState.table.cols?[...saved]:am.map;
+    $('pdfHint').textContent=(saved?'הוחל מיפוי העמודות ששמרת בפעם הקודמת לטבלה עם '+pdfState.table.cols+' עמודות. ':am.header?'כותרת הטבלה זוהתה אוטומטית. ':'כותרת הטבלה לא זוהתה. ')+'בשורה העליונה בוחרים לכל עמודה מה היא מכילה. שורות כותרת חוזרות מדולגות.';
+  }else{
+    pdfState.pairs=H.pairsFromLines(pdfState.lines,t,{defaultType:$('pdfDefType').value});
+    $('pdfHint').textContent='מצב טקסט חופשי: בכל שורה נלקחות שתי הנקודות הראשונות שנראות כמו מחבר-פין (J1-12, P2-A). סוג הבדיקה מנוחש לפי מילים בשורה (continuity, insulation, hipot…).';
+  }
+  $('pdfOut').hidden=false;renderPdfTable();
+}
+function pdfResult(){
+  const t=$('pdfTarget').value,opts={defaultType:$('pdfDefType').value,joiner:$('pdfJoin').value};
+  if($('pdfMode').value==='pairs'){pdfState.pairs=H.pairsFromLines(pdfState.lines,t,opts);return{csv:H.pairsToCsv(pdfState.pairs,t),count:pdfState.pairs.length,skipped:pdfState.lines.length-pdfState.pairs.length};}
+  return H.tableToCsv(pdfState.table,pdfState.map,t,opts);
+}
+function renderPdfTable(){
+  const t=$('pdfTarget').value,tbl=$('pdfTable');tbl.replaceChildren();
+  const res=pdfResult();const preview=H.parseCsv(res.csv);
+  if($('pdfMode').value==='table'){
+    const fields=H.PDF_FIELDS[t];const thead=document.createElement('thead'),hr=document.createElement('tr');
+    hr.append(Object.assign(document.createElement('th'),{textContent:'עמ׳'}));
+    for(let i=0;i<pdfState.table.cols;i++){const th=document.createElement('th');const sel=document.createElement('select');
+      sel.add(new Option('— התעלם —',''));for(const [k,l] of Object.entries(fields))sel.add(new Option(l,k,false,pdfState.map[i]===k));
+      sel.onchange=()=>{pdfState.map[i]=sel.value;data.pdfMaps={...(data.pdfMaps||{}),[t+'|'+pdfState.table.cols]:[...pdfState.map]};saveSoon();renderPdfTable();};
+      th.append(sel);hr.append(th);}
+    thead.append(hr);tbl.append(thead);
+    const body=document.createElement('tbody');let n=0;
+    const one={...pdfState.table};
+    for(const r of pdfState.table.rows){
+      if($('pdfOnlyFull').checked&&H.tableToCsv({cols:one.cols,rows:[r]},pdfState.map,t,{defaultType:$('pdfDefType').value,joiner:$('pdfJoin').value}).count===0)continue;
+      if(++n>300)break;
+      const tr=document.createElement('tr');tr.append(td(r.page));for(const c of r.cells)tr.append(td(c,'ltr'));body.append(tr);}
+    tbl.append(body);
+  }else{
+    const thead=document.createElement('thead'),hr=document.createElement('tr');
+    for(const h of ['עמ׳','צעד','סוג','מוצא','יעד','מינ׳','מקס׳','מתח','השורה במסמך'])hr.append(Object.assign(document.createElement('th'),{textContent:h}));thead.append(hr);tbl.append(thead);
+    const body=document.createElement('tbody');
+    for(const r of pdfState.pairs.slice(0,300)){const tr=document.createElement('tr');tr.append(td(r.page),td(r.step,'ltr'),td(r.type,'ltr'),td(r.from,'ltr'),td(r.to,'ltr'),td(r.low,'ltr'),td(r.high,'ltr'),td(r.voltage,'ltr'),td(r.text,'ltr'));body.append(tr);}
+    tbl.append(body);
+  }
+  $('pdfCount').textContent=res.count+' שורות יועברו אל '+TARGET_LABEL[t]+' ('+res.skipped+' שורות דולגו: כותרות, טקסט שאינו טבלה, או שורות בלי מוצא ויעד).'+(res.count>300?' בתצוגה מוצגות 300 הראשונות.':'');
+  $('pdfAppend').disabled=$('pdfReplace').disabled=!res.count;
+  pdfState.preview=preview;
+}
+function pdfApply(replace){
+  const t=$('pdfTarget').value,res=pdfResult();if(!res.count)return;
+  if(replace&&$(t).value.trim()&&!confirm('להחליף את כל התוכן של '+TARGET_LABEL[t]+' ב־'+res.count+' שורות מה־PDF?'))return;
+  const cur=$(t).value.trim();
+  $(t).value=replace||!cur?res.csv:cur+'\n'+res.csv.split('\n').slice(1).join('\n');
+  data[t]=$(t).value;save();
+  notify('הועברו '+res.count+' שורות אל '+TARGET_LABEL[t]+' – לבדוק מול המסמך');
+  document.querySelector('[data-tab='+({drawing:'tDraw',tests:'tTests',mech:'tMech'})[t]+']').click();
+}
+$('pdfAppend').onclick=()=>pdfApply(false);$('pdfReplace').onclick=()=>pdfApply(true);
+$('pdfRaw').onclick=async()=>{const txt=pdfState.lines.map(l=>'['+l.page+'] '+l.cells.map(c=>c.text).join(' | ')).join('\n');
+  try{await navigator.clipboard.writeText(txt);notify('הטקסט הועתק');}catch(e){download((pdfState.file||'pdf')+'.txt',txt,'text/plain;charset=utf-8');}};
 
 /* ---- analysis & rendering ---- */
 const td=(v,cls)=>{const e=document.createElement('td');e.textContent=v??'';if(cls)e.className=cls;return e;};

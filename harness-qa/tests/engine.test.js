@@ -148,4 +148,45 @@ DC Net1 (SIDE A - A, SIDE B - A): Pass 500V
   assert.ok(r.findings.some(f=>f.key.startsWith('contgap')&&f.msg.includes('P1-C')));
 });
 
+
+
+/* ---- PDF text reconstruction (items shaped like pdf.js getTextContent output) ---- */
+const item=(str,x,y,page=1,h=10)=>({str,t:[h,0,0,h,x,y],w:str.length*h*0.5,page});
+test('PDF table: columns, repeated headers, connector+pin join',()=>{
+  const items=[];let y=700;
+  for(const pg of [1,2]){
+    y=700;['WIRE','FROM','PIN','TO','PIN','SIGNAL'].forEach((h,i)=>items.push(item(h,40+i*80,y,pg)));
+    for(let k=1;k<=5;k++){y-=16;const n=(pg-1)*5+k;[`W${n}`,'J1',String(n),'J2',String(n),`SIG ${n}`].forEach((v,i)=>items.push(item(v,40+i*80,y,pg)));}
+  }
+  const tbl=HQA.tableFromLines(HQA.pdfLines(items));
+  assert.equal(tbl.cols,6);
+  const {map}=HQA.autoMap(tbl,'drawing');
+  assert.equal(JSON.stringify(map),JSON.stringify(['id','from','from_pin','to','to_pin','net']));
+  const r=HQA.tableToCsv(tbl,map,'drawing',{});
+  assert.equal(r.count,10);
+  assert.ok(r.csv.includes('WIRE,W7,J1-7,J2-7,,,SIG 7,'));
+});
+test('PDF rotated text is read along its baseline',()=>{
+  const rot=(str,x,y)=>({str,t:[0,10,-10,0,x,y],w:str.length*5,page:1});
+  const lines=HQA.pdfLines([rot('J5-1',300,100),rot('J6-1',300,180),rot('J5-2',316,100),rot('J6-2',316,180)]);
+  assert.equal(lines.map(l=>l.cells.map(c=>c.text).join(' ')).join('|'),'J5-1 J6-1|J5-2 J6-2');
+});
+test('PDF free text: pairs, type, limits, voltage',()=>{
+  const lines=HQA.pdfLines([item('Step 3: Measure insulation J1-1 to all other pins, 500VDC, min 100 MOhm.',50,700),item('Step 1: Check continuity between J1-1 and J2-1. Max 1 Ohm.',50,680)]);
+  const recs=HQA.pairsFromLines(lines,'tests');
+  assert.equal(recs[0].type,'ISO');assert.equal(recs[0].to,'ALL');assert.equal(recs[0].low,'100MOhm');assert.equal(recs[0].voltage,'500');assert.equal(recs[0].step,'3');
+  assert.equal(recs[1].type,'CONT');assert.equal(recs[1].high,'1Ohm');
+  const t=HQA.parseTests(HQA.pairsToCsv(recs,'tests')).tests;
+  assert.equal(t[0].low,1e8);assert.equal(t[1].high,1);
+});
+test('PDF table: second page with shifted column positions is aligned',()=>{
+  const items=[];
+  const put=(pg,xs,rows)=>{let y=700;rows.forEach(r=>{r.forEach((v,i)=>items.push(item(v,xs[i],y,pg)));y-=16;});};
+  put(1,[40,120,170,250,300],[['WIRE','FROM','PIN','TO','PIN'],...[1,2,3,4].map(n=>['W'+n,'J1',''+n,'J2',''+n])]);
+  put(2,[40,100,140,200,240],[['WIRE','FROM','PIN','TO','PIN'],...[5,6,7,8].map(n=>['W'+n,'J1',''+n,'J2',''+n])]);
+  const tbl=HQA.tableFromLines(HQA.pdfLines(items));
+  const r=HQA.tableToCsv(tbl,HQA.autoMap(tbl,'drawing').map,'drawing',{});
+  assert.equal(r.count,8);assert.ok(r.csv.includes('WIRE,W8,J1-8,J2-8'));
+});
+
 console.log(`\n${pass} passed`);
