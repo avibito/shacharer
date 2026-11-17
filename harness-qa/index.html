@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Harness QA Inspector</title>
+<title>בודק כיסוי רתמות</title>
 <style>
 :root{direction:rtl;--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--field:#fff;--fieldline:#bdc8d5;--th:#eaf0f6;--tab:#e9eef5;--track:#e5ebf2;--shadow:#172b4312;--brand:#194775;--brand2:#617186;--danger:#9c3941;--link:#194775;
 --crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec;--warntext:#874700}
@@ -72,8 +72,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <body>
 
 <header>
-<h1>Harness QA Inspector</h1>
-<b>v4.4: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<h1>בודק כיסוי רתמות</h1>
+<p class="muted small" style="margin:0">Harness QA Inspector</p>
+<b>גרסה 4.4: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -129,7 +130,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <p class="small">עמודות: <code>type,id,from,to,value,tol,net,note</code>. נקודות נכתבות בצורה <code>מחבר-פין</code>, לדוגמה <code>J1-12</code>.</p>
 <table class="small"><tr><th>type</th><th>משמעות</th><th>דוגמה</th></tr>
 <tr><td>WIRE</td><td>חוט / מוליך ישיר בין שתי נקודות</td><td class="ltr">WIRE,W1,J1-1,SPL1,,,PWR</td></tr>
-<tr><td>SPLICE</td><td>הגדרת נקודת פיצול (סיכוך). שמות שמתחילים ב־SPL מזוהים אוטומטית. נקודת פיצול היא פנימית ולא נגישה לבודק.</td><td class="ltr">SPLICE,SPL1</td></tr>
+<tr><td>SPLICE</td><td>הגדרת נקודת פיצול (ספלייס). שמות שמתחילים ב־SPL מזוהים אוטומטית. נקודת פיצול היא פנימית ולא נגישה לבודק.</td><td class="ltr">SPLICE,SPL1</td></tr>
 <tr><td>JUMPER</td><td>גשר בתוך מחבר (מאחד רשתות)</td><td class="ltr">JUMPER,,J2-5,J2-6</td></tr>
 <tr><td>SHIELD</td><td>מוליך סיכוך / Drain. הרשת מסומנת כרשת סיכוך.</td><td class="ltr">SHIELD,SH1,J1-8,J2-SHELL</td></tr>
 <tr><td>R</td><td>נגד בין שתי נקודות. value באוהם (אפשר 3.3k), tol באחוזים</td><td class="ltr">R,R1,R1-1,R1-2,3.3,5</td></tr>
@@ -268,7 +269,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <div class="tab" id="rSugg">
 <p class="small">בדיקות שהוספתן תסגור את פערי הכיסוי שנמצאו. הן כתובות בפורמט של תוכנית הבדיקה, אפשר לייצא אותן ולהעביר להנדסת הבדיקות. <b>את הגבולות חובה לאמת מול המפרט.</b></p>
 <div class="toolbar"><button id="expSugg" class="secondary">ייצוא בדיקות מוצעות CSV</button><button id="simSugg" class="secondary">סימולציה: הוסף לתוכנית ונתח מחדש</button></div>
-<div class="scroll"><table><thead><tr><th>type</th><th>from</th><th>to</th><th>low</th><th>high</th><th>unit</th><th>voltage</th><th>סיבה</th></tr></thead><tbody id="suggRows"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>סוג</th><th>מוצא</th><th>יעד</th><th>מינימום</th><th>מקסימום</th><th>יחידה</th><th>מתח</th><th>סיבה</th></tr></thead><tbody id="suggRows"></tbody></table></div>
 </div>
 
 <div class="tab" id="rNets">
@@ -1407,7 +1408,8 @@ function renderPdfTable(){
     tbl.append(body);
   }else if($('pdfMode').value==='tester'){
     const rows=H.parseCsv(res.csv),thead=document.createElement('thead'),hr=document.createElement('tr');
-    for(const h of rows[0].cells)hr.append(Object.assign(document.createElement('th'),{textContent:h}));thead.append(hr);tbl.append(thead);
+    const HE={step:'צעד',type:'סוג',from:'מוצא',to:'יעד',low:'מינימום',high:'מקסימום',unit:'יחידה',voltage:'מתח',measured:'נמדד',result:'תוצאה',note:'הערה'};
+    for(const h of rows[0].cells)hr.append(Object.assign(document.createElement('th'),{textContent:HE[h]||h}));thead.append(hr);tbl.append(thead);
     const body=document.createElement('tbody');
     for(const r of rows.slice(1,301)){const tr=document.createElement('tr');for(const c of r.cells)tr.append(td(c,'ltr'));body.append(tr);}
     tbl.append(body);
