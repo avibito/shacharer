@@ -296,4 +296,17 @@ test('4-wire second contacts (<pin>B) are folded onto the pin',()=>{
   const b=run('WIRE,,J1-4,J2-4','1,CONT,J1-4,J2-4B,,1');assert.ok(codes(b).includes('unknownpt'));
 });
 
+test('QA report: sections, verdict, metrics, reviews, escaping',()=>{
+  const res=HQA.analyze({drawing:grab('drawing'),tests:grab('tests'),mech:grab('mech'),meta:{drawingRev:'B'}});
+  const f=res.findings[0];
+  const html=HQA.reportHtml({meta:{pn:'DEMO-100',drawingRev:'B',inspector:'<b>x</b>',notes:'a & b'},res,reviews:{[f.key]:{status:'סגור',note:'ראיה "1"'}},
+    verify:{total:3,ok:1,bad:1,open:1,badList:[{name:'N2',points:['J1-1'],sheet:'2',zone:'C4',note:'חסר חיבור'}]},date:'1.1.2026',reportNo:'HQA-DEMO-1',reviewLabels:['פתוח','סגור']});
+  for(const t of ['דוח ביקורת איכות','1. פרטי הפריט','3. מסקנה וכיסוי','4. אימות רשימת החיבורים','5. ממצאים','אישורים','HQA-DEMO-1','חוטים שכוסו ברציפות','חסר חיבור','גיליון 2, אזור C4'])assert.ok(html.includes(t),t);
+  assert.ok(html.includes('v-bad'),'critical verdict styling');
+  assert.ok(html.includes('&lt;b&gt;x&lt;/b&gt;')&&!html.includes('<b>x</b>'),'inspector name escaped');
+  assert.ok(html.includes('a &amp; b')&&html.includes('ראיה &quot;1&quot;'));
+  assert.equal((html.match(/<tr><td>\d+<\/td><td><span class="sev/g)||[]).length,res.findings.length,'one row per finding');
+  const doc=HQA.reportDocument(html,'t');assert.ok(doc.startsWith('<!doctype html>')&&doc.includes('dir="rtl"')&&doc.includes('.qa-doc'));
+});
+
 console.log(`\n${pass} passed`);

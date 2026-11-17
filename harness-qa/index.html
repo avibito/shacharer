@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>בודק כיסוי רתמות</title>
+<style id="qaDocCss"></style>
 <style>
 :root{direction:rtl;--ink:#192a3e;--muted:#5b6878;--bg:#eef3f9;--card:#fff;--line:#d7e0e9;--field:#fff;--fieldline:#bdc8d5;--th:#eaf0f6;--tab:#e9eef5;--track:#e5ebf2;--shadow:#172b4312;--brand:#194775;--brand2:#617186;--danger:#9c3941;--link:#194775;
 --crit:#9c1c28;--critbg:#fde7e9;--gap:#8a4b00;--gapbg:#fff1dc;--warn:#6b5d00;--warnbg:#fff8cc;--info:#2f4d6b;--infobg:#e6f0f8;--ok:#176a45;--okbg:#e3f5ec;--warntext:#874700}
@@ -73,7 +74,9 @@ details{margin:8px 0}summary{cursor:pointer;font-weight:bold}
 #dlg>div{background:var(--card);color:var(--ink);border-radius:12px;padding:16px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
 #dlgText{min-height:220px;font-family:Consolas,monospace;font-size:12px;direction:ltr;text-align:left}
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+#docWrap{background:#fff;padding:8px 0}
 @media print{
+ body.print-doc>*:not(#results){display:none!important}body.print-doc #results>*:not(#rDoc){display:none!important}body.print-doc #rDoc{display:block!important}body.print-doc #results{border:0;padding:0;margin:0}body.print-doc .qa-doc{border:0;max-width:none;padding:0}
  body{max-width:none;background:#fff;padding:0}header,section{box-shadow:none;border:1px solid #ccc;break-inside:auto}
  .noprint,button,.toolbar,.tabs{display:none!important}.printonly{display:block}
  th{position:static}select,input{border:0;padding:0}
@@ -85,7 +88,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <header>
 <h1>בודק כיסוי רתמות</h1>
 <p class="muted small" style="margin:0">Harness QA Inspector</p>
-<b>גרסה 4.7: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
+<b>גרסה 4.8: מנוע כיסוי והצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה</b>
 <p class="muted small">הכלי בודק אם תוכנית הבדיקה (ATP / תוכנית הבודק החשמלי) מכסה את כל מה שמוגדר בשרטוטים: כל חוט וענף פיצול, נגדים, דיודות, קבלים, סיכוכים, פינים לא מחוברים, ובידוד בין כל הרשתות. כל העיבוד נעשה מקומית בדפדפן, ושום קובץ לא נשלח לשרת. הנתונים נשמרים באחסון המקומי של הדפדפן, לכן מומלץ לגבות ל־JSON.</p>
 <p class="warn small">התוצאה טובה כמו הנתונים שהוזנו. ״כיסוי מלא״ פירושו שלא נמצא פער מול רשימות הקלט ולפי הכללים המפורטים בעמוד הזה. היא אינה מחליפה סקירה הנדסית ואישור מבקר.</p>
 <span class="pill msg" id="msg">מוכן</span>
@@ -268,6 +271,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <button data-rtab="rFind" class="on">ממצאים</button>
 <button data-rtab="rTrace">מטריצת עקיבות</button>
 <button data-rtab="rSugg">בדיקות מוצעות</button>
+<button data-rtab="rDoc">דוח איכות</button>
 <button data-rtab="rNets">רשתות</button>
 </div>
 
@@ -293,6 +297,12 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 <p class="small">בדיקות שהוספתן תסגור את פערי הכיסוי שנמצאו. הן כתובות בפורמט של תוכנית הבדיקה, אפשר לייצא אותן ולהעביר להנדסת הבדיקות. <b>את הגבולות חובה לאמת מול המפרט.</b></p>
 <div class="toolbar"><button id="expSugg" class="secondary">ייצוא בדיקות מוצעות CSV</button><button id="simSugg" class="secondary">סימולציה: הוסף לתוכנית ונתח מחדש</button></div>
 <div class="scroll"><table><thead><tr><th>סוג</th><th>מוצא</th><th>יעד</th><th>מינימום</th><th>מקסימום</th><th>יחידה</th><th>מתח</th><th>סיבה</th></tr></thead><tbody id="suggRows"></tbody></table></div>
+</div>
+
+<div class="tab" id="rDoc">
+<div class="toolbar"><button id="docPrint">הדפס / שמור כ־PDF</button><button id="docCopy" class="secondary">העתק לוורד</button><button id="docSave" class="secondary">הורד כקובץ HTML</button></div>
+<p class="small muted noprint" id="docHint">הדוח נבנה מהניתוח האחרון, כולל סטטוס הסקירה והערות המבקר. כדי לעדכן אותו, נתח שוב או שנה סטטוס בלשונית הממצאים.</p>
+<div class="scroll" id="docWrap"></div>
 </div>
 
 <div class="tab" id="rNets">
@@ -323,7 +333,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 </div></div>
 
 <script id="hqa-engine">
-/* Harness QA engine v4.7: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
+/* Harness QA engine v4.8: pure functions, no DOM. Exposed as globalThis.HQA (also used by tests). */
 (function(root){
 'use strict';
 const SEV_LABEL={critical:'קריטי',gap:'פער כיסוי',warn:'אזהרה',info:'מידע'};
@@ -1244,7 +1254,72 @@ function setVerify(drawText,key,v){
   return rows.map(r=>r.cells.map(q).join(',')).join('\n');
 }
 
-root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS,verifyItems,setVerify,parseVerifyNote};
+/* ---------- QA report document (pure: returns HTML) ---------- */
+const REPORT_CSS=`.qa-doc{direction:rtl;font-family:Arial,"Segoe UI",sans-serif;color:#111;background:#fff;font-size:12.5px;line-height:1.5;max-width:820px;margin:0 auto;padding:22px 26px;border:1px solid #c9d2dc}
+.qa-doc h1{font-size:20px;margin:0}.qa-doc h2{font-size:15px;margin:18px 0 6px;padding-bottom:3px;border-bottom:2px solid #194775;color:#194775}
+.qa-doc table{border-collapse:collapse;width:100%;margin:4px 0 8px}.qa-doc th,.qa-doc td{border:1px solid #9aa7b5;padding:4px 6px;text-align:right;vertical-align:top}
+.qa-doc th{background:#e8eef5;font-weight:bold}.qa-doc .kv th{width:28%}.qa-doc .ltr{direction:ltr;unicode-bidi:plaintext}
+.qa-doc .head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:3px double #194775;padding-bottom:8px;margin-bottom:10px}
+.qa-doc .verdict{border:2px solid;padding:8px 10px;font-weight:bold;font-size:14px;margin:6px 0}
+.qa-doc .v-ok{border-color:#176a45;background:#e3f5ec;color:#0f4d31}.qa-doc .v-bad{border-color:#9c1c28;background:#fde7e9;color:#7a1520}.qa-doc .v-gap{border-color:#8a4b00;background:#fff1dc;color:#6a3a00}
+.qa-doc .sev{font-weight:bold;white-space:nowrap}.qa-doc .s-critical{color:#9c1c28}.qa-doc .s-gap{color:#8a4b00}.qa-doc .s-warn{color:#6b5d00}.qa-doc .s-info{color:#2f4d6b}
+.qa-doc .muted{color:#555}.qa-doc .sig td{height:34px}.qa-doc ul{margin:4px 0;padding-right:18px}
+.qa-doc tr{break-inside:avoid}.qa-doc h2{break-after:avoid}`;
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function reportHtml(o){
+  const m=o.meta||{},res=o.res,S=res.settings,rm=o.reportMeta||null,REV=o.reviewLabels||['פתוח'];
+  const tr=cells=>'<tr>'+cells.map(c=>'<td>'+c+'</td>').join('')+'</tr>';
+  const kv=rows=>'<table class="kv">'+rows.filter(r=>r[1]!==undefined&&r[1]!=='').map(([k,v])=>'<tr><th>'+esc(k)+'</th><td>'+v+'</td></tr>').join('')+'</table>';
+  const c=res.counts;
+  const verdictCls=res.full?'v-ok':c.critical?'v-bad':'v-gap';
+  const verdict=res.full?'כיסוי מלא לפי נתוני הקלט: לא נמצאו פערי כיסוי או סתירות. נדרש אישור מבקר.'
+    :(c.critical&&!c.gap)?'אין פערי כיסוי, אך נמצאו '+c.critical+' סתירות קריטיות שיש לברר לפני אישור.'
+    :c.critical?'תוכנית הבדיקה אינה מכסה את השרטוט במלואו: '+c.critical+' סתירות קריטיות ו־'+c.gap+' פערי כיסוי.'
+    :'תוכנית הבדיקה אינה מכסה את השרטוט במלואו: '+c.gap+' פערי כיסוי.';
+  const byType={};for(const t of res.tests)byType[t.type]=(byType[t.type]||0)+1;
+  const testsLine=Object.entries(byType).map(([k,n])=>esc(HE_TEST[k]||k)+': '+n).join(', ');
+  const M=res.model||{};
+  const docs=o.docs||{};
+  let h='<article class="qa-doc">';
+  h+='<div class="head"><div><h1>דוח ביקורת איכות: כיסוי תוכנית בדיקה חשמלית</h1><div class="muted">הצלבה בין שרטוט חשמלי, שרטוט מכני ותוכנית הבדיקה / דוח הבודק</div></div>'
+    +'<div style="text-align:left;white-space:nowrap"><b>מס׳ דוח:</b> <span class="ltr">'+esc(o.reportNo||'')+'</span><br><b>תאריך:</b> '+esc(o.date||'')+'</div></div>';
+  h+='<h2>1. פרטי הפריט והמסמכים</h2>'+kv([
+    ['מק״ט רתמה',esc(m.pn)],['שרטוט חשמלי',esc([m.drawingNo,m.drawingRev?'מהדורה '+m.drawingRev:''].filter(Boolean).join(', '))],
+    ['שרטוט מכני',esc([m.mechNo,m.mechRev?'מהדורה '+m.mechRev:''].filter(Boolean).join(', '))],
+    ['תוכנית בדיקה / ATP',esc([m.atpNo,m.atpRev?'מהדורה '+m.atpRev:''].filter(Boolean).join(', '))],
+    ['דוח בודק',rm?esc([rm.file,rm.program,rm.date,rm.drawingRev?'מהדורת סכמה לפי הבודק: '+rm.drawingRev:'',rm.result?'תוצאה כוללת: '+(rm.result==='PASS'?'עבר':rm.result==='FAIL'?'נכשל':rm.result):''].filter(Boolean).join(' | ')):''],
+    ['קבצים שצורפו',esc(Object.values(docs).filter(Boolean).join(', '))],
+    ['מבקר',esc(m.inspector)]]);
+  if(m.notes)h+='<p><b>הערות והיקף:</b> '+esc(m.notes)+'</p>';
+  h+='<h2>2. היקף ומקורות</h2><ul>'
+    +'<li>שרטוט חשמלי: '+(M.nets?M.nets.length+' רשתות, '+M.nodes.size+' נקודות, '+M.comps.length+' רכיבים':'לא הוזן')+(M.unverified?'. <b>'+M.unverified+' שורות נגזרו מתוכנית הבודק וטרם אומתו מול השרטוט.</b>':'')+'</li>'
+    +'<li>תוכנית בדיקה: '+res.tests.length+' בדיקות'+(testsLine?' ('+testsLine+')':'')+'</li>'
+    +'<li>ספי ניתוח: רציפות עד '+esc(S.conductorMax)+' Ω, בידוד מינימלי '+esc(S.isoMinM)+' MΩ'+(S.requireHipot?', מתח גבוה נדרש '+esc(S.hipotV)+' V':'')+', תוספת חיווט לבדיקת נגד '+esc(S.wireAllow)+' Ω'+(S.requireDiodeRev?', בדיקת דיודה גם בכיוון חסימה':'')+'</li></ul>';
+  h+='<h2>3. מסקנה וכיסוי</h2><div class="verdict '+verdictCls+'">'+esc(verdict)+'</div>';
+  h+='<table><tr><th>תחום</th><th>מכוסה</th><th>סה״כ</th><th>אחוז</th></tr>'+res.metrics.map(x=>tr([esc(x.label),x.covered,x.total,(x.total?Math.round(100*x.covered/x.total):100)+'%'])).join('')+'</table>';
+  h+='<p>ממצאים: קריטי '+c.critical+', פער כיסוי '+c.gap+', אזהרה '+c.warn+', מידע '+c.info+'.</p>';
+  const v=o.verify;
+  if(v&&v.total){
+    h+='<h2>4. אימות רשימת החיבורים מול השרטוט</h2><p>רשימת החיבורים נגזרה מתוכנית הבודק ונבדקה רשת אחרי רשת מול השרטוט: <b>'+v.ok+'</b> תואמות, <b>'+v.bad+'</b> לא תואמות, <b>'+v.open+'</b> טרם אומתו, מתוך '+v.total+'.</p>';
+    if(v.badList.length)h+='<table><tr><th>רשת / רכיב</th><th>נקודות</th><th>מיקום בשרטוט</th><th>אי־התאמה</th></tr>'+v.badList.map(x=>tr([esc(x.name),'<span class="ltr">'+esc(x.points.join(', '))+'</span>',esc([x.sheet?'גיליון '+x.sheet:'',x.zone?'אזור '+x.zone:''].filter(Boolean).join(', ')),esc(x.note)])).join('')+'</table>';
+  }
+  const sec=v&&v.total?5:4;
+  const rv=o.reviews||{};
+  const st={};for(const f of res.findings){const s_=(rv[f.key]||{}).status||REV[0];st[s_]=(st[s_]||0)+1;}
+  h+='<h2>'+sec+'. ממצאים</h2><p class="muted">סטטוס סקירה: '+Object.entries(st).map(([k,n])=>esc(k)+' '+n).join(', ')+'.</p>';
+  h+='<table><tr><th>#</th><th>חומרה</th><th>תחום</th><th>פריט</th><th>ממצא</th><th>המלצה</th><th>סטטוס</th><th>הערת מבקר</th></tr>'
+    +res.findings.map(f=>{const r=rv[f.key]||{};return tr([f.n,'<span class="sev s-'+f.sev+'">'+esc(SEV_LABEL[f.sev])+'</span>',esc(f.cat),'<span class="ltr">'+esc(f.el)+'</span>',esc(f.msg),esc(f.rec),esc(r.status||REV[0]),esc(r.note||'')]);}).join('')+'</table>';
+  h+='<h2>'+(sec+1)+'. גבולות הבדיקה</h2><ul>'
+    +'<li>הניתוח מבוסס על רשימות הקלט שהוזנו או יובאו. "כיסוי מלא" פירושו שלא נמצא פער מול הרשימות האלה לפי הכללים של הכלי, ואינו מחליף סקירה הנדסית.</li>'
+    +'<li>קווים מצוירים בשרטוט אינם נקראים אוטומטית. רשימת החיבורים מבוססת על טבלה, הזנה ידנית או טיוטה מהבודק שאומתה ידנית.</li>'
+    +'<li>תוצאות מדידה נבדקו מול הגבולות שבתוכנית. התאמת הגבולות למפרט ולמק״טים באחריות המבקר.</li></ul>';
+  h+='<h2>'+(sec+2)+'. אישורים</h2><table class="sig"><tr><th>תפקיד</th><th>שם</th><th>חתימה</th><th>תאריך</th></tr>'
+    +tr(['מבקר איכות',esc(m.inspector),'',''])+tr(['ראש צוות איכות','','',''])+tr(['הנדסת בדיקות','','',''])+'</table>';
+  return h+'</article>';
+}
+function reportDocument(inner,title){return '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>body{background:#fff;margin:0;padding:16px}@page{size:A4;margin:12mm}'+REPORT_CSS+'</style></head><body>'+inner+'</body></html>';}
+
+root.HQA={parseCsv,readTable,parseQty,unitFactor,fmtQty,buildModel,parseTests,parseMech,effRes,analyze,parseReportText,reportToTestsCsv,refOf,SEV_LABEL,DEFAULT_SETTINGS,pdfLines,tableFromLines,autoMap,tableToCsv,pairsFromLines,pairsToCsv,guessTestType,PDF_FIELDS,isTesterLog,parseTesterLog,testsToNetlist,HE_DRAW,HE_TEST,HE_UNIT,ALL_HE,HEADERS,verifyItems,setVerify,parseVerifyNote,reportHtml,reportDocument,REPORT_CSS,esc};
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
 
@@ -1602,7 +1677,7 @@ function run(scroll=true){
   const ml={pn:'מק״ט',drawingNo:'שרטוט חשמלי',drawingRev:'מהדורה',mechNo:'שרטוט מכני',mechRev:'מהדורה',atpNo:'תוכנית בדיקה',atpRev:'מהדורה',inspector:'מבקר'};
   const line=document.createElement('p');line.textContent=Object.entries(ml).map(([k,l])=>l+': '+(data.meta[k]||'—')).join(' | ')+' | תאריך: '+new Date().toLocaleString('he-IL');pm.append(line);
   if(data.meta.notes){const n=document.createElement('p');n.textContent='הערות: '+data.meta.notes;pm.append(n);}
-  renderFindings();renderTrace();renderSugg();renderNets();
+  renderFindings();renderTrace();renderSugg();renderNets();if($('rDoc').classList.contains('on'))renderDoc();
   if(scroll)$('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('run').onclick=()=>{data.drawing=$('drawing').value;data.tests=$('tests').value;data.mech=$('mech').value;save();run();};
@@ -1653,6 +1728,25 @@ function renderNets(){
   for(const n of M.nets){const tr=document.createElement('tr');
     tr.append(td(n.name),td(n.shield?'סיכוך':n.nc?'NC':n.virtual?'net,pin':'רגילה'),td(n.testable.join(', '),'ltr'),td(n.internal.join(', '),'ltr'),td(String(n.edges.length)),td(M.groups[n.group].name));body.append(tr);}
 }
+
+
+/* ---- QA report document ---- */
+$('qaDocCss').textContent=H.REPORT_CSS;
+function reportNo(){const d=new Date(),z=n=>String(n).padStart(2,'0');return 'HQA-'+(data.meta.pn||'X').replace(/[^\w.-]+/g,'')+'-'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate());}
+function verifySummary(){const items=H.verifyItems(data.drawing||'');const v={total:items.length,ok:0,bad:0,open:0,badList:[]};for(const x of items){v[x.status]++;if(x.status==='bad')v.badList.push(x);}return v;}
+function reportInner(){return H.reportHtml({meta:data.meta,res:last,reviews:data.reviews,reportMeta:data.reportMeta,docs:data.docs,verify:verifySummary(),date:new Date().toLocaleDateString('he-IL'),reportNo:reportNo(),reviewLabels:REVIEW});}
+function renderDoc(){if(!last)return;$('docWrap').innerHTML=reportInner();}
+document.querySelector('[data-rtab=rDoc]').addEventListener('click',renderDoc);
+$('docPrint').onclick=()=>{renderDoc();document.body.classList.add('print-doc');window.print();setTimeout(()=>document.body.classList.remove('print-doc'),500);};
+window.addEventListener('afterprint',()=>document.body.classList.remove('print-doc'));
+$('docSave').onclick=()=>{if(!last)return;download(base()+'_QA_report.html',H.reportDocument(reportInner(),'דוח ביקורת איכות '+(data.meta.pn||'')),'text/html;charset=utf-8');};
+$('docCopy').onclick=()=>{
+  if(!last)return;renderDoc();const html=H.reportDocument(reportInner(),'דוח ביקורת איכות'),el=$('docWrap');
+  const fallback=()=>{const r=document.createRange();r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);let ok=false;try{ok=document.execCommand('copy');}catch(e){}
+    notify(ok?'הדוח הועתק – הדבק ב־Word':'הדוח מסומן – העתק עם Ctrl+C והדבק ב־Word');};
+  try{navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([el.innerText],{type:'text/plain'})})]).then(()=>notify('הדוח הועתק – הדבק ב־Word'),fallback);}catch(e){fallback();}
+};
+if(EMBEDDED){$('docPrint').hidden=true;$('docSave').hidden=true;$('docHint').textContent+=' בתוך הצ׳אט אי אפשר להדפיס או להוריד: השתמש ב"העתק לוורד", או פתח את הכלי באתר.';}
 
 /* ---- exports ---- */
 const cell=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
