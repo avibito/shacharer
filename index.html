@@ -515,18 +515,19 @@ details summary{cursor:pointer;list-style-position:inside}
    שחרר v17 — single-pass rewrite of the v7…v16.2 layered patches.
    Storage keys and the record format are unchanged so existing data loads as-is.
    ========================================================================== */
-const VERSION = '18.4';
+const VERSION = '18.5';
 const KEY = 'shacharerHistory';          // { "D.M.YYYY": record }
 const SK  = 'shacharerCombinedSettings'; // calculation settings
 const BK  = 'shacharerV14Balances';      // { vacation, sick }
 
+// In the order of the day: travel out, work (with a break), travel home.
 const TIME_FIELDS = [
   ['leaveHome',  'יציאה מהבית',      '🏠'],
-  ['startWork',  'התחלת עבודה',      '🧰'],
-  ['endWork',    'סיום עבודה',       '🏁'],
   ['arriveDest', 'הגעה ליעד',        '📍'],
+  ['startWork',  'התחלת עבודה',      '🧰'],
   ['startCoffee','תחילת הפסקה',      '☕'],
   ['endCoffee',  'סיום הפסקה',       '✔'],
+  ['endWork',    'סיום עבודה',       '🏁'],
   ['returnHome', 'חזרה הביתה',       '🏠'],
 ];
 const TIME_IDS = TIME_FIELDS.map(f => f[0]);
@@ -656,6 +657,9 @@ function analyze(d, key) {
   const deduct = settings.deductCoffee ? (coffee || 0) : 0;
   if (settings.deductCoffee && gross !== null && deduct > gross) problems.push('משך ההפסקה ארוך ממשך העבודה');
   if (absence !== null && absence > 8 * 60) problems.push('נסיעה ליעד מעל 8 שעות — בדוק את השעות');
+  // "Arrival at destination" is the morning arrival; it can't come after work started.
+  if (mins(d.arriveDest) !== null && mins(d.startWork) !== null && mins(d.arriveDest) > mins(d.startWork) && !crossesMidnight(d.leaveHome, d.arriveDest))
+    problems.push('״הגעה ליעד״ היא ההגעה בבוקר — רשומה אחרי התחלת העבודה. בסוף היום ממלאים ״חזרה הביתה״');
 
   if (ext && !d.siteName) problems.push('לא צוין שם האתר החיצוני');
   if (type === 'abroad' && !d.country) problems.push('לא צוינה מדינה בעבודה בחו״ל');
